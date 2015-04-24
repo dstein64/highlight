@@ -1,0 +1,33 @@
+/* 
+ * Hacky, yes, but you chain your single class CSS selectors
+ * to give higher specificity
+ * (just twice does the trick, but could do 11 times so it has higher specificity than an id)
+ */
+  
+/* Also, you can't break the chaining across lines the way you tried (with a newline, then next line starting with a dot) */
+
+/* all:inherit causes some text color to not change, and links not to take on their color */
+/*
+._highlight_b08d724a-5194-4bdd-9114-21136a9518ce_wrapper._highlight_b08d724a-5194-4bdd-9114-21136a9518ce_wrapper
+,
+._highlight_b08d724a-5194-4bdd-9114-21136a9518ce_wrapper._highlight_b08d724a-5194-4bdd-9114-21136a9518ce_wrapper
+{
+    all: inherit;
+}
+*/
+
+/* remove pseudo elements */
+
+/* Couldn't do this with Javascript */
+
+/* 
+ * since you're chaining, the pseudo element (::after) goes at the very end of the selector.
+ * (yes: .classname.classname::after , no: .classname::after.classname::after)
+ */
+
+._highlight_b08d724a-5194-4bdd-9114-21136a9518ce_wrapper._highlight_b08d724a-5194-4bdd-9114-21136a9518ce_wrapper::after
+,
+._highlight_b08d724a-5194-4bdd-9114-21136a9518ce_wrapper._highlight_b08d724a-5194-4bdd-9114-21136a9518ce_wrapper::before
+{
+    content: none !important;
+}
