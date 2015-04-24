@@ -806,7 +806,12 @@ var persighligter = function(_options) {
         if (HIGHLIGHT_ALL)
             ratio = 1; // debugging
         
-        for (var i = 0; i < Math.min(scores.length, Math.floor(ratio * scores.length)); i++) {
+        var howMany = Math.floor(ratio * scores.length);
+        // always highlight at least one
+        if (howMany < 1)
+            howMany = 1;
+        
+        for (var i = 0; i < Math.min(scores.length, howMany); i++) {
             var scored = scores[i];
             _tohighlight.push(scored);
         }
