@@ -1,12 +1,12 @@
 {
   "name": "Highlight",
   "version": "1.0",
-  "description": "Highlight the Important Content on Article Sites",
+  "description": "Highlight Important Content on Article Sites. tl;dr. Summarize.",
   "content_scripts": [ {
       "js": [ "src/ping.js" ],
       "matches": [ "<all_urls>" ],
       "run_at": "document_start",
-      "all_frames": false // no need for iframes for ping script
+      "all_frames": false
   }, {
       "js": [ "src/prepare.js",
               "src/lib/readabilitySAX.js",
@@ -16,9 +16,8 @@
               "src/content.js" ],
       "css" : ["src/style.css"],
       "matches": [ "<all_urls>" ],
-      "all_frames": true // work on iframes too
+      "all_frames": true
   } ],
-  // "tabs" and "*://*/*" permissions specified below for loading content script on extension install/reload
   "permissions": ["tabs", "*://*/*", "storage"],
   "background": { "scripts": ["src/utils.js", "src/eventPage.js"],
                   "persistent": true },
