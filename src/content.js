@@ -753,11 +753,40 @@ var persighligter = function(_options) {
         var candidates = getCandidates();
         var scores = [];
         var _tohighlight = [];
+        
+        var cstems = candidates.map(function(c){return NLP.tokenormalize(c.text);});
+        var tsf = new Map(); // term sentence frequency (how many times a term appears in a sentence)
+        
+        for (var i = 0; i < cstems.length; i++) {
+            var stems = cstems[i];
+            var _set = new Set(stems.keys());
+            _set.forEach(function(stem) {
+                if (tsf.has(stem)) {
+                    tsf.set(stem, tsf.get(stem) + 1);
+                } else {
+                    tsf.set(stem, 1);
+                }
+            });            
+        }
+        
         for (var i = 0; i < candidates.length; i++) {
             var candidate = candidates[i];
-            var stems = NLP.tokenormalize(candidate.text);
+            var stems = cstems[i];
             
-            var score = Math.random();
+            var score = 0;
+            
+            stems.forEach(function(count, stem) {
+                var tsfScore = Math.log2(tsf.get(stem)) + 1;
+                score += (count * tsfScore);
+            });
+            
+            // reduce score of long sentences (being long will give them more weight above)
+            var size = 0;
+            for (c of stems.values()) {
+                size += c;
+            }
+            var factor = 1.0 / (Math.log2(size) + 1);
+            score *= factor;
             
             scores.push(new ScoredCandidate(candidate, score, i));
         }

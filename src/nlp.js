@@ -60,7 +60,7 @@ var NLP = (function() {
         // remove non alphanumeric TODO: don't remove chars with accents/diacritics. one way would replace with ascii char without the accent
         text = text.replace(/\W+/g, ' ');
         // consolidate contiguous whitespace
-        text = text.replace(/\s+/g, ' ');        
+        text = text.replace(/\s+/g, ' ');
         return text.split(' ');
     };
     
