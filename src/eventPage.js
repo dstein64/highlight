@@ -33,7 +33,9 @@ var updateHighlightState = function(tabId, highlight, success) {
         var curState = tabIdToHighlightState.get(tabId);
         var curHighlight = curState[0];
         var curSuccess = curState[1];
-        if ((curHighlight === highlight) && (curSuccess === true)) { // could just check curSuccess, but since null has meaning too, this is clearer IMO
+        // highlight > 0 && (curHighlight >= highlight) added so that double clicking icon fast
+        // on a site with icons doesn't cause the no highlighting icon to appear.
+        if (highlight > 0 && (curHighlight >= highlight) && (curSuccess === true)) { // could just check curSuccess, but since null has meaning too, this is clearer IMO
             // if state has not changed, and we already have a successful icon,
             // keep it (to prevent iframe overriding)
             return;
