@@ -1,7 +1,7 @@
 var NLP = (function() {
     var me = Object.create(null);
 
-    // stopwords are from nltk
+    // 127 stopwords are from nltk
     var stopwordsl = ['a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', 'as', 'at',
                       'be', 'because', 'been', 'before', 'being', 'below', 'between', 'both', 'but', 'by',
                       'can',
@@ -20,6 +20,35 @@ var NLP = (function() {
                       'very',
                       'was', 'we', 'were', 'what', 'when', 'where', 'which', 'while', 'who', 'whom', 'why', 'will', 'with',
                       'you', 'your', 'yours', 'yourself', 'yourselves'];
+    
+    // more stopwords from Open Text Summarizer (these are common Engligh words).
+    stopwordsl = stopwordsl.concat([
+                                    'a', 'about', 'again', 'all', 'along', 'almost', 'also', 'always', 'am', 'among', 'an', 'and', 'another', 'any', 'anybody', 'anything', 'anywhere', 'apart', 'are', 'around', 'as', 'at',
+                                    'be', 'because', 'been', 'before', 'being', 'between', 'both', 'but', 'by',
+                                    'can', 'cannot', 'comes', 'could', 'couldn',
+                                    'did', 'didn', 'different', 'do', 'does', 'doesn', 'done', 'don', 'down', 'during', 'dr',
+                                    'each', 'either', 'enough', 'etc', 'even', 'every', 'everybody', 'everything', 'everywhere', 'except', 'exactly',
+                                    'few', 'final', 'first', 'for', 'from',
+                                    'get', 'go', 'goes', 'gone', 'good', 'got',
+                                    'had', 'has', 'have', 'having', 'he', 'hence', 'her', 'him', 'his', 'how', 'however',
+                                    'i', 'i.e', 'if', 'in', 'initial', 'into', 'is', 'isn', 'it', 'its', 'it', 'itself',
+                                    'just',
+                                    'last', 'least', 'less', 'let', 'lets', 'let\'s', 'like', 'lot',
+                                    'made', 'make', 'many', 'may', 'maybe', 'me', 'might', 'mine', 'more', 'most', 'Mr', 'much', 'must', 'my',
+                                    'near', 'need', 'next', 'niether', 'no', 'nobody', 'nor', 'not', 'nothing', 'now', 'nowhere',
+                                    'of', 'off', 'often', 'oh', 'ok', 'okay', 'on', 'once', 'one', 'only', 'onto', 'or', 'other', 'our', 'ours', 'out', 'over', 'own',
+                                    'perhaps', 'please', 'previous',
+                                    'quite',
+                                    'rather', 're', 'really',
+                                    's', 'said', 'same', 'say', 'see', 'seems', 'several', 'shall', 'she', 'should', 'shouldn\'t', 'since', 'so', 'some', 'somebody', 'something', 'somewhere', 'still', 'stuff', 'such',
+                                    'than', 't', 'that', 'the', 'their', 'theirs', 'them', 'then', 'there', 'these', 'they', 'thing', 'things', 'this', 'those', 'through', 'thus', 'to', 'too', 'top', 'two',
+                                    'under', 'unless', 'until', 'up', 'upon', 'us', 'use',
+                                    'v', 've', 'very',
+                                    'want', 'was', 'we', 'well', 'went', 'were', 'what', 'when', 'where', 'which', 'while', 'who', 'whom', 'why', 'will', 'with', 'without', 'won', 'would',
+                                    'x',
+                                    'yes', 'yet', 'you', 'you', 'your', 'yours'
+                             ]);
+    
     // sets added in Chrome 38: http://blog.chromium.org/2014/08/chrome-38-beta-new-primitives-for-next.html
     var stopwords = new Set(stopwordsl);
 
@@ -34,11 +63,92 @@ var NLP = (function() {
         text = text.replace(/\s+/g, ' ');        
         return text.split(' ');
     };
+    
+    // synonyms from Open Text Summarizer
+    var syns = new Map();
+    syns.set('colour', 'color');
+    syns.set('honour', 'honor');
+    syns.set('murder', 'kill');
+    syns.set('assist', 'help');
+    syns.set('simple', 'basic');
+    syns.set('winsome', 'charming');
+    syns.set('incisive', 'perceptive');
+    syns.set('bay', 'bark');
+    syns.set('verbose', 'wordy');
+    syns.set('angry', 'mad');
+    syns.set('unhappy', 'sad');
+    syns.set('depressed', 'sad');
+    syns.set('dismal', 'sad');
+    syns.set('mournful', 'sad');
+    syns.set('dreadful', 'sad');
+    syns.set('dreary', 'sad');
+    syns.set('discouraged', 'sad');
+    syns.set('fled', 'run');
+    syns.set('fearful', 'afraid');
+    syns.set('terrified', 'afraid');
+    syns.set('hysterical', 'afraid');
+    syns.set('worried', 'afraid');
+    syns.set('scared', 'afraid');
+    syns.set('petrified', 'afraid');
+    syns.set('worse', 'bad');
+    syns.set('terrible', 'bad');
+    syns.set('horrible', 'bad');
+    syns.set('wicked', 'evil');
+    syns.set('huge', 'big');
+    syns.set('massive', 'bug');
+    syns.set('giant', 'big');
+    syns.set('gigantic', 'big');
+    syns.set('monstrous', 'big');
+    syns.set('tremendous', 'big');
+    syns.set('bulky', 'big');
+    syns.set('anxious', 'eager');
+    syns.set('intent', 'eager');
+    syns.set('ardent', 'eager');
+    syns.set('avid', 'eager');
+    syns.set('brave', 'bold');
+    syns.set('excellent', 'good');
+    syns.set('worthy', 'good');
+    syns.set('proper', 'good');
+    syns.set('favored', 'good');
+    syns.set('fine', 'good');
+    syns.set('brisk', 'happy');
+    syns.set('glad', 'happy');
+    syns.set('cheerful', 'happy');
+    syns.set('jolly', 'happy');
+    syns.set('pleased', 'happy');
+    syns.set('satisfied', 'happy');
+    syns.set('vivacious', 'happy');
+    syns.set('cheery', 'happy');
+    syns.set('merry', 'happy');
+    syns.set('injured', 'hurt');
+    syns.set('offended', 'hurt');
+    syns.set('distressed', 'hurt');
+    syns.set('suffering', 'hurt');
+    syns.set('afflicted', 'hurt');
+    syns.set('little', 'small');
+    syns.set('tiny', 'small');
+    syns.set('microscopic', 'small');
+    syns.set('miniscule', 'small');
+    syns.set('slender', 'small');   
+    syns.set('insignificant', 'small');
+    syns.set('gaze', 'look');
+    syns.set('stare', 'look');
+    syns.set('view', 'look');
+    syns.set('inspect', 'look');
+    syns.set('glance', 'look');
+    syns.set('announce', 'say');
+    
+    var synonym = function(word) {
+        var s = word;
+        if (syns.has(word))
+            s = syns.get(word);
+        return s;
+    }
 
     var MAX_TOKEN_LEN = 20;
 
     // given a list of tokens, convert to a standard form, where certain tokens are removed,
-    // and retained tokens are stemmed
+    // some are replaced with synonyms, and retained tokens are stemmed
     me.normalize = function(tokens) {
         tokens = tokens.map(function(w){return w.toLowerCase();});
         // require at least one alphabetic char (e.g., 10,000 will be removed)
@@ -48,6 +158,8 @@ var NLP = (function() {
         // remove single character tokens
         // most have already been removed (commas, stop words, ...)
         tokens = tokens.filter(function(w){return w.length > 1;});
+        // replace synonyms
+        tokens = tokens.map(function(w){return synonym(w);});
         // stem (PorterStemmer1980.js)
         tokens = tokens.map(function(w){return stemmer(w, false);});
         // filter again for at least one alphabetic char (since after stemming we may now have no alphabetic char)
