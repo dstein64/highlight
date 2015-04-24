@@ -1,15 +1,3 @@
-// Default Options (don't need chrome.storage for options)
-var defaultOptions = function() {
-    var options = Object.create(null);
-    options['coverage'] = 20;
-    return options;
-};
-if (!localStorage['options']) {
-    var options = defaultOptions();
-    localStorage['options'] = JSON.stringify(options);
-}
-// TODO: if we have missing options, they should be set using the default values...
-
 var ping = new Set(); // list of content scripts we've heard from
                       // this gets sent earlier than tabIdToHighlightState
                       // reflects. (removal code is below)
@@ -31,7 +19,7 @@ chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
     ping['delete'](tabId);
 });
 
-var highlightStates = 2; // total number of states
+var highlightStates = 4; // total number of states
 
 // updates highlight state in tabIdToHighlightState, and also used to
 // show the correct highlight icon
@@ -54,11 +42,16 @@ var updateHighlightState = function(tabId, highlight, success) {
     tabIdToHighlightState.set(tabId, [highlight, success]);
     
     // now that we've updated state, show the corresponding icon
-    var iconName = 'whiteHighlight';
-    if (highlight === 1)
-        iconName = 'yellowHighlight';
-    if (highlight > 0 && (success === false)) // can't just check !success, since null has meaning here
-        iconName += 'X';
+    if (success === false)
+        iconName = 'Xhighlight';
+    else
+        iconName = highlight + 'highlight';
+    
+//    var iconName = 'whiteHighlight';
+//    if (highlight === 1)
+//        iconName = 'yellowHighlight';
+//    if (highlight > 0 && (success === false)) // can't just check !success, since null has meaning here
+//        iconName += 'X';
     path19 = 'icons/' + iconName + '19x19.png';
     path38 = 'icons/' + iconName + '38x38.png';
     chrome.pageAction.setIcon({path: {'19': path19, '38': path38}, tabId: tabId});
@@ -78,12 +71,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
         response({'curHighlight': highlightState[0], 'curSuccess': highlightState[1]});
     } else if (message === 'ping') {
         ping.add(tabId);
-    } else if (message === 'defaultOptions') {
-        var options = defaultOptions();
-        response(options);
-    } else if (message === 'getOptions') {
-        var options = JSON.parse(localStorage['options']);
-        response(options);
     }
     // NOTE: if you're going to call response asynchronously, be sure to return true
     // from this function. http://stackoverflow.com/questions/20077487/chrome-extension-message-passing-response-not-sent

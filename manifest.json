@@ -2,10 +2,6 @@
   "name": "Highlight",
   "version": "1.0",
   "description": "Highlight the Important Content on Article Sites",
-  "options_ui": {
-      "page": "src/options/options.html",
-      "chrome_style": true
-    },
   "content_scripts": [ {
       "js": [ "src/ping.js" ],
       "matches": [ "<all_urls>" ],
@@ -28,8 +24,8 @@
                   "persistent": true },
   "page_action": {
       "default_icon": {
-          "19": "icons/whiteHighlight19x19.png",
-          "38": "icons/whiteHighlight38x38.png"
+          "19": "icons/0highlight19x19.png",
+          "38": "icons/0highlight38x38.png"
       },
       "default_title": "Highlight this page"
   },
