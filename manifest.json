@@ -1,7 +1,7 @@
 {
   "name": "Highlight",
   "version": "1.0",
-  "description": "Highlight Important Content on Article Sites. tl;dr. Summarize.",
+  "description": "Highlight important content on article sites. tl;dr. Summarize.",
   "content_scripts": [ {
       "js": [ "src/ping.js" ],
       "matches": [ "<all_urls>" ],
