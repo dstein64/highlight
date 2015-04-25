@@ -884,32 +884,6 @@ var getHighlightState = function(callback) {
     });
 };
 
-if (!isEmbed && compatible) {
-    // if top frame and html page, tell eventPage our initial status, so it shows the icon
-    updateHighlightState(0, true);
-    
-    // if we're the top frame, continuously check if we (or our child frames) have highlighting
-    // it's possible that changing URLs in a child frame caused the highlighting to
-    // turn off. If so, let's turn off the icon and update highlight state.
-    // This is somewhat hacky, but the alternatives are as well. For example, an alternative would
-    // require monitoring all events that can trigger highlighting to disappear (iframe changes, DOM modications, etc.).
-    // Alternatively, it would possibly be more elegant to handle this in eventPage, but that would
-    // require additional message passing which becomes a mess IMO.
-    // Also, somethingHighlighted() is fast (it uses getElementsByClassName: 1.97ms on "a considerably large file with lots of elements to consider" in 2007, http://ejohn.org/blog/getelementsbyclassname-speed-comparison/)
-    
-    var interval = 1200;
-    UTILS.safeSetInterval(function() {
-        getHighlightState(function(curHighlight, curSuccess) {
-            // don't have to worry about a page change in the case where
-            // curHighlight > 0 and !curSuccess,
-            // since we don't keep that icon active for more than X seconds
-            if (curHighlight > 0 && curSuccess && !somethingHighlighted(window)) {
-                updateHighlightState(0, true);
-            }
-        });
-    }, interval);
-}
-
 //useful for debugging sentence boundary detection
 var _cycleColors = ["yellow", "skyblue", "sandybrown", "palegreen", "lightpink"];
 var cycles = [];
@@ -961,7 +935,7 @@ var trimSpaces = function(scoredCandsToHighlight) {
     }
 };
 
-var lastHighlight; // keep track of last highlight time, so our timers only operate if we haven't
+var lastHighlight = (new Date()).getTime(); // keep track of last highlight time, so our timers only operate if we haven't
                    // received new highlight requests
 // you were originally managing highlightState in here. But then when you added
 // iframe support, highlightState management was moved to eventPage.js, so it now
@@ -974,7 +948,6 @@ var highlight = function(highlightState) {
     // Where the background page is Inactive (when using "persistent": false),
     // there is a slight delay for the following call
     // we're in a new state, but we don't know whether there is success yet
-    
     removeHighlight();
     if (highlightState === 0) {
         updateHighlightState(0, true);
@@ -1017,7 +990,7 @@ var highlight = function(highlightState) {
         if (!success) {
             UTILS.setTimeoutIgnore(function() {
                 getHighlightState(function(curHighlight, curSuccess) {
-                    if (curHighlight > 0 && !curSuccess && lastHighlight === time) {
+                    if (curHighlight === 0 && !curSuccess && lastHighlight === time) {
                         updateHighlightState(0, null);
                     }
                 });
@@ -1036,6 +1009,37 @@ chrome.runtime.onMessage.addListener(function(request) {
         }
     }
 });
+
+if (!isEmbed && compatible) {
+    // if top frame and html page, tell eventPage our initial status, so it shows the icon
+    updateHighlightState(0, true);
+    
+    // if we're the top frame, continuously check if we (or our child frames) have highlighting
+    // it's possible that changing URLs in a child frame caused the highlighting to
+    // turn off. If so, let's turn off the icon and update highlight state.
+    // This is somewhat hacky, but the alternatives are as well. For example, an alternative would
+    // require monitoring all events that can trigger highlighting to disappear (iframe changes, DOM modications, etc.).
+    // Alternatively, it would possibly be more elegant to handle this in eventPage, but that would
+    // require additional message passing which becomes a mess IMO.
+    // Also, somethingHighlighted() is fast (it uses getElementsByClassName: 1.97ms on "a considerably large file with lots of elements to consider" in 2007, http://ejohn.org/blog/getelementsbyclassname-speed-comparison/)
+    
+    var interval = 1200;
+    
+    UTILS.safeSetInterval(function() {
+        
+        getHighlightState(function(curHighlight, curSuccess) {
+            // don't have to worry about a page change in the case where
+            // curHighlight > 0 and !curSuccess,
+            // since we don't keep that icon active for more than X seconds
+            
+            var diff = (new Date().getTime()) - lastHighlight;
+            
+            if (diff >= interval && curHighlight > 0 && curSuccess && !somethingHighlighted(window)) {
+                updateHighlightState(0, true);
+            }
+        });
+    }, interval);
+}
 
 // we may have existing highlighting. clear so we're in sync with icon.
 // after injecting content.js, remove highlighting. (will ensure icon and page in sync)
