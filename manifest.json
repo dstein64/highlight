@@ -1,7 +1,7 @@
 {
   "name": "Highlight",
   "version": "1.1",
-  "description": "Highlight important content on article sites. tl;dr. Summarize.",
+  "description": "Highlight automatically highlights the important content on article sites. It addresses tl;dr in a similar way to article summarization.",
   "content_scripts": [ {
       "js": [ "src/ping.js" ],
       "matches": [ "<all_urls>" ],

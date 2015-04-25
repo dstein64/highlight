@@ -29,13 +29,15 @@ var updateHighlightState = function(tabId, highlight, success) {
     // never change state indicating successful highlighting
     // to unsuccessful highlighting. This is to accommodate that different
     // iframes can send conflicting status. If one succeeded, keep that state
+    var curHighlight = 0;
+    var curSuccess = null;
     if (tabIdToHighlightState.has(tabId)) {
-        var curState = tabIdToHighlightState.get(tabId);
-        var curHighlight = curState[0];
+        curState = tabIdToHighlightState.get(tabId);
+        curHighlight = curState[0];
         var curSuccess = curState[1];
         // highlight > 0 && (curHighlight >= highlight) added so that double clicking icon fast
         // on a site with icons doesn't cause the no highlighting icon to appear.
-        if (highlight > 0 && (curHighlight >= highlight) && (curSuccess === true)) { // could just check curSuccess, but since null has meaning too, this is clearer IMO
+        if (curSuccess === true && !success && curHighlight > 0) { // could just check curSuccess, but since null has meaning too, this is clearer IMO
             // if state has not changed, and we already have a successful icon,
             // keep it (to prevent iframe overriding)
             return;
@@ -44,16 +46,10 @@ var updateHighlightState = function(tabId, highlight, success) {
     tabIdToHighlightState.set(tabId, [highlight, success]);
     
     // now that we've updated state, show the corresponding icon
+    var iconName = highlight + 'highlight';
     if (success === false)
         iconName = 'Xhighlight';
-    else
-        iconName = highlight + 'highlight';
     
-//    var iconName = 'whiteHighlight';
-//    if (highlight === 1)
-//        iconName = 'yellowHighlight';
-//    if (highlight > 0 && (success === false)) // can't just check !success, since null has meaning here
-//        iconName += 'X';
     path19 = 'icons/' + iconName + '19x19.png';
     path38 = 'icons/' + iconName + '38x38.png';
     chrome.pageAction.setIcon({path: {'19': path19, '38': path38}, tabId: tabId});
@@ -100,89 +96,119 @@ var manualInject = function(force) {
     if (!force && (onStartup || mInjected))
         return false;
     mInjected = true;
+    
+    // js is a boolean indicating whehter script is javascript. if false, assumed to be css
+    var ContentScript = function(script, js, allFrames, runAt) {
+        this.script = script;
+        this.js = js;
+        this.allFrames = allFrames;
+        this.runAt = runAt;
+    }
+    
+    var contentScripts = [];
+    var manifest = chrome.runtime.getManifest();
+    
+    for (var h = 0; h < manifest.content_scripts.length; h++) {
+        var _content_scripts = manifest.content_scripts[h];
+        var all_frames = false;
+        if ('all_frames' in _content_scripts) {
+            all_frames = _content_scripts['all_frames'];
+        }
+        
+        // it probably doesn't matter what we have this set to, since the page
+        // has already loaded. This is the "soonest" the file can run, but in this
+        // injection case, it's probably already past document_end.
+        var run_at = 'document_idle';
+        if ('run_at' in _content_scripts) {
+            run_at = _content_scripts['run_at'];
+        }
+        
+        if (_content_scripts && ('css' in _content_scripts)) {
+            for (var i = 0; i < _content_scripts.css.length; i++) {
+                var css = _content_scripts.css[i];
+                var cs = new ContentScript(css, false, all_frames, run_at);
+                contentScripts.push(cs);
+            }
+        }
+        
+        if (_content_scripts && ('js' in _content_scripts)) {
+            for (var i = 0; i < _content_scripts.js.length; i++) {
+                var js = _content_scripts.js[i];
+                var cs = new ContentScript(js, true, all_frames, run_at);
+                contentScripts.push(cs);
+            }
+        }
+    }
+    
+    // for each tab, scripts are injected in order, using callbacks. This allows injected = true to work, since you want that
+    // to be set before the following scripts are injected (since they may rely on that value)
     chrome.tabs.query({}, function(tabs) {
-        var manifest = chrome.runtime.getManifest();
-        for (var h = 0; h < manifest.content_scripts.length; h++) {
-            var _content_scripts = manifest.content_scripts[h];
-            var all_frames = false;
-            if ('all_frames' in _content_scripts) {
-                all_frames = _content_scripts['all_frames'];
+        for (var i = 0; i < tabs.length; i++) {
+            var tab = tabs[i];
+            var tabId = tab.id;
+            
+            // no need to inject if page already had injection
+            // note to self: there could be multiple entries in manifest.content_scripts, so we might end
+            // up here multiple times. could alternative loop through tabs on the outer loop.
+            if (ping.has(tabId)) {
+                continue;
             }
             
-            // it probably doesn't matter what we have this set to, since the page
-            // has already loaded. This is the "soonest" the file can run, but in this
-            // injection case, it's probably already past document_end.
-            var run_at = 'document_idle';
-            if ('run_at' in _content_scripts) {
-                run_at = _content_scripts['run_at'];
-            }
-            
-            var js = [];
-            if (_content_scripts && ('js' in _content_scripts)) {
-                js = js.concat(_content_scripts.js);
-            }
-            
-            var css = [];
-            if (_content_scripts && ('css' in _content_scripts)) {
-                css = css.concat(_content_scripts.css);
-            }
-            
-            for (var i = 0; i < tabs.length; i++) {
-                var tab = tabs[i];
-                var tabId = tab.id;
+            var url = tab.url;
+            if (/^(?:http|https|ftp|file):\/\//.test(url)) {
                 
-                // no need to inject if page already had injection
-                // note to self: there could be multiple entries in manifest.content_scripts, so we might end
-                // up here multiple times. could alternative loop through tabs on the outer loop.
-                if (ping.has(tabId)) {
-                    continue;
-                }
-                
-                var url = tab.url;
-                if (/^(?:http|https|ftp|file):\/\//.test(url)) {
-                    for (var j = 0; j < js.length; j++) {
-                        var script = js[j];
-                        var options = {file: script, allFrames: all_frames, runAt: run_at};
-                        chrome.tabs.executeScript(tabId, options, function(id, _script, _all_frames) {
-                            return function() {
-                                // just checking with a call to chrome.runtime.lastError
-                                // is sufficient to suppress chrome warning.
-                                if (chrome.runtime.lastError) {
+                (function(id) {
+                    var inject = function(remaining) {
+                        if (remaining.length <= 0)
+                            return;
+                        
+                        var first = remaining[0];
+                        
+                        if (!first.js) {
+                            var options = {file: first.script, allFrames: first.allFrames};
+                            chrome.tabs.insertCSS(id, options, function() {
+                                if (chrome.runtime.lastError) {}
+                                inject(remaining.slice(1));
+                            });
+                        } else {
+                            var options = {file: first.script, allFrames: first.allFrames, runAt: first.runAt};
+                            chrome.tabs.executeScript(id, options, function() {
+                                    // just checking with a call to chrome.runtime.lastError
+                                    // is sufficient to suppress chrome warning.
+                                    if (chrome.runtime.lastError) {}
                                     // check for error so chrome doesn't throw error
                                     // this happens because some pages, like the Chrome web store,
                                     // cannot have scripts injected
                                     //console.warn(chrome.runtime.lastError.message);
-                                }
-                                
-                                // you wrapped the function you're in, to pass id. Otherwise it would
-                                // take on it's value from outside the closure
-                                                                
-                                if (_script === 'src/prepare.js') {
-                                    // let the extension know we were injected (prepare.js is the first script loaded, so later
-                                    // scripts can use this information
-                                    chrome.tabs.executeScript(id, {
-                                            code: 'injected = true;',
-                                            allFrames: _all_frames // use same all_frames that was used for injecting src/prepare.js,
-                                        },
-                                        function() {
-                                            if (chrome.runtime.lastError) {}
-                                    });
-                                }
-                            };
-                        }(tabId, script, all_frames));
-                    }
+                                    
+                                    if (first.script === 'src/prepare.js') {
+                                        // let the extension know we were injected (prepare.js is the first script loaded, so later
+                                        // scripts can use this information
+                                        chrome.tabs.executeScript(id, {
+                                                code: 'injected = true;',
+                                                allFrames: first.allFrames // use same all_frames that was used for injecting src/prepare.js,
+                                            },
+                                            function() {
+                                                if (chrome.runtime.lastError) {}
+                                                inject(remaining.slice(1));
+                                        });
+                                    } else {
+                                        inject(remaining.slice(1));
+                                    }
+                                    
+                                    // you wrapped the function you're in, to pass id. Otherwise it would
+                                    // take on it's value from outside the closure
+                                });
+                        }
+                    };
+                    inject(contentScripts);
                     
-                    for (var j = 0; j < css.length; j++) {
-                        var sheet = css[j];
-                        var options = {file: sheet, allFrames: all_frames};
-                        chrome.tabs.insertCSS(tabId, options, function() {
-                            if (chrome.runtime.lastError) {}
-                        });
-                    }
-                }
+                })(tabId);
             }
         }
     });
+    
+    
     return true;
 };
 

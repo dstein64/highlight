@@ -886,7 +886,7 @@ var getHighlightState = function(callback) {
 
 if (!isEmbed && compatible) {
     // if top frame and html page, tell eventPage our initial status, so it shows the icon
-    updateHighlightState(0, null);
+    updateHighlightState(0, true);
     
     // if we're the top frame, continuously check if we (or our child frames) have highlighting
     // it's possible that changing URLs in a child frame caused the highlighting to
@@ -904,7 +904,7 @@ if (!isEmbed && compatible) {
             // curHighlight > 0 and !curSuccess,
             // since we don't keep that icon active for more than X seconds
             if (curHighlight > 0 && curSuccess && !somethingHighlighted(window)) {
-                updateHighlightState(0, null);
+                updateHighlightState(0, true);
             }
         });
     }, interval);
@@ -961,19 +961,24 @@ var trimSpaces = function(scoredCandsToHighlight) {
     }
 };
 
+var lastHighlight; // keep track of last highlight time, so our timers only operate if we haven't
+                   // received new highlight requests
 // you were originally managing highlightState in here. But then when you added
 // iframe support, highlightState management was moved to eventPage.js, so it now
 // gets passed along as an arg. This prevents different iframes from being in different
 // states, in case they were loaded at different times (e.g., one before a highlight and one loaded
-// after) 
+// after)
 var highlight = function(highlightState) {
+    var time = (new Date()).getTime();
+    lastHighlight = time;
     // Where the background page is Inactive (when using "persistent": false),
     // there is a slight delay for the following call
     // we're in a new state, but we don't know whether there is success yet
-    updateHighlightState(highlightState, null);
     
     removeHighlight();
-    if (highlightState > 0) {
+    if (highlightState === 0) {
+        updateHighlightState(0, true);
+    } else if (highlightState > 0) {
         var scoredCandsToHighlight = cth(highlightState);
         trimSpaces(scoredCandsToHighlight);
         
@@ -994,7 +999,8 @@ var highlight = function(highlightState) {
                 // if we have no highlighting, success is false.
                 // also let background page know if we do have success on page
                 // (as opposed to null for, I don't know, which we told it earlier)
-                updateHighlightState(highlightState, _success);
+                if (lastHighlight === time)
+                    updateHighlightState(highlightState, _success);
             };
         })(highlightState, success);
         
@@ -1011,7 +1017,7 @@ var highlight = function(highlightState) {
         if (!success) {
             UTILS.setTimeoutIgnore(function() {
                 getHighlightState(function(curHighlight, curSuccess) {
-                    if (curHighlight > 0 && !curSuccess) {
+                    if (curHighlight > 0 && !curSuccess && lastHighlight === time) {
                         updateHighlightState(0, null);
                     }
                 });
@@ -1034,6 +1040,7 @@ chrome.runtime.onMessage.addListener(function(request) {
 // we may have existing highlighting. clear so we're in sync with icon.
 // after injecting content.js, remove highlighting. (will ensure icon and page in sync)
 // there would be no consequence to doing this on all pages, so you don't really need to use that inject flag
-if ((typeof injected) !== 'undefined' && injected)
+// NOTE: you noticed the code executing multiple times on some tabs. that's because it executes for each frame
+if ((typeof injected) !== 'undefined' && injected && compatible)
     removeHighlight();
 
