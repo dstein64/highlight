@@ -948,55 +948,64 @@ var highlight = function(highlightState) {
     // Where the background page is Inactive (when using "persistent": false),
     // there is a slight delay for the following call
     // we're in a new state, but we don't know whether there is success yet
-    removeHighlight();
     if (highlightState === 0) {
         updateHighlightState(0, true);
+        UTILS.setTimeoutIgnore(function() {
+            removeHighlight();
+        }, 0);
     } else if (highlightState > 0) {
         updateHighlightState(highlightState, null);
-        var scoredCandsToHighlight = cth(highlightState);
-        trimSpaces(scoredCandsToHighlight);
-        
-        var highlightColor = new HighlightColor('yellow', 'black', 'red');
-        // have to loop backwards since splitting text nodes
-        for (var j = scoredCandsToHighlight.length-1; j >= 0; j--) {
-            var candidate = scoredCandsToHighlight[j].candidate;
-            candidate.highlight(CYCLE_COLORS ? getNextColor() : highlightColor);
+        // use a callback so icon updates right away
+        var fn = function() {
+            removeHighlight();
+            var scoredCandsToHighlight = cth(highlightState);
+            trimSpaces(scoredCandsToHighlight);
+            
+            var highlightColor = new HighlightColor('yellow', 'black', 'red');
+            // have to loop backwards since splitting text nodes
+            for (var j = scoredCandsToHighlight.length-1; j >= 0; j--) {
+                var candidate = scoredCandsToHighlight[j].candidate;
+                candidate.highlight(CYCLE_COLORS ? getNextColor() : highlightColor);
+            }
+            
+            // the following is hacky, but to handle the case where we don't have success
+            // use a slight delay in telling the eventPage, in case some other iframe has success
+            // so that icon doesn't flash from no success to success
+            // also, you probably don't *need* to set this up to avoid closure issues, but just in case...
+            var success = scoredCandsToHighlight.length > 0;
+            var notify = (function(state, _success) {
+                return function() {
+                    // if we have no highlighting, success is false.
+                    // also let background page know if we do have success on page
+                    // (as opposed to null for, I don't know, which we told it earlier)
+                    if (lastHighlight === time)
+                        updateHighlightState(highlightState, _success);
+                };
+            })(highlightState, success);
+            
+            var delayMs = 200; // milliseconds
+            var shouldDelay = !success && (isEmbed || hasEmbed());
+            if (shouldDelay) {
+                UTILS.setTimeoutIgnore(notify, delayMs);
+            } else {
+                notify();
+            }
+            
+            // if we don't have success, turn off icon in 2 seconds
+            var turnoffdelay = 2000;
+            if (!success) {
+                UTILS.setTimeoutIgnore(function() {
+                    getHighlightState(function(curHighlight, curSuccess) {
+                        if (curHighlight === 0 && !curSuccess && lastHighlight === time) {
+                            updateHighlightState(0, true);
+                        }
+                    });
+                }, turnoffdelay);
+            }
         }
-        
-        // the following is hacky, but to handle the case where we don't have success
-        // use a slight delay in telling the eventPage, in case some other iframe has success
-        // so that icon doesn't flash from no success to success
-        // also, you probably don't *need* to set this up to avoid closure issues, but just in case...
-        var success = scoredCandsToHighlight.length > 0;
-        var notify = (function(state, _success) {
-            return function() {
-                // if we have no highlighting, success is false.
-                // also let background page know if we do have success on page
-                // (as opposed to null for, I don't know, which we told it earlier)
-                if (lastHighlight === time)
-                    updateHighlightState(highlightState, _success);
-            };
-        })(highlightState, success);
-        
-        var delayMs = 200; // milliseconds
-        var shouldDelay = !success && (isEmbed || hasEmbed());
-        if (shouldDelay) {
-            UTILS.setTimeoutIgnore(notify, delayMs);
-        } else {
-            notify();
-        }
-        
-        // if we don't have success, turn off icon in 2 seconds
-        var turnoffdelay = 2000;
-        if (!success) {
-            UTILS.setTimeoutIgnore(function() {
-                getHighlightState(function(curHighlight, curSuccess) {
-                    if (curHighlight === 0 && !curSuccess && lastHighlight === time) {
-                        updateHighlightState(0, null);
-                    }
-                });
-            }, turnoffdelay);
-        }
+        UTILS.setTimeoutIgnore(function() {
+            fn();
+        }, 0);
     }
 };
 

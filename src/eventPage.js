@@ -24,7 +24,8 @@ var highlightStates = 4; // total number of states
 // updates highlight state in tabIdToHighlightState, and also used to
 // show the correct highlight icon
 var updateHighlightState = function(tabId, highlight, success) {
-    // default to null, which is used to represent 'unknown'
+    // null represents 'unknown'
+    // true should always clobber false (for iframes)
     success = (typeof success) === 'undefined' ? null : success;
     // never change state indicating successful highlighting
     // to unsuccessful highlighting. This is to accommodate that different
@@ -44,7 +45,9 @@ var updateHighlightState = function(tabId, highlight, success) {
             return;
         }
     }
-    if (!success)
+    
+    // have to check for false. for null we don't want to set to zero.
+    if (success === false)
         highlight = 0;
     
     tabIdToHighlightState.set(tabId, [highlight, success]);
