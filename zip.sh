@@ -8,6 +8,10 @@ ARGS+=("icons/")
 ARGS+=("src/")
 ARGS+=("manifest.json")
 
+# exclude
+ARGS+=("-x")
+ARGS+=("*.DS_Store")
+
 rm archive.zip
 zip -r archive.zip "${ARGS[@]}"
 
