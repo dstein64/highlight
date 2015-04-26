@@ -948,14 +948,15 @@ var highlight = function(highlightState) {
     // Where the background page is Inactive (when using "persistent": false),
     // there is a slight delay for the following call
     // we're in a new state, but we don't know whether there is success yet
+    
     if (highlightState === 0) {
-        updateHighlightState(0, null);
+        // no loading icon here
+        updateHighlightState(0, true);
         UTILS.setTimeoutIgnore(function() {
             removeHighlight();
-            updateHighlightState(0, true);
         }, 0);
     } else if (highlightState > 0) {
-        updateHighlightState(highlightState, null);
+        updateHighlightState(highlightState, null); // loading
         // use a callback so icon updates right away
         var fn = function() {
             removeHighlight();
