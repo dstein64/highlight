@@ -805,14 +805,22 @@ var cth = function(highlightState) {
     if (HIGHLIGHT_ALL)
         ratio = 1; // debugging
     
-    var howMany = Math.floor(ratio * scores.length);
-    // always highlight at least one
-    if (howMany < 1)
-        howMany = 1;
+    var totalChars = 0;
+    for (var i = 0; i < scores.length; i++) {
+        var scored = scores[i];
+        var candidate = scored.candidate;
+        totalChars += candidate.textLength;
+    }
     
-    for (var i = 0; i < Math.min(scores.length, howMany); i++) {
+    var limit = ratio * totalChars;
+    var highlightCharCounter = 0;
+    
+    for (var i = 0; i < scores.length; i++) {
         var scored = scores[i];
         _tohighlight.push(scored);
+        highlightCharCounter += scored.candidate.textLength;
+        if (highlightCharCounter > limit)
+            break;
     }
     
     // highlighting breaks if not in pre-order traversal order
