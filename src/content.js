@@ -215,6 +215,8 @@ var Sentence = function(nodes, s, e, hasEnd) {
     // TODO: could implement following as method instead of instance variable so results are calculated lazily (with possible caching)
     this.wordCount = countWords(this.text);
     
+    this.avgWordLength = this.textLength / this.wordCount;
+    
     var linkDensityNum = 0;
     var linkDensityDen = this.textLength;
     
@@ -699,8 +701,10 @@ var getCandidates = function() {
     var textblocks = getTextBlocks();
     
     var WORD_COUNT_THRESHOLD = 3; // min number of words to be a candidate
-    var CHAR_COUNT_THRESHOLD = 15; // min number of characters
+    var CHAR_COUNT_MIN_THRESHOLD = 15; // min number of characters
     var LINK_DENSITY_THRESHOLD = .75;
+    var CHAR_COUNT_MAX_THRESHOLD = 1000; // max number of words to be consdered a candidate
+    var AVG_WORD_LEN_THRESHOLD = 15;
     
     for (var h = 0; h < textblocks.length; h++) {
         var tb = textblocks[h];
@@ -717,7 +721,9 @@ var getCandidates = function() {
             // candidates are sentences extracted from readability or other sentences that have a sentence end
             // along with some other constraints
             var isCandidate = sentence.wordCount > WORD_COUNT_THRESHOLD
-                              && sentence.textLength > CHAR_COUNT_THRESHOLD
+                              && sentence.textLength > CHAR_COUNT_MIN_THRESHOLD
+                              && sentence.textLength < CHAR_COUNT_MAX_THRESHOLD
+                              && sentence.avgWordLength < AVG_WORD_LEN_THRESHOLD
                               && sentence.linkDensity < LINK_DENSITY_THRESHOLD
                               && (readability || sentence.hasEnd);
             
