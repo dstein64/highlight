@@ -36,7 +36,7 @@ var updateHighlightState = function(tabId, highlight, success) {
         var curState = tabIdToHighlightState.get(tabId);
         curHighlight = curState[0];
         curSuccess = curState[1];
-        if (!success
+        if (success === false
                 && curSuccess === true
                 // && highlight <= curHighlight //don't need this check since highlight() calls updateHighlightState(., null)
                 && curHighlight > 0) { // could just check (curSuccess), but since null has meaning too, this is clearer IMO
@@ -56,9 +56,12 @@ var updateHighlightState = function(tabId, highlight, success) {
     var iconName = highlight + 'highlight';
     if (success === false)
         iconName = 'Xhighlight';
+    else if (success === null)
+        iconName = 'loading';
     
     path19 = 'icons/' + iconName + '19x19.png';
     path38 = 'icons/' + iconName + '38x38.png';
+    
     chrome.pageAction.setIcon({path: {'19': path19, '38': path38}, tabId: tabId});
     chrome.pageAction.show(tabId);
 };

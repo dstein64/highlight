@@ -949,9 +949,10 @@ var highlight = function(highlightState) {
     // there is a slight delay for the following call
     // we're in a new state, but we don't know whether there is success yet
     if (highlightState === 0) {
-        updateHighlightState(0, true);
+        updateHighlightState(0, null);
         UTILS.setTimeoutIgnore(function() {
             removeHighlight();
+            updateHighlightState(0, true);
         }, 0);
     } else if (highlightState > 0) {
         updateHighlightState(highlightState, null);
