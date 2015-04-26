@@ -8,5 +8,6 @@ ARGS+=("icons/")
 ARGS+=("src/")
 ARGS+=("manifest.json")
 
+rm archive.zip
 zip -r archive.zip "${ARGS[@]}"
 
