@@ -56,8 +56,6 @@ var updateHighlightState = function(tabId, highlight, success) {
     var iconName = highlight + 'highlight';
     if (success === false)
         iconName = 'Xhighlight';
-    else if (success === null)
-        iconName = 'loading';
     
     path19 = 'icons/' + iconName + '19x19.png';
     path38 = 'icons/' + iconName + '38x38.png';
