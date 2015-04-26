@@ -32,10 +32,13 @@ var updateHighlightState = function(tabId, highlight, success) {
     var curHighlight = 0;
     var curSuccess = null;
     if (tabIdToHighlightState.has(tabId)) {
-        curState = tabIdToHighlightState.get(tabId);
+        var curState = tabIdToHighlightState.get(tabId);
         curHighlight = curState[0];
-        var curSuccess = curState[1];
-        if (!success && curSuccess === true && curHighlight > 0) { // could just check curSuccess, but since null has meaning too, this is clearer IMO
+        curSuccess = curState[1];
+        if (!success
+                && curSuccess === true
+                // && highlight <= curHighlight //don't need this check since highlight() calls updateHighlightState(., null)
+                && curHighlight > 0) { // could just check (curSuccess), but since null has meaning too, this is clearer IMO
             // if state has not changed, and we already have a successful icon,
             // keep it (to prevent iframe overriding)
             return;
@@ -82,6 +85,14 @@ chrome.pageAction.onClicked.addListener(function(tab) {
                              highlightState: (highlightState+1) % highlightStates });
 });
 
+// js is a boolean indicating whehter script is javascript. if false, assumed to be css
+var ContentScript = function(script, js, allFrames, runAt) {
+    this.script = script;
+    this.js = js;
+    this.allFrames = allFrames;
+    this.runAt = runAt;
+};
+
 // manually inject the content scripts
 // never do this more than once (per eventPage.js execution)
 //
@@ -97,14 +108,6 @@ var manualInject = function(force) {
     if (!force && (onStartup || mInjected))
         return false;
     mInjected = true;
-    
-    // js is a boolean indicating whehter script is javascript. if false, assumed to be css
-    var ContentScript = function(script, js, allFrames, runAt) {
-        this.script = script;
-        this.js = js;
-        this.allFrames = allFrames;
-        this.runAt = runAt;
-    }
     
     var contentScripts = [];
     var manifest = chrome.runtime.getManifest();

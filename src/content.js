@@ -952,6 +952,7 @@ var highlight = function(highlightState) {
     if (highlightState === 0) {
         updateHighlightState(0, true);
     } else if (highlightState > 0) {
+        updateHighlightState(highlightState, null);
         var scoredCandsToHighlight = cth(highlightState);
         trimSpaces(scoredCandsToHighlight);
         
