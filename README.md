@@ -1,6 +1,8 @@
 Highlight
 =========
 
+Keywords: tldr, tl;dr, article, summarizer, summarization, summary, highlight, highlighting, highlighter
+
 *Highlight* is a Google Chrome extension that automatically highlights
 the important content on article sites.
 
