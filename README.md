@@ -24,7 +24,7 @@ Acknowledgments
 *Highlight* contains code from:
 
 1. [readabilitySAX](https://github.com/fb55/readabilitySAX)
-  * Modifications (see [other/readabilitySAX.js.diff](other/readabilitySAX.js.diff))
+  * Modifications (see (other/readabilitySAX.js.diff))
     1. Add getNodes() for returning nodes
     2. Incorporate readabilitySAX/browsers/DOMasSAX.js
 2. [Porter-Stemmer](https://github.com/kristopolous/Porter-Stemmer)
