@@ -12,6 +12,10 @@ ARGS+=("manifest.json")
 ARGS+=("-x")
 ARGS+=("*.DS_Store")
 
-rm archive.zip
-zip -r archive.zip "${ARGS[@]}"
+archive="archive.zip"
 
+if [ -f "${archive}" ]; then
+	rm "${archive}"
+fi
+
+zip -r "${archive}" "${ARGS[@]}"
