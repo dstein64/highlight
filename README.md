@@ -10,3 +10,14 @@ https://chrome.google.com/webstore/detail/highlight/dnkdpcbijfnmekbkchfjapfneigj
 To use *Highlight*, install the extension, and click the highlighter
 icon in the location bar. Clicking multiple times changes the
 highlighting coverage.
+
+Acknowledgments
+---------------
+
+*Highlight* contains code from:
+
+1. [readabilitySAX](https://github.com/fb55/readabilitySAX)
+  * Modifications (see other/readabilitySAX.js.diff)
+    1. Add getNodes() for returning nodes
+    2. Incorporate readabilitySAX/browsers/DOMasSAX.js
+2. [Porter-Stemmer](https://github.com/kristopolous/Porter-Stemmer)
