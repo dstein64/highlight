@@ -11,6 +11,13 @@ To use *Highlight*, install the extension, and click the highlighter
 icon in the location bar. Clicking multiple times changes the
 highlighting coverage.
 
+License
+-------
+
+See [LICENSE](LICENSE).
+This license does not apply to the libraries. For the library licenses, see the corresponding files
+in [src/lib](src/lib).
+
 Acknowledgments
 ---------------
 

@@ -835,11 +835,12 @@ var cth = function(highlightState) {
     });
     
     // if we're highlighting sentences, make sure we got at least one sentence. Otherwise, we're probably on
-    // a navigational page
+    // a navigational page. You were looping over _tohighlight, but changed to looping over everything.
+    // since you may only have one _tohighlight candidate, which may not have a period.
     var haveOne = false;
-    for (var i = 0; i < _tohighlight.length; i++) {
-        var scoredCand = _tohighlight[i];
-        var cand = scoredCand.candidate;
+    for (var i = 0; i < scores.length; i++) {
+        var scored = scores[i];
+        var cand = scored.candidate;
         if (cand instanceof Sentence && cand.hasEnd) {
             haveOne = true;
             break;
