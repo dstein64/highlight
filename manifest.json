@@ -1,6 +1,6 @@
 {
   "name": "Highlight",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "description": "Highlight automatically highlights the important content on article sites.",
   "content_scripts": [ {
       "js": [ "src/ping.js" ],

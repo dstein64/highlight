@@ -81,6 +81,26 @@ var inlink = function(element, depth) {
     return false;
 };
 
+var descendantOfTag = function(element, tagName, depth) {
+    depth = typeof depth !== 'undefined' ? depth : -1; // -1 for infinite. not safe.
+    tagName = tagName.toUpperCase();
+    var cur = element;
+    var counter = 0;
+    while (cur) {
+        if (cur === null) { // at root
+            return false;
+        } else if (depth > -1 && counter > depth) {
+            return false;
+        } else if (cur.tagName == tagName) {
+            return cur;
+        } else {
+            cur = cur.parentNode;
+        }
+        counter++;
+    }
+    return false;
+};
+
 var wrapNode = function(outer, inner) {
     inner.parentElement.replaceChild(outer, inner);
     outer.appendChild(inner);
@@ -479,7 +499,7 @@ var isVisible = function(textNode, docWidth, docHeight) {
         var sy = window.scrollY;
         
         var top = rect.top + sy;
-        //var bottom = rect.bottom + sy;
+        var bottom = rect.bottom + sy;
         var left = rect.left + sx;
         var right = rect.right + sx;
         var height = rect.height;
@@ -487,7 +507,9 @@ var isVisible = function(textNode, docWidth, docHeight) {
         
         // don't count stuff that's below the page as being invisible. (bottom > docHeight)
         // in your experience, such content is not intended to be invisible.
-        var offPage = top < 0 || left < 0 || right > docWidth;
+        var offPage = bottom < 0
+                      || right < 0
+                      || left > docWidth;
         var zeroDim = width <= 0 || height <= 0;
         if (offPage || zeroDim)
             visible = false;
@@ -592,6 +614,48 @@ var getTextBlocks = function(parseSentences) {
     return blocks;
 };
 
+// this is probably built-in somewhere, but I'm not sure where
+var numberCompareFn = function(a, b) {
+    if (a === b)
+        return 0;
+    if (a < b)
+        return -1;
+    else
+        return 1;
+};
+
+// insertion position in sorted arr, using binary search
+var insertPos = function(n, arr, imin, compareFn) {
+    imin = typeof imin !== 'undefined' ? imin : 0;
+    var imax = arr.length - 1;
+    var counter = 0;
+    while (imax >= imin) {
+        var imid = Math.floor((imax+imin) / 2);
+        // shouldn't happen. protection.
+        if (imid < 0 || imid >= arr.length)
+            return -1;
+        var positionCompare = compareFn(arr[imid], n);
+        if (positionCompare === 0)
+            return imid;
+        if (positionCompare < 0) {
+            if (imid >= arr.length - 1 || compareFn(arr[imid+1], n) > 0)
+                return imid + 1;
+            imin = imid + 1;
+        } else {
+            if (imid <= 0 || compareFn(arr[imid-1], n) < 0)
+                return imid;
+            imax = imid - 1;
+        }
+        counter++;
+        // the following should never happen, but it's protection against an infinite loop,
+        // which would freeze the tab
+        if (counter > arr.length)
+            return -1;
+    }
+    // shouldn't happen. protection.
+    return -1;
+};
+
 // allow sentences across newlines (single <br>, per earlier in the pipeline those could be maintained in a TextBlock)?
 var CROSS_BR = false;
 
@@ -645,6 +709,27 @@ var getSentences = function(nodes) {
         var segs = NLP.sentenceSegments(text);
         var ends = segs.ends; // sentence end indices
         var hasEnd = segs.hasEnd; // flag for whether there was an actual end (block ends may not have sentence ends)
+        
+        // handling for <pre> until you figure out a better place
+        // TODO: this should be handled at a highher level. that is, <pre>'s are composed of their own special types of TextBlocks
+        // this doesn't handle syntax highlighted code well. that will need more complex handling.
+        var inPre = block.length > 0 && descendantOfTag(block[0], 'pre', 5);
+        var endsAlready = new Set(ends);
+        if (inPre) {
+            var re = /[\n\r]{2,}/g;
+            var lastNewPos = 0;
+            while ((match = re.exec(text)) != null) {
+                var idx = match.index;                
+                if (!endsAlready.has(idx)) {
+                    var newPos = insertPos(idx, ends, lastNewPos, numberCompareFn);
+                    lastNewPos = newPos;
+                    if (newPos >= 0) {
+                        ends.splice(newPos, 0, idx);
+                        hasEnd.splice(newPos, 0, false); 
+                    }
+                }
+            }
+        }
         
         var starts = [];
         if (ends.length > 0) {

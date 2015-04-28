@@ -246,7 +246,7 @@ var NLP = (function() {
     var quoteEnds = ['\u0022', '\u201D', ')']; // u+0022: neutral double quote, u+201D: closing curly quote
 
     // sentenceSegments returns an object with two arrays
-    // the first array has the indices of sentence ends
+    // the first array has the indices of sorted sentence ends (calling code depends on this being sorted)
     // the second array has flags for whether there was an actual end (end of text always considered an end, but it may not have sentence ends)
     me.sentenceSegments = function(text) {
         var ends = []; // sentence end indices
