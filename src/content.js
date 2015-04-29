@@ -822,8 +822,24 @@ var getCandidates = function() {
             
             if (isCandidate)
                 candidates.push(sentence);
-        }   
+        }
     }
+    
+    // Only return a unique set of candidates. Don't want to give extra
+    // weight to duplicates, and highlight the same content twice.
+    // duplicates can be part of boilerplate, or also e.g., extracted sentences
+    // that are featured in larger font size. Keep the first occurence.
+    var uniques = new Set();
+    var _candidates = [];
+    for (var i = 0; i < candidates.length; i++) {
+        var candidate = candidates[i];
+        var text = candidate.text;
+        if (!uniques.has(text))
+            _candidates.push(candidate);
+        uniques.add(text);
+    }
+    candidates = _candidates;
+    
     return candidates;
 };
 
