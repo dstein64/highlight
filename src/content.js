@@ -70,7 +70,7 @@ var inlink = function(element, depth) {
             return false;
         } else if (counter > depth) {
             return false;
-        } else if (cur.tagName == 'A' && cur.hasAttribute('href')) {
+        } else if (cur.tagName === 'A' && cur.hasAttribute('href')) {
             // not only does it have to be an anchor tag, but also has to have href
             return cur;
         } else {
@@ -91,7 +91,7 @@ var descendantOfTag = function(element, tagName, depth) {
             return false;
         } else if (depth > -1 && counter > depth) {
             return false;
-        } else if (cur.tagName == tagName) {
+        } else if (cur.tagName === tagName) {
             return cur;
         } else {
             cur = cur.parentNode;
@@ -357,7 +357,7 @@ var TextBlock = function(nodes, parseSentences, readability) {
             return '';
     }).join('').trim();
     this.textLength = this.text.length;
-    this.blank = this.textLength == 0 || /^\s+$/.test(this.text);
+    this.blank = this.textLength === 0 || /^\s+$/.test(this.text);
     this.sentences = [];
     if (parseSentences)
         this.sentences = getSentences(nodes);
@@ -910,10 +910,10 @@ var cth = function(highlightState) {
         return b.score - a.score;
     });
     
-    var ratio = .10; // default (highlightState == 1)
-    if (highlightState == 2)
+    var ratio = .10; // default (highlightState === 1)
+    if (highlightState === 2)
         ratio = .20;
-    if (highlightState == 3)
+    if (highlightState === 3)
         ratio = .40;
     
     if (HIGHLIGHT_ALL)
@@ -1027,7 +1027,7 @@ var trimSpaces = function(scoredCandsToHighlight) {
         var scoredCand = scoredCandsToHighlight[j];
         // could just check the first element earlier, but this is safer (in case multiple types to highlight)
         if (scoredCand.candidate instanceof Sentence) {
-            var toTrim = j == 0; // we definitely want to trim first sentence
+            var toTrim = j === 0; // we definitely want to trim first sentence
             if (j >= 1) {
                 var curIndex = scoredCand.index;
                 var prev = scoredCandsToHighlight[j-1];
@@ -1039,7 +1039,7 @@ var trimSpaces = function(scoredCandsToHighlight) {
                 // however, if we're at the start of a text block, even if the preceding candidate will be highlighted,
                 // we still want to trim (althugh this may not be necessary as the browser may ignore spaces in the beginning
                 // a text block, even if you wrap them in a span.
-                if (curIndex == prevIndex+1) {
+                if (curIndex === prevIndex+1) {
                     // could store whether sentence starts TextBlock, but let's just check with nearestLineBreakNode()
                     var candNodes = scoredCand.candidate.nodes;
                     var prevNodes = prev.candidate.nodes;

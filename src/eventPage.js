@@ -223,7 +223,7 @@ var manualInject = function(force) {
 // first, listen for events that you want to manually inject for
 chrome.runtime.onInstalled.addListener(function(details){
     var reason = details.reason;
-    var extensionLoaded = (reason === "install" || reason == "update");
+    var extensionLoaded = (reason === "install" || reason === "update");
     if (extensionLoaded) {
         manualInject();
     }
