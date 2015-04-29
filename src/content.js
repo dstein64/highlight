@@ -505,7 +505,7 @@ var isVisible = function(textNode, docWidth, docHeight) {
         var height = rect.height;
         var width = rect.width;
         
-        // don't count stuff that's below the page as being invisible. (bottom > docHeight)
+        // don't count stuff that's below the page as being invisible. (top > docHeight)
         // in your experience, such content is not intended to be invisible.
         var offPage = bottom < 0
                       || right < 0
@@ -615,6 +615,7 @@ var getTextBlocks = function(parseSentences) {
 };
 
 // this is probably built-in somewhere, but I'm not sure where
+// return a-b would also work (assuming just sign matters, not magnitude)
 var numberCompareFn = function(a, b) {
     if (a === b)
         return 0;
