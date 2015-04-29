@@ -782,6 +782,11 @@ var getSentences = function(nodes) {
  * Highlighting
  */
 
+var isCode = function(textblock) {
+    return textblock.nodes.length > 0
+        && descendantOfTag(textblock.nodes[0], 'code', 8);
+};
+
 var getCandidates = function() {
     var candidates = [];
     var textblocks = getTextBlocks();
@@ -811,6 +816,7 @@ var getCandidates = function() {
                               && sentence.textLength < CHAR_COUNT_MAX_THRESHOLD
                               && sentence.avgWordLength < AVG_WORD_LEN_THRESHOLD
                               && sentence.linkDensity < LINK_DENSITY_THRESHOLD
+                              && !isCode(tb)
                               && (readability || sentence.hasEnd);
             
             if (HIGHLIGHT_ALL)
