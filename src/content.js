@@ -719,7 +719,7 @@ var getSentences = function(nodes) {
         if (inPre) {
             var re = /[\n\r]{2,}/g;
             var lastNewPos = 0;
-            while ((match = re.exec(text)) != null) {
+            while ((match = re.exec(text)) !== null) {
                 var idx = match.index;                
                 if (!endsAlready.has(idx)) {
                     var newPos = insertPos(idx, ends, lastNewPos, numberCompareFn);
@@ -965,7 +965,7 @@ var updateHighlightState = function(highlightState, success) {
     chrome.runtime.sendMessage({'message': "updateHighlightState", 'highlight': highlightState, 'success': success});
 };
 
-var isEmbed = window != window.parent; // am I in an iframe?
+var isEmbed = window !== window.parent; // am I in an iframe?
 
 // unlike isEmbed, hasEmbed can change, so make it a function
 // even checking for iframe doesn't fix the problem since that can change too
