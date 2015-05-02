@@ -16,7 +16,7 @@ highlighting coverage.
 Screenshot
 ----------
 
-The following shows the highlighting on an article after clicking the
+The following image shows the highlighting on an article after clicking the
 *Highlight* icon once.
 
 ![Screenshot](screenshots/1.png?raw=true)
