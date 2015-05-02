@@ -13,6 +13,14 @@ To use *Highlight*, install the extension, and click the highlighter
 icon in the location bar. Clicking multiple times changes the
 highlighting coverage.
 
+Screenshot
+----------
+
+The following shows the highlighting on an article after clicking the
+*Highlight* icon once.
+
+[Screenshot](screenshots/1.png)
+
 License
 -------
 
