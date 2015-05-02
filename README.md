@@ -19,7 +19,7 @@ Screenshot
 The following shows the highlighting on an article after clicking the
 *Highlight* icon once.
 
-[Screenshot](screenshots/1.png?raw=true)
+![Screenshot](screenshots/1.png?raw=true)
 
 License
 -------
