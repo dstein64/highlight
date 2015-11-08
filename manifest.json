@@ -1,7 +1,7 @@
 {
   "name": "Auto Highlight",
   "version": "1.2.0",
-  "description": "Highlight automatically highlights the important content on article sites.",
+  "description": "*Auto Highlight* automatically highlights the important content on article pages.",
   "content_scripts": [ {
       "js": [ "src/ping.js" ],
       "matches": [ "<all_urls>" ],
