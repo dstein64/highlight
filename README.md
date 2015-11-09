@@ -1,15 +1,15 @@
-Highlight
-=========
+Auto Highlight
+==============
 
 Keywords: tldr, tl;dr, article, summarizer, summarization, summary, highlight, highlighting, highlighter
 
-*Highlight* is a Google Chrome extension that automatically highlights
+*Auto Highlight* is a Google Chrome extension that automatically highlights
 the important content on article sites.
 
 It is available from the Google Chrome Web Store:
 https://chrome.google.com/webstore/detail/highlight/dnkdpcbijfnmekbkchfjapfneigjomhh
 
-To use *Highlight*, install the extension, and click the highlighter
+To use *Auto Highlight*, install the extension, and click the highlighter
 icon in the location bar. Clicking multiple times changes the
 highlighting coverage.
 
@@ -17,7 +17,7 @@ Screenshot
 ----------
 
 The following image shows the highlighting on an article after clicking the
-*Highlight* icon once.
+*Auto Highlight* icon once.
 
 ![Screenshot](screenshots/1.png)
 
@@ -31,7 +31,7 @@ in [src/lib](src/lib).
 Acknowledgments
 ---------------
 
-*Highlight* contains code from:
+*Auto Highlight* contains code from:
 
 1. [readabilitySAX](https://github.com/fb55/readabilitySAX)
   * Modifications (see [other/readabilitySAX.js.diff](other/readabilitySAX.js.diff))
