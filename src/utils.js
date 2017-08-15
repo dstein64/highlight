@@ -11,8 +11,8 @@ var UTILS = (function() {
     };
     
     // safeSetInterval kill an interval timer if there is an error.
-    // this is useful for intervals that communicate with the background page,
-    // since we can lose communication if the extension reloads.
+    // this is useful for intervals that communicate with the background
+    // page, since we can lose communication if the extension reloads.
     // Syntax: safeSetInterval(function,milliseconds,param1,param2,...)
     me.safeSetInterval = function() {
         // arguments is not an Array. It's array-like. Let's create one

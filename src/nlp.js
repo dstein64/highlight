@@ -2,62 +2,90 @@ var NLP = (function() {
     var me = Object.create(null);
 
     // 127 stopwords are from nltk
-    var stopwordsl = ['a', 'about', 'above', 'after', 'again', 'against', 'all', 'am', 'an', 'and', 'any', 'are', 'as', 'at',
-                      'be', 'because', 'been', 'before', 'being', 'below', 'between', 'both', 'but', 'by',
+    var stopwordsl = ['a', 'about', 'above', 'after', 'again', 'against',
+                      'all', 'am', 'an', 'and', 'any', 'are', 'as', 'at',
+                      'be', 'because', 'been', 'before', 'being', 'below',
+                      'between', 'both', 'but', 'by',
                       'can',
                       'did', 'do', 'does', 'doing', 'don', 'down', 'during',
                       'each',
                       'few', 'for', 'from', 'further',
-                      'had', 'has', 'have', 'having', 'he', 'her', 'here', 'hers', 'herself', 'him', 'himself', 'his', 'how',
+                      'had', 'has', 'have', 'having', 'he', 'her', 'here',
+                      'hers', 'herself', 'him', 'himself', 'his', 'how',
                       'i', 'if', 'in', 'into', 'is', 'it', 'its', 'itself',
                       'just',
                       'me', 'more', 'most', 'my', 'myself',
                       'no', 'nor', 'not', 'now',
-                      'of', 'off', 'on', 'once', 'only', 'or', 'other', 'our', 'ours', 'ourselves', 'out', 'over', 'own',
+                      'of', 'off', 'on', 'once', 'only', 'or', 'other',
+                      'our', 'ours', 'ourselves', 'out', 'over', 'own',
                       's', 'same', 'she', 'should', 'so', 'some', 'such',
-                      't', 'than', 'that', 'the', 'their', 'theirs', 'them', 'themselves', 'then', 'there', 'these', 'they', 'this', 'those', 'through', 'to', 'too',
+                      't', 'than', 'that', 'the', 'their', 'theirs', 'them',
+                      'themselves', 'then', 'there', 'these', 'they', 'this',
+                      'those', 'through', 'to', 'too',
                       'under', 'until', 'up',
                       'very',
-                      'was', 'we', 'were', 'what', 'when', 'where', 'which', 'while', 'who', 'whom', 'why', 'will', 'with',
+                      'was', 'we', 'were', 'what', 'when', 'where', 'which',
+                      'while', 'who', 'whom', 'why', 'will', 'with',
                       'you', 'your', 'yours', 'yourself', 'yourselves'];
     
-    // more stopwords from Open Text Summarizer (these are common Engligh words).
+    // more stopwords from Open Text Summarizer
+    // (these are common Engligh words)
     stopwordsl = stopwordsl.concat([
-                                    'a', 'about', 'again', 'all', 'along', 'almost', 'also', 'always', 'am', 'among', 'an', 'and', 'another', 'any', 'anybody', 'anything', 'anywhere', 'apart', 'are', 'around', 'as', 'at',
-                                    'be', 'because', 'been', 'before', 'being', 'between', 'both', 'but', 'by',
-                                    'can', 'cannot', 'comes', 'could', 'couldn',
-                                    'did', 'didn', 'different', 'do', 'does', 'doesn', 'done', 'don', 'down', 'during', 'dr',
-                                    'each', 'either', 'enough', 'etc', 'even', 'every', 'everybody', 'everything', 'everywhere', 'except', 'exactly',
-                                    'few', 'final', 'first', 'for', 'from',
-                                    'get', 'go', 'goes', 'gone', 'good', 'got',
-                                    'had', 'has', 'have', 'having', 'he', 'hence', 'her', 'him', 'his', 'how', 'however',
-                                    'i', 'i.e', 'if', 'in', 'initial', 'into', 'is', 'isn', 'it', 'its', 'it', 'itself',
-                                    'just',
-                                    'last', 'least', 'less', 'let', 'lets', 'let\'s', 'like', 'lot',
-                                    'made', 'make', 'many', 'may', 'maybe', 'me', 'might', 'mine', 'more', 'most', 'Mr', 'much', 'must', 'my',
-                                    'near', 'need', 'next', 'niether', 'no', 'nobody', 'nor', 'not', 'nothing', 'now', 'nowhere',
-                                    'of', 'off', 'often', 'oh', 'ok', 'okay', 'on', 'once', 'one', 'only', 'onto', 'or', 'other', 'our', 'ours', 'out', 'over', 'own',
-                                    'perhaps', 'please', 'previous',
-                                    'quite',
-                                    'rather', 're', 'really',
-                                    's', 'said', 'same', 'say', 'see', 'seems', 'several', 'shall', 'she', 'should', 'shouldn\'t', 'since', 'so', 'some', 'somebody', 'something', 'somewhere', 'still', 'stuff', 'such',
-                                    'than', 't', 'that', 'the', 'their', 'theirs', 'them', 'then', 'there', 'these', 'they', 'thing', 'things', 'this', 'those', 'through', 'thus', 'to', 'too', 'top', 'two',
-                                    'under', 'unless', 'until', 'up', 'upon', 'us', 'use',
-                                    'v', 've', 'very',
-                                    'want', 'was', 'we', 'well', 'went', 'were', 'what', 'when', 'where', 'which', 'while', 'who', 'whom', 'why', 'will', 'with', 'without', 'won', 'would',
-                                    'x',
-                                    'yes', 'yet', 'you', 'you', 'your', 'yours'
+      'a', 'about', 'again', 'all', 'along', 'almost', 'also', 'always',
+      'am', 'among', 'an', 'and', 'another', 'any', 'anybody', 'anything',
+      'anywhere', 'apart', 'are', 'around', 'as', 'at',
+      'be', 'because', 'been', 'before', 'being', 'between', 'both', 'but', 'by',
+      'can', 'cannot', 'comes', 'could', 'couldn',
+      'did', 'didn', 'different', 'do', 'does', 'doesn', 'done', 'don',
+      'down', 'during', 'dr',
+      'each', 'either', 'enough', 'etc', 'even', 'every', 'everybody',
+      'everything', 'everywhere', 'except', 'exactly',
+      'few', 'final', 'first', 'for', 'from',
+      'get', 'go', 'goes', 'gone', 'good', 'got',
+      'had', 'has', 'have', 'having', 'he', 'hence', 'her', 'him', 'his',
+      'how', 'however',
+      'i', 'i.e', 'if', 'in', 'initial', 'into', 'is', 'isn', 'it', 'its',
+      'it', 'itself',
+      'just',
+      'last', 'least', 'less', 'let', 'lets', 'let\'s', 'like', 'lot',
+      'made', 'make', 'many', 'may', 'maybe', 'me', 'might', 'mine', 'more',
+      'most', 'Mr', 'much', 'must', 'my',
+      'near', 'need', 'next', 'niether', 'no', 'nobody', 'nor', 'not',
+      'nothing', 'now', 'nowhere',
+      'of', 'off', 'often', 'oh', 'ok', 'okay', 'on', 'once', 'one', 'only',
+      'onto', 'or', 'other', 'our', 'ours', 'out', 'over', 'own',
+      'perhaps', 'please', 'previous',
+      'quite',
+      'rather', 're', 'really',
+      's', 'said', 'same', 'say', 'see', 'seems', 'several', 'shall', 'she',
+      'should', 'shouldn\'t', 'since', 'so', 'some', 'somebody', 'something',
+      'somewhere', 'still', 'stuff', 'such',
+      'than', 't', 'that', 'the', 'their', 'theirs', 'them', 'then', 'there',
+      'these', 'they', 'thing', 'things', 'this', 'those', 'through', 'thus',
+      'to', 'too', 'top', 'two',
+      'under', 'unless', 'until', 'up', 'upon', 'us', 'use',
+      'v', 've', 'very',
+      'want', 'was', 'we', 'well', 'went', 'were', 'what', 'when', 'where',
+      'which', 'while', 'who', 'whom', 'why', 'will', 'with', 'without',
+      'won', 'would',
+      'x',
+      'yes', 'yet', 'you', 'you', 'your', 'yours'
                              ]);
     
-    // sets added in Chrome 38: http://blog.chromium.org/2014/08/chrome-38-beta-new-primitives-for-next.html
+    // sets added in Chrome 38
+    // http://blog.chromium.org/2014/08/
+    //        chrome-38-beta-new-primitives-for-next.html
     var stopwords = new Set(stopwordsl);
 
     // a hacky tokenizer
     me.tokenize = function(text) {
         // remove "." so that for example, acronyms using "." aren't split
-        // shouldn't be problematic at the end of sentences, since new sentences start with at least one space
+        // shouldn't be problematic at the end of sentences, since new
+        // sentences start with at least one space
         text = text.replace(/\./g, '');
-        // remove non alphanumeric TODO: don't remove chars with accents/diacritics. one way would replace with ascii char without the accent
+        // remove non alphanumeric TODO: don't remove chars with
+        // accents/diacritics. one way would replace with ascii char
+        // without the accent
         text = text.replace(/\W+/g, ' ');
         // consolidate contiguous whitespace
         text = text.replace(/\s+/g, ' ');
@@ -147,12 +175,15 @@ var NLP = (function() {
 
     var MAX_TOKEN_LEN = 20;
 
-    // given a list of tokens, convert to a standard form, where certain tokens are removed,
+    // given a list of tokens, convert to a standard form, where certain
+    // tokens are removed,
     // some are replaced with synonyms, and retained tokens are stemmed
     me.normalize = function(tokens) {
         tokens = tokens.map(function(w){return w.toLowerCase();});
-        // require at least one alphabetic char (e.g., 10,000 will be removed)
-        tokens = tokens.filter(function(w){return w.search(/[a-zA-Z]/) > -1;});
+        // require at least one alphabetic char
+        // (e.g., 10,000 will be removed)
+        tokens = tokens.filter(function(w){
+          return w.search(/[a-zA-Z]/) > -1;});
         // remove stop words
         tokens = tokens.filter(function(w){return !stopwords.has(w);});
         // remove single character tokens
@@ -162,14 +193,18 @@ var NLP = (function() {
         tokens = tokens.map(function(w){return synonym(w);});
         // stem (PorterStemmer1980.js)
         tokens = tokens.map(function(w){return stemmer(w, false);});
-        // filter again for at least one alphabetic char (since after stemming we may now have no alphabetic char)
-        tokens = tokens.filter(function(w){return w.search(/[a-zA-Z]/) > -1;});
+        // filter again for at least one alphabetic char
+        // (since after stemming we may now have no alphabetic char)
+        tokens = tokens.filter(function(w){
+          return w.search(/[a-zA-Z]/) > -1;});
         // truncate stems longer than MAX_TOKEN_LEN chars
-        tokens = tokens.map(function(w){return w.substring(0,Math.min(w.length, MAX_TOKEN_LEN));});
+        tokens = tokens.map(function(w){
+          return w.substring(0,Math.min(w.length, MAX_TOKEN_LEN));});
         return tokens;
     };
 
-    // tokenormalize returns a map of normalized tokens as keys, and counts as values
+    // tokenormalize returns a map of normalized tokens as keys, and
+    // counts as values
     me.tokenormalize = function(text) {
         var tokens = me.tokenize(text);
         var stems = me.normalize(tokens);
@@ -188,27 +223,28 @@ var NLP = (function() {
     
     /* Sentence Boundary Detection */
     
-    //abbreviations from https://github.com/Tessmore/sbd/blob/master/lib/Match.js
+    // abbreviations from:
+    // https://github.com/Tessmore/sbd/blob/master/lib/Match.js
     var abbreviationsl = [
-                         "ie", "eg", "ext", // + number?
-                         "Fig", "fig", "Figs", "figs", "et al", "Co", "Corp",
-                         "Ave", "Inc", "Ex", "Viz", "vs", "Vs", "repr", "Rep",
-                         "Dem", "trans", "Vol", "pp", "rev", "est", "Ref", "Refs",
-                         "Eq", "Eqs", "Ch", "Sec", "Secs", "mi", "Dept",
-
-                         "Univ", "Nos", "No", "Mol", "Cell",
-
-                         "Miss", "Mrs", "Mr", "Ms",
-                         "Prof", "Dr",
-                         "Sgt", "Col", "Gen", "Rep", "Sen",'Gov', "Lt", "Maj", "Capt","St",
-
-                         "Sr", "Jr", "jr", "Rev",
-                         "PhD", "MD", "BA", "MA", "MM",
-                         "BSc", "MSc",
-
-                         "Jan","Feb","Mar","Apr","Jun","Jul","Aug","Sep","Sept","Oct","Nov","Dec",
-                         "Sun","Mon","Tu","Tue","Tues","Wed","Th","Thu","Thur","Thurs","Fri","Sat"
-                     ];
+     "ie", "eg", "ext", // + number?
+     "Fig", "fig", "Figs", "figs", "et al", "Co", "Corp",
+     "Ave", "Inc", "Ex", "Viz", "vs", "Vs", "repr", "Rep",
+     "Dem", "trans", "Vol", "pp", "rev", "est", "Ref", "Refs",
+     "Eq", "Eqs", "Ch", "Sec", "Secs", "mi", "Dept",
+    
+     "Univ", "Nos", "No", "Mol", "Cell",
+    
+     "Miss", "Mrs", "Mr", "Ms",
+     "Prof", "Dr",
+     "Sgt", "Col", "Gen", "Rep", "Sen",'Gov', "Lt", "Maj", "Capt","St",
+    
+     "Sr", "Jr", "jr", "Rev",
+     "PhD", "MD", "BA", "MA", "MM",
+     "BSc", "MSc",
+    
+     "Jan","Feb","Mar","Apr","Jun","Jul","Aug","Sep","Sept","Oct","Nov","Dec",
+     "Sun","Mon","Tu","Tue","Tues","Wed","Th","Thu","Thur","Thurs","Fri","Sat"
+    ];
 
     // add more
     abbreviationsl = abbreviationsl.concat([
@@ -232,8 +268,11 @@ var NLP = (function() {
 
     abbreviationsl.push('etc');
 
-    // sometimes states are all caps (TODO: better generic handling for caps)
-    abbreviationsl = abbreviationsl.concat(["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "SEPT", "OCT", "NOV", "DEC"]);
+    // sometimes states are all caps
+    // (TODO: better generic handling for caps)
+    abbreviationsl = abbreviationsl.concat(
+        ["JAN", "FEB", "MAR", "APR", "MAY", "JUN",
+         "JUL", "AUG", "SEP", "SEPT", "OCT", "NOV", "DEC"]);
 
     var abbreviations = new Set(abbreviationsl);
     var maxabbrlen = -1;
@@ -243,14 +282,19 @@ var NLP = (function() {
     }
 
     var sentenceEnds = ['.', '?', '!'];
-    var quoteEnds = ['\u0022', '\u201D', ')']; // u+0022: neutral double quote, u+201D: closing curly quote
+    // u+0022: neutral double quote, u+201D: closing curly quote
+    var quoteEnds = ['\u0022', '\u201D', ')'];
 
     // sentenceSegments returns an object with two arrays
-    // the first array has the indices of sorted sentence ends (calling code depends on this being sorted)
-    // the second array has flags for whether there was an actual end (end of text always considered an end, but it may not have sentence ends)
+    // the first array has the indices of sorted sentence ends
+    // (calling code depends on this being sorted)
+    // the second array has flags for whether there was an actual end
+    // (end of text always considered an end, but it may not have sentence ends)
     me.sentenceSegments = function(text) {
         var ends = []; // sentence end indices
-        var hasEnd = []; // flag for whether there was an actual end (block ends may not have sentence ends)
+        // flag for whether there was an actual end
+        // (block ends may not have sentence ends)
+        var hasEnd = [];
         for (var j = 0; j < text.length; j++) {
             var c = text.charAt(j);
             var isEnd = false; // is end of sentence
@@ -258,23 +302,27 @@ var NLP = (function() {
             if (sentenceEnds.indexOf(c) > -1) {
                 isEnd = true;
                 if (j >= text.length-1) {
-                    // end character at the end of string always considered an end
+                    // end character at the end of string always considered
+                    // an end
                     isEnd = true;
                 } else if (j > 0) {
-                    // some of these special cases are more relevant for '.', not others like '?'
+                    // some of these special cases are more relevant for
+                    // '.', not others like '?'
                     
                     // check to see if end char is used to end an abbreviation
                     for (var k = 1; k <= Math.min(j, maxabbrlen); k++) {
                         var sub = text.substring(j-k, j);
-                        if (abbreviations.has(sub) && (j-k-1 < 0 || /\s/.test(text.charAt(j-k-1)))) {
+                        if (abbreviations.has(sub)
+                            && (j-k-1 < 0 || /\s/.test(text.charAt(j-k-1)))) {
                             isEnd = false;
                             break;
                         }
                     }
                     
-                    // if end char preceded by another end prior to non-alphanumeric,
-                    // we have an acronym. (you were originally using \s instead of \W, but then '.).'
-                    // was considered an acronym
+                    // if end char preceded by another end prior to
+                    // non-alphanumeric, we have an acronym.
+                    // (you were originally using \s instead of \W, but
+                    // then '.).' was considered an acronym)
                     for (var k = 1; k <= j; k++) {
                         var _c = text.charAt(j-k);
                         if (sentenceEnds.indexOf(_c) > -1) {
@@ -285,13 +333,20 @@ var NLP = (function() {
                         }
                     }
                     
-                    // if end char preceded by a single capital letter, we have an initial (e.g., middle initial)
-                    // only check mid sentence (that is, don't worry about this at the beginning of a sentence)
-                    if (j > 1 && /[A-Z]/.test(text.charAt(j-1)) && /\s/.test(text.charAt(j-2)))
+                    // if end char preceded by a single capital letter,
+                    // we have an initial (e.g., middle initial)
+                    // only check mid sentence (that is, don't worry about
+                    // this at the beginning of a sentence)
+                    if (j > 1
+                        && /[A-Z]/.test(text.charAt(j-1))
+                        && /\s/.test(text.charAt(j-2)))
                         isEnd = false;
                     
-                    // if we haven't had any white space yet, let's not consider this the end of a sentence
-                    // TODO: a more efficient implementation would keep track of white space chars elsewhere, rather than traversing back.
+                    // if we haven't had any white space yet, let's not
+                    // consider this the end of a sentence
+                    // TODO: a more efficient implementation would keep
+                    // track of white space chars elsewhere, rather than
+                    // traversing back.
                     var hadWhitespace = false;
                     for (var k = 1; k <= j; k++) {
                         var _c = text.charAt(j-k);
@@ -306,18 +361,23 @@ var NLP = (function() {
                     // if end char followed by non-whitespace, not an end
                     if (j+1 < text.length && /\S/.test(text.charAt(j+1)))
                         isEnd = false;
-                    // TODO: if letter before end is capital, might not be considered
-                    //       end (since these are usually acronyms (if so, should also check for
-                    //       the presence of a lower-case letter to make sure that not everything
-                    //       is upper case.
-                    // TODO: So some tests above may set isEnd to false. Like T.I.A.A in the example above. But it's
-                    //       possible for T.I.A.A. to be at sentence end. So a final test is to check for the end
-                    //       char is followed by a space, and then if there is a capital letter (with non capitals elsewhere),
+                    // TODO: if letter before end is capital, might not
+                    //       be considered end (since these are usually
+                    //       acronyms (if so, should also check for the
+                    //       presence of a lower-case letter to make sure
+                    //       that not everything is upper case.
+                    // TODO: So some tests above may set isEnd to false.
+                    //       Like T.I.A.A in the example above. But it's
+                    //       possible for T.I.A.A. to be at sentence end.
+                    //       So a final test is to check for the end char
+                    //       is followed by a space, and then if there is
+                    //       a capital letter (with non capitals elsewhere),
                     //       it is likely a sentence end.
                 }
             } else if (quoteEnds.indexOf(c) > -1) {
-                // if we're at an end quote, and the preceding char is a '.' (not ! or ?), we have an end
-                // also make sure that if we have a char after, it's whitespace
+                // if we're at an end quote, and the preceding char is a
+                // '.' (not ! or ?), we have an end also make sure that
+                // if we have a char after, it's whitespace
                 if (j > 0 && text.charAt(j-1) === '.'
                           && (j+1 >= text.length || /\s/.test(text.charAt(j+1))))
                     isEnd = true;

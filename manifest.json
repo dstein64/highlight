@@ -1,6 +1,6 @@
 {
   "name": "Auto Highlight",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "*Auto Highlight* automatically highlights the important content on article pages.",
   "content_scripts": [ {
       "js": [ "src/ping.js" ],
