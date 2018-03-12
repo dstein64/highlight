@@ -1,10 +1,24 @@
+/***********************************
+ * Options and Shared Globals
+ ***********************************/
+
 // Debugging Options
 var HIGHLIGHT_ALL = false;
 var CYCLE_COLORS = false;
 // only highlight readability-extracted text.
 // this has higher precedence than HIGHLIGHT_ALL, which can still
-//be used to highlight all readability-extracted text
+// be used to highlight all readability-extracted text
 var READABILITY_ONLY = false;
+
+var OPTIONS = null;
+chrome.runtime.sendMessage({message: "getOptions"}, function(response) {
+    OPTIONS = response;
+});
+
+var COLOR_MAP = null;
+chrome.runtime.sendMessage({message: "getSharedGlobals"}, function(response) {
+  COLOR_MAP = response['COLOR_MAP'];
+});
 
 /***********************************
  * Node Highlighting Functionality
@@ -1118,14 +1132,23 @@ var getHighlightState = function(callback) {
     });
 };
 
-//useful for debugging sentence boundary detection
-var _cycleColors = ["yellow", "skyblue", "sandybrown", "palegreen", "lightpink"];
+// useful for debugging sentence boundary detection
+// cycles in initialized on the first call to getNextColor.
+// It's not initialized sooner since COLOR_MAP may not be set yet.
 var cycles = [];
-for (var i = 0; i < _cycleColors.length; i++) {
-    cycles.push(new HighlightColor(_cycleColors[i], 'black', 'red'));
-}
 var cycleCurColor = 0;
 var getNextColor = function() {
+    if (cycles.length === 0) {
+        Object.keys(COLOR_MAP).forEach(function(key) {
+            color_properties = COLOR_MAP[key];
+            var color = color_properties[1];
+            var textcolor = color_properties[2];
+            var linkcolor = color_properties[3];
+            var highlightColor = new HighlightColor(
+                color, textcolor, linkcolor);
+            cycles.push(highlightColor);
+        });
+    }
     color = cycles[cycleCurColor];
     cycleCurColor = (cycleCurColor+1) % cycles.length;
     return color;
@@ -1207,9 +1230,13 @@ var highlight = function(highlightState) {
             var scoredCandsToHighlight = cth(highlightState);
             trimSpaces(scoredCandsToHighlight);
             
-            var highlightColor = new HighlightColor('yellow',
-                                                    'black',
-                                                    'red');
+            var color_id = OPTIONS.color;
+            var color_properties = COLOR_MAP[color_id];
+            var color = color_properties[1];
+            var textcolor = color_properties[2];
+            var linkcolor = color_properties[3];
+            var highlightColor = new HighlightColor(
+                color, textcolor, linkcolor);
             // have to loop backwards since splitting text nodes
             for (var j = scoredCandsToHighlight.length-1; j >= 0; j--) {
                 var candidate = scoredCandsToHighlight[j].candidate;
@@ -1272,6 +1299,8 @@ chrome.runtime.onMessage.addListener(function(request) {
             var highlightState = request.highlightState;
             highlight(highlightState);
         }
+    } else if (method === "updateOptions") {
+        OPTIONS = request.data;
     }
 });
 

@@ -1,0 +1,64 @@
+<html>
+<head>
+<title>*Auto Highlight* Chrome Extension Options</title>
+<style>
+#container {
+    width: 500px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+body {
+    margin-top: 20px;
+}
+
+a.tooltip {
+    outline: none;
+    border-bottom: 1px dotted;
+}
+a.tooltip:hover { text-decoration: none; } 
+a.tooltip span {
+    z-index: 10;
+    display: none;
+    padding: 14px 20px;
+    margin-top: -30px;
+    margin-left: 14px;
+    width: auto;
+    max-width: 300px;
+    line-height: 16px;
+}
+a.tooltip:hover span {
+    display: inline;
+    position: absolute;
+    color: #111;
+    border: 1px solid #DCA;
+    background:#fffAF0;
+}
+a.tooltip span {
+    border-radius:4px;
+    box-shadow: 5px 5px 8px #CCC;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="container">
+<h3><em>Auto Highlight</em> v<span id="version"></span></h3>
+<h2>Options</h2>
+<label>Highlight Color</label>
+<select id="color-dropdown">
+</select>
+<br><br>
+<button id="defaults">Defaults</button>
+<button id="revert">Revert</button>
+<br><br>
+<span style="margin-left: 7px;" id="status"></span>
+</div>
+</body>
+
+<script src="options.js"></script>
+
+</html>

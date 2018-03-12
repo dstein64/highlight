@@ -1,3 +1,60 @@
+// *****************************
+// * Utilities and Options
+// *****************************
+
+var getVersion = function() {
+    var version = chrome.runtime.getManifest().version;
+    return version;
+};
+
+var getOptions = function() {
+  var opts = localStorage["options"];
+  if (opts) {
+      opts = JSON.parse(opts);
+  }
+  return opts;
+};
+
+// Maps color ID to a list of properties
+// (name, background/highlight color, text color, link color)
+var COLOR_MAP = {
+  'yellow': ['Yellow', 'yellow',     'black', 'red'],
+  'blue':   ['Blue',   'skyblue',    'black', 'red'],
+  'orange': ['Orange', 'sandybrown', 'black', 'red'],
+  'green':  ['Green',  'palegreen',  'black', 'red'],
+  'pink':   ['Pink',   'lightpink',  'black', 'red']
+};
+
+var defaultOptions = function() {
+  var options = Object.create(null);
+  options['color'] = 'yellow';
+  return options;
+};
+
+// Set missing options using defaults
+(function() {
+  var opts = getOptions();
+  if (!opts) {
+      opts = Object.create(null);
+  }
+  
+  var defaults = defaultOptions();
+  
+  var keys = Object.keys(defaults);
+  for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (!(key in opts)) {
+          opts[key] = defaults[key];
+      }
+  }
+  
+  localStorage["options"] = JSON.stringify(opts);
+})();
+
+// *****************************
+// * Core
+// *****************************
+
 // list of content scripts we've heard from
 // this gets sent earlier than tabIdToHighlightState
 // reflects. (removal code is below)
@@ -82,8 +139,15 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
         var highlightState = tabIdToHighlightState.get(tabId);
         response({'curHighlight': highlightState[0],
                   'curSuccess': highlightState[1]});
+    } else if (message === 'getOptions') {
+        response(getOptions());
     } else if (message === 'ping') {
         ping.add(tabId);
+    } else if (message === 'getSharedGlobals') {
+        sharedGlobals = {
+            'COLOR_MAP': COLOR_MAP
+        };
+        response(sharedGlobals);
     }
     // NOTE: if you're going to call response asynchronously,
     //       be sure to return true from this function.
