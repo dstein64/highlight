@@ -17,7 +17,7 @@ chrome.runtime.sendMessage({message: "getOptions"}, function(response) {
 
 var COLOR_MAP = null;
 chrome.runtime.sendMessage({message: "getSharedGlobals"}, function(response) {
-  COLOR_MAP = response['COLOR_MAP'];
+    COLOR_MAP = response['COLOR_MAP'];
 });
 
 /***********************************

@@ -77,7 +77,7 @@ document.getElementById('defaults').addEventListener('click', function() {
 
 // save options on any user input
 (function() {
-  colorDropdown.addEventListener('change', saveOptions);
+    colorDropdown.addEventListener('change', saveOptions);
 })();
 
 document.getElementById('revert').addEventListener('click', function() {

@@ -8,47 +8,47 @@ var getVersion = function() {
 };
 
 var getOptions = function() {
-  var opts = localStorage["options"];
-  if (opts) {
-      opts = JSON.parse(opts);
-  }
-  return opts;
+    var opts = localStorage["options"];
+    if (opts) {
+        opts = JSON.parse(opts);
+    }
+    return opts;
 };
 
 // Maps color ID to a list of properties
 // (name, background/highlight color, text color, link color)
 var COLOR_MAP = {
-  'yellow': ['Yellow', 'yellow',     'black', 'red'],
-  'blue':   ['Blue',   'skyblue',    'black', 'red'],
-  'orange': ['Orange', 'sandybrown', 'black', 'red'],
-  'green':  ['Green',  'palegreen',  'black', 'red'],
-  'pink':   ['Pink',   'lightpink',  'black', 'red']
+    'yellow': ['Yellow', 'yellow',     'black', 'red'],
+    'blue':   ['Blue',   'skyblue',    'black', 'red'],
+    'orange': ['Orange', 'sandybrown', 'black', 'red'],
+    'green':  ['Green',  'palegreen',  'black', 'red'],
+    'pink':   ['Pink',   'lightpink',  'black', 'red']
 };
 
 var defaultOptions = function() {
-  var options = Object.create(null);
-  options['color'] = 'yellow';
-  return options;
+    var options = Object.create(null);
+    options['color'] = 'yellow';
+    return options;
 };
 
 // Set missing options using defaults
 (function() {
-  var opts = getOptions();
-  if (!opts) {
-      opts = Object.create(null);
-  }
+    var opts = getOptions();
+    if (!opts) {
+        opts = Object.create(null);
+    }
+    
+    var defaults = defaultOptions();
+    
+    var keys = Object.keys(defaults);
+    for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        if (!(key in opts)) {
+            opts[key] = defaults[key];
+        }
+    }
   
-  var defaults = defaultOptions();
-  
-  var keys = Object.keys(defaults);
-  for (var i = 0; i < keys.length; i++) {
-      var key = keys[i];
-      if (!(key in opts)) {
-          opts[key] = defaults[key];
-      }
-  }
-  
-  localStorage["options"] = JSON.stringify(opts);
+    ocalStorage["options"] = JSON.stringify(opts);
 })();
 
 // *****************************
