@@ -2,6 +2,9 @@
 // * Utilities and Options
 // *****************************
 
+// TODO: can some of this utility functionality, particularly
+//       the code/data shared with content.js, be moved to utils.js?
+
 var getVersion = function() {
     var version = chrome.runtime.getManifest().version;
     return version;
@@ -48,7 +51,7 @@ var defaultOptions = function() {
         }
     }
   
-    ocalStorage["options"] = JSON.stringify(opts);
+    localStorage["options"] = JSON.stringify(opts);
 })();
 
 // *****************************
