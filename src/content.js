@@ -1,3 +1,5 @@
+// TODO: Use consistent variable naming (camel case or underscores, not both)
+
 /***********************************
  * Options and Shared Globals
  ***********************************/
@@ -130,13 +132,13 @@ var wrapNode = function(outer, inner) {
     outer.appendChild(inner);
 };
 
-var HighlightColor = function(color, textcolor, linkcolor) {
-    this.color = color;
-    this.textcolor = textcolor;
-    this.linkcolor = linkcolor;
+var ColorSpec = function(highlightColor, textColor, linkColor) {
+    this.highlightColor = highlightColor;
+    this.textColor = textColor;
+    this.linkColor = linkColor;
 };
 
-var highlightTextNode = function(textNode, highlightColor) {
+var highlightTextNode = function(textNode, colorSpec) {
     // style.css has generic style already applied. Here, we add specific
     // stuff that may vary
     
@@ -156,17 +158,17 @@ var highlightTextNode = function(textNode, highlightColor) {
     _span.classList.add(outerClassName);
     // this is already set by createTextNodeWrapper
     setPropertyImp(_span, 'position', 'static');
-    setPropertyImp(_span, 'background-color', highlightColor.color);
+    setPropertyImp(_span, 'background-color', colorSpec.highlightColor);
     wrapNode(_span, textNode);
     
     var span = createTextNodeWrapper();
     span.classList.add(innerClassName);
     
     setPropertyImp(span, 'text-shadow', 'none');
-    setPropertyImp(span, 'color', highlightColor.textcolor);
+    setPropertyImp(span, 'color', colorSpec.textColor);
     
     if (_inlink) {
-        setPropertyImp(span, 'color', highlightColor.linkcolor);
+        setPropertyImp(span, 'color', colorSpec.linkColor);
         // you tried removing underline if it existed, but you can't
         // modify text-decoration for parent. So rather, add an underline,
         // so that it gets the right color (as opposed to pre-highlighted
@@ -353,32 +355,32 @@ var splitAndWrapText = function(textNode, offset) {
     return _t;
 };
 
-Sentence.prototype.highlight = function(highlightColor) {
+Sentence.prototype.highlight = function(colorSpec) {
     if (this.nodeCount === 1) {
         var t = this.nodes[0];
         if (t.textContent.length > this.e+1)
             splitAndWrapText(t, this.e+1);
         if (this.s > 0 && t.textContent.length > this.s)
             t = splitAndWrapText(t, this.s);
-        highlightTextNode(t, highlightColor);
+        highlightTextNode(t, colorSpec);
     } else if (this.nodeCount >= 2) {
         // last node
         var t = this.nodes[this.nodeCount-1];
         if (t.textContent.length > this.e+1)
             splitAndWrapText(t, this.e+1);
-        highlightTextNode(t, highlightColor);
+        highlightTextNode(t, colorSpec);
         
         // middle nodes
         var middle = this.nodes.slice(1,this.nodeCount-1);
         for (var i = 0; i < middle.length; i++) {
-            highlightTextNode(middle[i], highlightColor);
+            highlightTextNode(middle[i], colorSpec);
         }
         
         //first node
         t = this.nodes[0];
         if (this.s > 0 && t.textContent.length > this.s)
             t = splitAndWrapText(t, this.s);
-        highlightTextNode(t, highlightColor);
+        highlightTextNode(t, colorSpec);
     }
 };
 
@@ -430,7 +432,7 @@ TextBlock.prototype.toString = function() {
     return this.text;
 };
 
-TextBlock.prototype.highlight = function(highlightColor) {
+TextBlock.prototype.highlight = function(colorSpec) {
     for (var i = 0; i < this.nodes.length; i++) {
         var n = this.nodes[i];
         // we may possibly have non-text nodes, like <br>. Only apply
@@ -439,7 +441,7 @@ TextBlock.prototype.highlight = function(highlightColor) {
         if (nodeType !== Node.TEXT_NODE)
             continue;
         
-        highlightTextNode(n, highlightColor);
+        highlightTextNode(n, colorSpec);
     }
 };
 
@@ -1141,12 +1143,11 @@ var getNextColor = function() {
     if (cycles.length === 0) {
         Object.keys(COLOR_MAP).forEach(function(key) {
             color_properties = COLOR_MAP[key];
-            var color = color_properties[1];
-            var textcolor = color_properties[2];
-            var linkcolor = color_properties[3];
-            var highlightColor = new HighlightColor(
-                color, textcolor, linkcolor);
-            cycles.push(highlightColor);
+            var highlightColor = color_properties[1];
+            var textColor = color_properties[2];
+            var linkColor = color_properties[3];
+            var colorSpec = new ColorSpec(highlightColor, textColor, linkColor);
+            cycles.push(colorSpec);
         });
     }
     color = cycles[cycleCurColor];
@@ -1232,15 +1233,14 @@ var highlight = function(highlightState) {
             
             var color_id = OPTIONS.color;
             var color_properties = COLOR_MAP[color_id];
-            var color = color_properties[1];
-            var textcolor = color_properties[2];
-            var linkcolor = color_properties[3];
-            var highlightColor = new HighlightColor(
-                color, textcolor, linkcolor);
+            var highlightColor = color_properties[1];
+            var textColor = color_properties[2];
+            var linkColor = color_properties[3];
+            var colorSpec = new ColorSpec(highlightColor, textColor, linkColor);
             // have to loop backwards since splitting text nodes
             for (var j = scoredCandsToHighlight.length-1; j >= 0; j--) {
                 var candidate = scoredCandsToHighlight[j].candidate;
-                var c = CYCLE_COLORS ? getNextColor() : highlightColor;
+                var c = CYCLE_COLORS ? getNextColor() : colorSpec;
                 candidate.highlight(c);
             }
             

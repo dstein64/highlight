@@ -1,3 +1,5 @@
+// TODO: Use consistent variable naming (camel case or underscores, not both)
+
 // *****************************
 // * Utilities and Options
 // *****************************
