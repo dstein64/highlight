@@ -4,9 +4,6 @@
 // * Utilities and Options
 // *****************************
 
-// TODO: can some of this utility functionality, particularly
-//       the code/data shared with content.js, be moved to utils.js?
-
 var getVersion = function() {
     var version = chrome.runtime.getManifest().version;
     return version;
@@ -20,23 +17,18 @@ var getOptions = function() {
     return opts;
 };
 
-// Maps color ID to a list of properties
-// (name, background/highlight color, text color, link color)
-var COLOR_MAP = {
-    'yellow': ['Yellow', 'yellow',     'black', 'red'],
-    'blue':   ['Blue',   'skyblue',    'black', 'red'],
-    'orange': ['Orange', 'sandybrown', 'black', 'red'],
-    'green':  ['Green',  'palegreen',  'black', 'red'],
-    'pink':   ['Pink',   'lightpink',  'black', 'red']
-};
-
 var defaultOptions = function() {
     var options = Object.create(null);
-    options['color'] = 'yellow';
+    var yellow = "#FFFF00";
+    var black = "#000000";
+    var red = "#FF0000";
+    options['highlight_color'] = yellow;
+    options['text_color'] = black;
+    options['link_color'] = red;
     return options;
 };
 
-// Set missing options using defaults
+// Validate options
 (function() {
     var opts = getOptions();
     if (!opts) {
@@ -44,12 +36,24 @@ var defaultOptions = function() {
     }
     
     var defaults = defaultOptions();
+  
+    // Set missing options using defaults.
     
-    var keys = Object.keys(defaults);
-    for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        if (!(key in opts)) {
-            opts[key] = defaults[key];
+    var default_keys = Object.keys(defaults);
+    for (var i = 0; i < default_keys.length; i++) {
+        var default_key = default_keys[i];
+        if (!(default_key in opts)) {
+            opts[default_key] = defaults[default_key];
+        }
+    }
+    
+    // Remove unknown options (these may have been set
+    // by previous versions of the extension).
+    var opt_keys = Object.keys(opts);
+    for (var i = 0; i < opt_keys.length; i++) {
+        var opt_key = opt_keys[i];
+        if (!(opt_key in defaults)) {
+            delete opts[opt_key];
         }
     }
   
@@ -148,11 +152,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
         response(getOptions());
     } else if (message === 'ping') {
         ping.add(tabId);
-    } else if (message === 'getSharedGlobals') {
-        sharedGlobals = {
-            'COLOR_MAP': COLOR_MAP
-        };
-        response(sharedGlobals);
     }
     // NOTE: if you're going to call response asynchronously,
     //       be sure to return true from this function.

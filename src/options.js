@@ -14,37 +14,34 @@ var statusMessage = function(message, time) {
 
 var backgroundPage = chrome.extension.getBackgroundPage();
 
-var colorDropdown = document.getElementById("color-dropdown");
-(function() {
-    var color_map = backgroundPage.COLOR_MAP;
-    var color_ids = Object.keys(color_map);
-    // sort by name
-    color_ids.sort(function(a, b) {
-        _a = color_map[a][0]; // name
-        _b = color_map[b][0]; // name
-        return _a.localeCompare(_b);
-    });
-    for (var i = 0; i < color_ids.length; ++i) {
-        var color_id = color_ids[i];
-        var color_properties = color_map[color_id];
-        var name = color_properties[0];
-        var color = color_properties[1];
-        var textcolor = color_properties[2];
-        var option_element = document.createElement('option');
-        option_element.value = color_id;
-        option_element.style = 'background: ' + color;
-        option_element.innerText = name;
-        colorDropdown.appendChild(option_element);
-    }
-})();
+var highlightColorInput = document.getElementById("highlight-color");
+var textColorInput = document.getElementById("text-color");
+var linkColorInput = document.getElementById("link-color");
 
-var saveOptions = function() {
+var exampleTextElement = document.getElementById("example-text");
+var exampleLinkElement = document.getElementById("example-link");
+
+// Propagates and saves options.
+var propagateOptions = function() {
+    highlightColor = highlightColorInput.value;
+    textColor = textColorInput.value;
+    linkColor = linkColorInput.value;
+  
+    // Update example text
+    exampleTextElement.style.backgroundColor = highlightColor; 
+    exampleTextElement.style.color = textColor;
+    exampleLinkElement.style.backgroundColor = highlightColor; 
+    exampleLinkElement.style.color = linkColor;
+  
+    // Save options
     var options = Object.create(null);
-    options['color'] = colorDropdown.value;
+    options['highlight_color'] = highlightColor;
+    options['text_color'] = textColor;
+    options['link_color'] = linkColor;
     
     localStorage["options"] = JSON.stringify(options);
     
-    // also let all tabs know of the new options
+    // Notify tabs of the options
     chrome.tabs.query({}, function(tabs) {
         for (var i = 0; i < tabs.length; i++) {
             var tab = tabs[i];
@@ -55,10 +52,12 @@ var saveOptions = function() {
 };
 
 var loadOptions = function(opts) {
-    colorDropdown.value = opts['color'];
+    highlightColorInput.value = opts['highlight_color'];
+    textColorInput.value = opts['text_color'];
+    linkColorInput.value = opts['link_color'];
     // onchange/oninput won't fire when loading options with javascript,
-    // so trigger saveOptions manually
-    saveOptions();
+    // so trigger handleChange manually.
+    propagateOptions();
 };
 
 var initOpts = JSON.parse(localStorage["options"]);
@@ -75,15 +74,17 @@ document.getElementById('defaults').addEventListener('click', function() {
     statusMessage("Defaults Loaded", 1200);
 });
 
-// save options on any user input
-(function() {
-    colorDropdown.addEventListener('change', saveOptions);
-})();
-
 document.getElementById('revert').addEventListener('click', function() {
     loadOptions(initOpts);
     statusMessage("Options Reverted", 1200);
 });
+
+// save options on any user input
+(function() {
+    highlightColorInput.addEventListener('change', propagateOptions);
+    textColorInput.addEventListener('change', propagateOptions);
+    linkColorInput.addEventListener('change', propagateOptions);
+})();
 
 // version
 document.getElementById('version').innerText = backgroundPage.getVersion();

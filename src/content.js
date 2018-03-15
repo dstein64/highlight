@@ -17,11 +17,6 @@ chrome.runtime.sendMessage({message: "getOptions"}, function(response) {
     OPTIONS = response;
 });
 
-var COLOR_MAP = null;
-chrome.runtime.sendMessage({message: "getSharedGlobals"}, function(response) {
-    COLOR_MAP = response['COLOR_MAP'];
-});
-
 /***********************************
  * Node Highlighting Functionality
  ***********************************/
@@ -1135,24 +1130,16 @@ var getHighlightState = function(callback) {
 };
 
 // useful for debugging sentence boundary detection
-// cycles in initialized on the first call to getNextColor.
-// It's not initialized sooner since COLOR_MAP may not be set yet.
-var cycles = [];
 var cycleCurColor = 0;
 var getNextColor = function() {
-    if (cycles.length === 0) {
-        Object.keys(COLOR_MAP).forEach(function(key) {
-            color_properties = COLOR_MAP[key];
-            var highlightColor = color_properties[1];
-            var textColor = color_properties[2];
-            var linkColor = color_properties[3];
-            var colorSpec = new ColorSpec(highlightColor, textColor, linkColor);
-            cycles.push(colorSpec);
-        });
-    }
-    color = cycles[cycleCurColor];
-    cycleCurColor = (cycleCurColor+1) % cycles.length;
-    return color;
+    var yellow = "#FFFF00";
+    var pale_green = "#98FB98";
+    var black = "#000000";
+    var red = "#FF0000";
+    var highlightColor = cycleCurColor === 0 ? yellow : pale_green;
+    var colorSpec = new ColorSpec(highlightColor, black, red);
+    cycleCurColor = (cycleCurColor+1) % 2;
+    return colorSpec;
 };
 
 // hacky way to trim spaces if we're not highlighting the preceding
@@ -1230,13 +1217,8 @@ var highlight = function(highlightState) {
             removeHighlight();
             var scoredCandsToHighlight = cth(highlightState);
             trimSpaces(scoredCandsToHighlight);
-            
-            var color_id = OPTIONS.color;
-            var color_properties = COLOR_MAP[color_id];
-            var highlightColor = color_properties[1];
-            var textColor = color_properties[2];
-            var linkColor = color_properties[3];
-            var colorSpec = new ColorSpec(highlightColor, textColor, linkColor);
+            var colorSpec = new ColorSpec(
+                OPTIONS["highlight_color"], OPTIONS["text_color"], OPTIONS["link_color"]);
             // have to loop backwards since splitting text nodes
             for (var j = scoredCandsToHighlight.length-1; j >= 0; j--) {
                 var candidate = scoredCandsToHighlight[j].candidate;
