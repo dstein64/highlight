@@ -205,7 +205,9 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 {method: 'ping'},
                 {},
                 function(resp) {
-                    if (chrome.runtime.lastError) {
+                    // On Firefox, in some cases just checking for lastError is not
+                    // sufficient.
+                    if (chrome.runtime.lastError || !resp) {
                         inject(highlight);
                     } else {
                         highlight();
