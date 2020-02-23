@@ -46,7 +46,15 @@ var propagateOptions = function() {
         for (var i = 0; i < tabs.length; i++) {
             var tab = tabs[i];
             chrome.tabs.sendMessage(
-                tab.id, {method: 'updateOptions', data: options});
+                tab.id,
+                {method: 'updateOptions', data: options},
+                function(resp) {
+                    // Check for lastError, to avoid:
+                    //   "Unchecked lastError value: Error: Could not establish connection.
+                    //   Receiving end does not exist."
+                    // Which would occur for tabs without the content script injected.
+                    if (chrome.runtime.lastError) {}
+                });
         }
     });
 };
