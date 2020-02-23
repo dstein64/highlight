@@ -1188,7 +1188,7 @@ var trimSpaces = function(scoredCandsToHighlight) {
     }
 };
 
-//keep track of last highlight time, so our timers only operate if we
+// keep track of last highlight time, so our timers only operate if we
 // haven't received new highlight requests
 var lastHighlight = (new Date()).getTime();
 // you were originally managing highlightState in here. But then when you
@@ -1265,14 +1265,14 @@ var highlight = function(highlightState) {
                     });
                 }, turnoffdelay);
             }
-        }
+        };
         UTILS.setTimeoutIgnore(function() {
             fn();
         }, 0);
     }
 };
 
-chrome.runtime.onMessage.addListener(function(request) {
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     var method = request.method;
     if (method === 'highlight') {
         // it's possible we're in an iframe with non-compatible content,
@@ -1283,7 +1283,10 @@ chrome.runtime.onMessage.addListener(function(request) {
         }
     } else if (method === "updateOptions") {
         OPTIONS = request.data;
+    } else if (method === 'ping') {
+        // response is sent below
     }
+    sendResponse(true);
 });
 
 if (!isEmbed && compatible) {
@@ -1309,7 +1312,6 @@ if (!isEmbed && compatible) {
     var interval = 1200;
     
     UTILS.safeSetInterval(function() {
-        
         getHighlightState(function(curHighlight, curSuccess) {
             // don't have to worry about a page change in the case where
             // curHighlight > 0 and !curSuccess,
@@ -1329,10 +1331,7 @@ if (!isEmbed && compatible) {
 
 // we may have existing highlighting. clear so we're in sync with icon.
 // after injecting content.js, remove highlighting. (will ensure icon
-// and page in sync) there would be no consequence to doing this on all
-// pages, so you don't really need to use that inject flag.
+// and page in sync)
 // NOTE: you noticed the code executing multiple times on some tabs.
 // that's because it executes for each frame
-if ((typeof injected) !== 'undefined' && injected && compatible)
-    removeHighlight();
-
+removeHighlight();

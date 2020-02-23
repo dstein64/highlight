@@ -1,36 +1,24 @@
 {
   "name": "Auto Highlight",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "*Auto Highlight* automatically highlights the important content on article pages.",
-  "content_scripts": [ {
-      "js": [ "src/ping.js" ],
-      "matches": [ "<all_urls>" ],
-      "run_at": "document_start",
-      "all_frames": false
-  }, {
-      "js": [ "src/prepare.js",
-              "src/lib/readabilitySAX/readabilitySAX.js",
-              "src/lib/Porter-Stemmer/PorterStemmer1980.js",
-              "src/nlp.js",
-              "src/utils.js",
-              "src/content.js" ],
-      "css" : ["src/style.css"],
-      "matches": [ "<all_urls>" ],
-      "all_frames": true
-  } ],
-  "options_page": "src/options.html",
-  "permissions": ["tabs", "*://*/*", "storage"],
-  "background": { "scripts": ["src/utils.js", "src/eventPage.js"],
-                  "persistent": true },
-  "page_action": {
-      "default_icon": {
-          "19": "icons/0highlight19x19.png",
-          "38": "icons/0highlight38x38.png"
-      },
-      "default_title": "Highlight this page"
+  "options_ui": {
+    "page": "src/options.html"
   },
-  "icons": { "128": "icons/128x128.png",
-              "48": "icons/48x48.png"},
-  "manifest_version": 2,
-  "minimum_chrome_version": "41"
+  "permissions": ["activeTab"],
+  "background": {
+    "scripts": ["src/utils.js", "src/eventPage.js"],
+    "persistent": true
+  },
+  "browser_action": {
+    "default_icon": {
+      "19": "icons/0highlight19x19.png",
+      "38": "icons/0highlight38x38.png"
+    },
+    "default_title": "Highlight this page"
+  },
+  "icons": {
+    "128": "icons/128x128.png",
+    "48": "icons/48x48.png"},
+  "manifest_version": 2
 }
