@@ -5,8 +5,7 @@
 // *****************************
 
 var getVersion = function() {
-    var version = chrome.runtime.getManifest().version;
-    return version;
+    return chrome.runtime.getManifest().version;
 };
 
 var getOptions = function() {
@@ -63,11 +62,6 @@ var defaultOptions = function() {
 // *****************************
 // * Core
 // *****************************
-
-var onStartup = false; // have we heard from onStartup?
-chrome.runtime.onStartup.addListener(function() {
-    onStartup = true;
-});
 
 // a highlightState is a list with highlight state and success state
 // this is used to manage highlight state, particularly for keeping
