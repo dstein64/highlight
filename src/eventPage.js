@@ -33,11 +33,11 @@ var defaultOptions = function() {
     if (!opts) {
         opts = Object.create(null);
     }
-    
+
     var defaults = defaultOptions();
-  
+
     // Set missing options using defaults.
-    
+
     var default_keys = Object.keys(defaults);
     for (var i = 0; i < default_keys.length; i++) {
         var default_key = default_keys[i];
@@ -45,7 +45,7 @@ var defaultOptions = function() {
             opts[default_key] = defaults[default_key];
         }
     }
-    
+
     // Remove unknown options (these may have been set
     // by previous versions of the extension).
     var opt_keys = Object.keys(opts);
@@ -55,7 +55,7 @@ var defaultOptions = function() {
             delete opts[opt_key];
         }
     }
-  
+
     localStorage["options"] = JSON.stringify(opts);
 })();
 
@@ -102,18 +102,18 @@ var updateHighlightState = function(tabId, highlight, success) {
             return;
         }
     }
-    
+
     // have to check for false. for null we don't want to set to zero.
     if (success === false)
         highlight = 0;
-    
+
     tabIdToHighlightState.set(tabId, [highlight, success]);
-    
+
     // now that we've updated state, show the corresponding icon
     var iconName = highlight + 'highlight';
     if (success === false)
         iconName = 'Xhighlight';
-    
+
     path19 = 'icons/' + iconName + '19x19.png';
     path38 = 'icons/' + iconName + '38x38.png';
 

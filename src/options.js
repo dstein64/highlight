@@ -26,21 +26,21 @@ var propagateOptions = function() {
     highlightColor = highlightColorInput.value;
     textColor = textColorInput.value;
     linkColor = linkColorInput.value;
-  
+
     // Update example text
-    exampleTextElement.style.backgroundColor = highlightColor; 
+    exampleTextElement.style.backgroundColor = highlightColor;
     exampleTextElement.style.color = textColor;
-    exampleLinkElement.style.backgroundColor = highlightColor; 
+    exampleLinkElement.style.backgroundColor = highlightColor;
     exampleLinkElement.style.color = linkColor;
-  
+
     // Save options
     var options = Object.create(null);
     options['highlight_color'] = highlightColor;
     options['text_color'] = textColor;
     options['link_color'] = linkColor;
-    
+
     localStorage["options"] = JSON.stringify(options);
-    
+
     // Notify tabs of the options
     chrome.tabs.query({}, function(tabs) {
         for (var i = 0; i < tabs.length; i++) {
