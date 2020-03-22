@@ -17,6 +17,11 @@ chrome.runtime.sendMessage({message: "getOptions"}, function(response) {
     OPTIONS = response;
 });
 
+var NUM_HIGHLIGHT_STATES = null;
+chrome.runtime.sendMessage({message: "getParams"}, function(response) {
+    NUM_HIGHLIGHT_STATES = response['numHighlightStates'];
+});
+
 /***********************************
  * Node Highlighting Functionality
  ***********************************/
@@ -1011,11 +1016,13 @@ var cth = function(highlightState) {
         return b.score - a.score;
     });
 
-    var ratio = .10; // default (highlightState === 1)
-    if (highlightState === 2)
-        ratio = .20;
-    if (highlightState === 3)
-        ratio = .40;
+    // Maps number of highlight states to a map of highlight states to coverage ratios
+    var ratio_lookup = {
+        2: {1: 0.25},
+        3: {1: 0.15, 2: 0.30},
+        4: {1: 0.10, 2: 0.20, 3: 0.40}
+    };
+    ratio = ratio_lookup[NUM_HIGHLIGHT_STATES][highlightState];
 
     if (HIGHLIGHT_ALL)
         ratio = 1; // debugging

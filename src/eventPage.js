@@ -63,6 +63,15 @@ var defaultOptions = function() {
 // * Core
 // *****************************
 
+var USER_AGENT = navigator.userAgent.toLowerCase();
+
+// total number of highlight states (min 2, max 4).
+var numHighlightStates = 4;
+// Firefox for mobile, doesn't show an browserAction icon, so only use two highlight
+// states (on and off).
+if (USER_AGENT.indexOf("android") > -1 && USER_AGENT.indexOf("firefox") > -1)
+    numHighlightStates = 2;
+
 // a highlightState is a list with highlight state and success state
 // this is used to manage highlight state, particularly for keeping
 // icon in sync, and telling content.js what state to change to
@@ -73,8 +82,6 @@ chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
     // will return false
     tabIdToHighlightState.delete(tabId);
 });
-
-var highlightStates = 4; // total number of states
 
 // updates highlight state in tabIdToHighlightState, and also used to
 // show the correct highlight icon
@@ -109,8 +116,10 @@ var updateHighlightState = function(tabId, highlight, success) {
 
     tabIdToHighlightState.set(tabId, [highlight, success]);
 
-    // now that we've updated state, show the corresponding icon
-    var iconName = highlight + 'highlight';
+    // now that we've updated state, show the corresponding icon.
+    // for highlight states greater than 0, jump to a less-full highlighter icon if there are less
+    // than 4 total highlight states.
+    var iconName = highlight + (highlight > 0 ? 4 - numHighlightStates : 0) + 'highlight';
     if (success === false)
         iconName = 'Xhighlight';
 
@@ -141,6 +150,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
             'curSuccess': highlightState[1]});
     } else if (message === 'getOptions') {
         response(getOptions());
+    } else if (message === 'getParams') {
+        response({'numHighlightStates': numHighlightStates});
     }
     // NOTE: if you're going to call response asynchronously,
     //       be sure to return true from this function.
@@ -181,7 +192,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
             tab.id,
             {
                 method: 'highlight',
-                highlightState: (highlightState + 1) % highlightStates
+                highlightState: (highlightState + 1) % numHighlightStates
             });
     };
     // First check if the current page is supported by trying to inject no-op code.
