@@ -15,7 +15,7 @@
       "19": "icons/0highlight19x19.png",
       "38": "icons/0highlight38x38.png"
     },
-    "default_title": "Highlight this page"
+    "default_title": "Toggle highlighting"
   },
   "icons": {
     "128": "icons/128x128.png",
