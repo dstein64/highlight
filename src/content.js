@@ -13,12 +13,12 @@ var CYCLE_COLORS = false;
 var READABILITY_ONLY = false;
 
 var OPTIONS = null;
-chrome.runtime.sendMessage({message: "getOptions"}, function(response) {
+chrome.runtime.sendMessage({message: 'getOptions'}, function(response) {
     OPTIONS = response;
 });
 
 var NUM_HIGHLIGHT_STATES = null;
-chrome.runtime.sendMessage({message: "getParams"}, function(response) {
+chrome.runtime.sendMessage({message: 'getParams'}, function(response) {
     NUM_HIGHLIGHT_STATES = response['numHighlightStates'];
 });
 
@@ -395,7 +395,7 @@ var TextBlock = function(nodes, parseSentences, readability) {
     this.text = this.nodes.map(function(n) {
         var nodeType = n.nodeType;
         if (nodeType === Node.TEXT_NODE)
-            return n.textContent.replace(/\s+/g, " ");
+            return n.textContent.replace(/\s+/g, ' ');
         else if (nodeType === Node.ELEMENT_NODE && isElementTagBR(n))
             return '\n';
         else
@@ -448,10 +448,10 @@ var isElementTag = function(node, tag) {
 };
 
 var isElementTagBR = function(node) {
-    return isElementTag(node, "BR");
+    return isElementTag(node, 'BR');
 };
 
-var metaTagsl = ["HEAD", "TITLE", "BASE", "LINK", "META", "SCRIPT", "STYLE"];
+var metaTagsl = ['HEAD', 'TITLE', 'BASE', 'LINK', 'META', 'SCRIPT', 'STYLE'];
 var metaTags = new Set(metaTagsl);
 
 // tags is a Set
@@ -471,7 +471,7 @@ var isInMetaTag = function(node) {
     return inMetaTag;
 };
 
-var inputTagsl = ["TEXTAREA", "INPUT"];
+var inputTagsl = ['TEXTAREA', 'INPUT'];
 var inputTags = new Set(inputTagsl);
 //only check one node up
 var isUserInput = function(node) {
@@ -547,9 +547,9 @@ var isVisible = function(textNode, docWidth, docHeight) {
         range.selectNode(textNode);
         var rect = range.getBoundingClientRect();
 
-        // "The amount of scrolling that has been done of the viewport
+        // 'The amount of scrolling that has been done of the viewport
         // area (or any other scrollable element) is taken into account
-        // when computing the bounding rectangle."
+        // when computing the bounding rectangle.'
         // https://developer.mozilla.org/en-US/docs/Web/API/Element/
         //         getBoundingClientRect
 
@@ -1074,7 +1074,7 @@ var cth = function(highlightState) {
 var updateHighlightState = function(highlightState, success) {
     chrome.runtime.sendMessage(
         {
-            'message': "updateHighlightState",
+            'message': 'updateHighlightState',
             'highlight': highlightState,
             'success': success
         });
@@ -1092,7 +1092,7 @@ var hasEmbed = function() {
 // This works even on cross domain iframes. In general, a page wouldn't be
 // able to call frames[0].document, if the frame was cross domain, but from
 // the extension it works. This even worked from the extension when you
-// tried with "all_frames" set to false
+// tried with 'all_frames' set to false
 var somethingHighlighted = function(win) {
     var sh = win.document.getElementsByClassName(innerClassName).length > 0;
     if (!sh) {
@@ -1115,7 +1115,7 @@ var compatible = document.doctype !== null
 // callback takes two args: a number indicating highlight state, and
 // boolean for success
 var getHighlightState = function(callback) {
-    var message = {'message': "getHighlightState"};
+    var message = {'message': 'getHighlightState'};
     chrome.runtime.sendMessage(message, function(response) {
         var curHighlight = response['curHighlight'];
         var curSuccess = response['curSuccess'];
@@ -1126,10 +1126,10 @@ var getHighlightState = function(callback) {
 // useful for debugging sentence boundary detection
 var cycleCurColor = 0;
 var getNextColor = function() {
-    var yellow = "#FFFF00";
-    var pale_green = "#98FB98";
-    var black = "#000000";
-    var red = "#FF0000";
+    var yellow = '#FFFF00';
+    var pale_green = '#98FB98';
+    var black = '#000000';
+    var red = '#FF0000';
     var highlightColor = cycleCurColor === 0 ? yellow : pale_green;
     var colorSpec = new ColorSpec(highlightColor, black, red);
     cycleCurColor = (cycleCurColor+1) % 2;
@@ -1193,7 +1193,7 @@ var highlight = function(highlightState) {
     var time = (new Date()).getTime();
     lastHighlight = time;
     // Where the background page is Inactive
-    // (when using "persistent": false),
+    // (when using 'persistent': false),
     // there is a slight delay for the following call
     // we're in a new state, but we don't know whether there is success yet
 
@@ -1211,7 +1211,7 @@ var highlight = function(highlightState) {
             var scoredCandsToHighlight = cth(highlightState);
             trimSpaces(scoredCandsToHighlight);
             var colorSpec = new ColorSpec(
-                OPTIONS["highlight_color"], OPTIONS["text_color"], OPTIONS["link_color"]);
+                OPTIONS['highlight_color'], OPTIONS['text_color'], OPTIONS['link_color']);
             // have to loop backwards since splitting text nodes
             for (var j = scoredCandsToHighlight.length-1; j >= 0; j--) {
                 var candidate = scoredCandsToHighlight[j].candidate;
@@ -1274,7 +1274,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             var highlightState = request.highlightState;
             highlight(highlightState);
         }
-    } else if (method === "updateOptions") {
+    } else if (method === 'updateOptions') {
         OPTIONS = request.data;
     } else if (method === 'ping') {
         // response is sent below
@@ -1298,8 +1298,8 @@ if (!isEmbed && compatible) {
     // eventPage, but that would require additional message passing which
     // becomes a mess IMO.
     // Also, somethingHighlighted() is fast
-    // (it uses getElementsByClassName: 1.97ms on "a considerably large
-    // file with lots of elements to consider" in 2007,
+    // (it uses getElementsByClassName: 1.97ms on 'a considerably large
+    // file with lots of elements to consider' in 2007,
     // http://ejohn.org/blog/getelementsbyclassname-speed-comparison/)
 
     var interval = 1200;

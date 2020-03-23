@@ -1,12 +1,12 @@
 var curTimer = null;
 var statusMessage = function(message, time) {
     time = (typeof time === 'undefined') ? 1500 : time;
-    var element = document.getElementById("status");
+    var element = document.getElementById('status');
     if (curTimer)
         clearTimeout(curTimer);
     element.innerText = message;
     var timer = setTimeout(function() {
-        element.innerText = "";
+        element.innerText = '';
         curTimer = null;
     }, time);
     curTimer = timer;
@@ -14,12 +14,12 @@ var statusMessage = function(message, time) {
 
 var backgroundPage = chrome.extension.getBackgroundPage();
 
-var highlightColorInput = document.getElementById("highlight-color");
-var textColorInput = document.getElementById("text-color");
-var linkColorInput = document.getElementById("link-color");
+var highlightColorInput = document.getElementById('highlight-color');
+var textColorInput = document.getElementById('text-color');
+var linkColorInput = document.getElementById('link-color');
 
-var exampleTextElement = document.getElementById("example-text");
-var exampleLinkElement = document.getElementById("example-link");
+var exampleTextElement = document.getElementById('example-text');
+var exampleLinkElement = document.getElementById('example-link');
 
 // Propagates and saves options.
 var propagateOptions = function() {
@@ -39,7 +39,7 @@ var propagateOptions = function() {
     options['text_color'] = textColor;
     options['link_color'] = linkColor;
 
-    localStorage["options"] = JSON.stringify(options);
+    localStorage['options'] = JSON.stringify(options);
 
     // Notify tabs of the options
     chrome.tabs.query({}, function(tabs) {
@@ -50,8 +50,8 @@ var propagateOptions = function() {
                 {method: 'updateOptions', data: options},
                 function(resp) {
                     // Check for lastError, to avoid:
-                    //   "Unchecked lastError value: Error: Could not establish connection.
-                    //   Receiving end does not exist."
+                    //   'Unchecked lastError value: Error: Could not establish connection.
+                    //   Receiving end does not exist.'
                     // Which would occur for tabs without the content script injected.
                     if (chrome.runtime.lastError) {}
                 });
@@ -68,7 +68,7 @@ var loadOptions = function(opts) {
     propagateOptions();
 };
 
-var initOpts = JSON.parse(localStorage["options"]);
+var initOpts = JSON.parse(localStorage['options']);
 
 // restore saved options
 document.addEventListener('DOMContentLoaded', function() {
@@ -79,12 +79,12 @@ document.addEventListener('DOMContentLoaded', function() {
 document.getElementById('defaults').addEventListener('click', function() {
     var defaults = backgroundPage.defaultOptions();
     loadOptions(defaults);
-    statusMessage("Defaults Loaded", 1200);
+    statusMessage('Defaults Loaded', 1200);
 });
 
 document.getElementById('revert').addEventListener('click', function() {
     loadOptions(initOpts);
-    statusMessage("Options Reverted", 1200);
+    statusMessage('Options Reverted', 1200);
 });
 
 // save options on any user input

@@ -9,7 +9,7 @@ var getVersion = function() {
 };
 
 var getOptions = function() {
-    var opts = localStorage["options"];
+    var opts = localStorage['options'];
     if (opts) {
         opts = JSON.parse(opts);
     }
@@ -18,9 +18,9 @@ var getOptions = function() {
 
 var defaultOptions = function() {
     var options = Object.create(null);
-    var yellow = "#FFFF00";
-    var black = "#000000";
-    var red = "#FF0000";
+    var yellow = '#FFFF00';
+    var black = '#000000';
+    var red = '#FF0000';
     options['highlight_color'] = yellow;
     options['text_color'] = black;
     options['link_color'] = red;
@@ -56,7 +56,7 @@ var defaultOptions = function() {
         }
     }
 
-    localStorage["options"] = JSON.stringify(opts);
+    localStorage['options'] = JSON.stringify(opts);
 })();
 
 // *****************************
@@ -69,7 +69,7 @@ var USER_AGENT = navigator.userAgent.toLowerCase();
 var numHighlightStates = 4;
 // Firefox for mobile, doesn't show an browserAction icon, so only use two highlight
 // states (on and off).
-if (USER_AGENT.indexOf("android") > -1 && USER_AGENT.indexOf("firefox") > -1)
+if (USER_AGENT.indexOf('android') > -1 && USER_AGENT.indexOf('firefox') > -1)
     numHighlightStates = 2;
 
 // a highlightState is a list with highlight state and success state
@@ -202,7 +202,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
         {code: '(function(){})();'},
         function() {
             if (chrome.runtime.lastError) {
-                alert("highlighting is not supported on this page.");
+                alert('highlighting is not supported on this page.');
                 return;
             }
             chrome.tabs.sendMessage(
