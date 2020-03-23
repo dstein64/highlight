@@ -1249,7 +1249,6 @@ var highlight = function(highlightState) {
                     var importance = scoredCandsToHighlight[j].importance;
                     // XXX: Ad-hoc formula can be improved.
                     highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
-                    console.log(highlightColor);
                 }
                 var colorSpec = new ColorSpec(
                     highlightColor, OPTIONS['text_color'], OPTIONS['link_color']);
