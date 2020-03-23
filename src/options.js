@@ -17,6 +17,7 @@ var backgroundPage = chrome.extension.getBackgroundPage();
 var highlightColorInput = document.getElementById('highlight-color');
 var textColorInput = document.getElementById('text-color');
 var linkColorInput = document.getElementById('link-color');
+var tintedHighlightsInput = document.getElementById('tinted-highlights');
 
 var exampleTextElement = document.getElementById('example-text');
 var exampleLinkElement = document.getElementById('example-link');
@@ -26,6 +27,7 @@ var propagateOptions = function() {
     highlightColor = highlightColorInput.value;
     textColor = textColorInput.value;
     linkColor = linkColorInput.value;
+    tintedHighlights = tintedHighlightsInput.checked;
 
     // Update example text
     exampleTextElement.style.backgroundColor = highlightColor;
@@ -38,6 +40,7 @@ var propagateOptions = function() {
     options['highlight_color'] = highlightColor;
     options['text_color'] = textColor;
     options['link_color'] = linkColor;
+    options['tinted_highlights'] = tintedHighlights;
 
     localStorage['options'] = JSON.stringify(options);
 
@@ -63,6 +66,7 @@ var loadOptions = function(opts) {
     highlightColorInput.value = opts['highlight_color'];
     textColorInput.value = opts['text_color'];
     linkColorInput.value = opts['link_color'];
+    tintedHighlightsInput.checked = opts['tinted_highlights'];
     // onchange/oninput won't fire when loading options with javascript,
     // so trigger handleChange manually.
     propagateOptions();
@@ -92,7 +96,17 @@ document.getElementById('revert').addEventListener('click', function() {
     highlightColorInput.addEventListener('change', propagateOptions);
     textColorInput.addEventListener('change', propagateOptions);
     linkColorInput.addEventListener('change', propagateOptions);
+    tintedHighlightsInput.addEventListener('change', propagateOptions);
 })();
 
 // version
 document.getElementById('version').innerText = backgroundPage.getVersion();
+
+// tinted highlight settings and documentation are not relevant when there
+// are less than 3 highlight states.
+if (backgroundPage.NUM_HIGHLIGHT_STATES < 3) {
+    let items = document.getElementsByClassName('tinted-highlights');
+    for (let i = 0; i < items.length; ++i) {
+        items[i].style.display = 'none';
+    }
+}

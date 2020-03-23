@@ -24,6 +24,7 @@ var defaultOptions = function() {
     options['highlight_color'] = yellow;
     options['text_color'] = black;
     options['link_color'] = red;
+    options['tinted_highlights'] = false;
     return options;
 };
 
@@ -66,11 +67,11 @@ var defaultOptions = function() {
 var USER_AGENT = navigator.userAgent.toLowerCase();
 
 // total number of highlight states (min 2, max 4).
-var numHighlightStates = 4;
+var NUM_HIGHLIGHT_STATES = 4;
 // Firefox for mobile, doesn't show an browserAction icon, so only use two highlight
 // states (on and off).
 if (USER_AGENT.indexOf('android') > -1 && USER_AGENT.indexOf('firefox') > -1)
-    numHighlightStates = 2;
+    NUM_HIGHLIGHT_STATES = 2;
 
 // a highlightState is a list with highlight state and success state
 // this is used to manage highlight state, particularly for keeping
@@ -119,7 +120,7 @@ var updateHighlightState = function(tabId, highlight, success) {
     // now that we've updated state, show the corresponding icon.
     // for highlight states greater than 0, jump to a less-full highlighter icon if there are less
     // than 4 total highlight states.
-    var iconName = highlight + (highlight > 0 ? 4 - numHighlightStates : 0) + 'highlight';
+    var iconName = highlight + (highlight > 0 ? 4 - NUM_HIGHLIGHT_STATES : 0) + 'highlight';
     if (success === false)
         iconName = 'Xhighlight';
 
@@ -151,7 +152,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
     } else if (message === 'getOptions') {
         response(getOptions());
     } else if (message === 'getParams') {
-        response({'numHighlightStates': numHighlightStates});
+        response({'numHighlightStates': NUM_HIGHLIGHT_STATES});
     }
     // NOTE: if you're going to call response asynchronously,
     //       be sure to return true from this function.
@@ -192,7 +193,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
             tab.id,
             {
                 method: 'highlight',
-                highlightState: (highlightState + 1) % numHighlightStates
+                highlightState: (highlightState + 1) % NUM_HIGHLIGHT_STATES
             });
     };
     // First check if the current page is supported by trying to inject no-op code.

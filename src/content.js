@@ -950,13 +950,16 @@ var getCandidates = function() {
     return candidates;
 };
 
-var ScoredCandidate = function(candidate, score, index) {
+var ScoredCandidate = function(candidate, score, index, importance) {
     this.candidate = candidate;
     this.score = score;
     // index, relative to all original candidates
     // (for sorting since highlighting depends on having candidates being
     // in certain order to work properly)
     this.index = index;
+    // This gets set to a value between 1 and (NUM_HIGHLIGHT_STATES - 1), representing
+    // the importance of the sentence. (lower numbers have higher importance)
+    this.importance = importance;
 };
 
 // return the candidates to highlight
@@ -1005,7 +1008,7 @@ var cth = function(highlightState) {
         var factor = 1.0 / (Math.log2(size) + 1);
         score *= factor;
 
-        scores.push(new ScoredCandidate(candidate, score, i));
+        scores.push(new ScoredCandidate(candidate, score, i, null));
     }
 
     // calculating percentile based on ratio, and filtering could be more
@@ -1034,14 +1037,23 @@ var cth = function(highlightState) {
         totalChars += candidate.textLength;
     }
 
-    var limit = ratio * totalChars;
     var highlightCharCounter = 0;
 
     for (var i = 0; i < scores.length; i++) {
         var scored = scores[i];
+        if (HIGHLIGHT_ALL) {
+            scored.importance = 1;
+        } else {
+            for (var j = 1; j < NUM_HIGHLIGHT_STATES; ++j) {
+                if (highlightCharCounter <= ratio_lookup[NUM_HIGHLIGHT_STATES][j] * totalChars) {
+                    scored.importance = j;
+                    break;
+                }
+            }
+        }
         _tohighlight.push(scored);
         highlightCharCounter += scored.candidate.textLength;
-        if (highlightCharCounter > limit)
+        if (!HIGHLIGHT_ALL && highlightCharCounter > ratio * totalChars)
             break;
     }
 
@@ -1181,6 +1193,26 @@ var trimSpaces = function(scoredCandsToHighlight) {
     }
 };
 
+// Tint colors by blending them with white.
+// Color is a hex string starting with '#'.
+// Level is between 0.0 and 1.0, where 0.0 corresponds to no tinting and
+// 1.0 corresponds to full tinting.
+const tintColor = function(color, level) {
+    const r_white = 255;
+    const g_white = 255;
+    const b_white = 255;
+    const r_in = parseInt(color.substring(1, 3), 16);
+    const g_in = parseInt(color.substring(3, 5), 16);
+    const b_in = parseInt(color.substring(5, 7), 16);
+    const r_out = Math.round(level * r_white + (1 - level) * r_in);
+    const g_out = Math.round(level * g_white + (1 - level) * g_in);
+    const b_out = Math.round(level * b_white + (1 - level) * b_in);
+    const out = '#' + r_out.toString(16).padStart(2, '0')
+        + g_out.toString(16).padStart(2, '0')
+        + b_out.toString(16).padStart(2, '0');
+    return out;
+};
+
 // keep track of last highlight time, so our timers only operate if we
 // haven't received new highlight requests
 var lastHighlight = (new Date()).getTime();
@@ -1210,10 +1242,17 @@ var highlight = function(highlightState) {
             removeHighlight();
             var scoredCandsToHighlight = cth(highlightState);
             trimSpaces(scoredCandsToHighlight);
-            var colorSpec = new ColorSpec(
-                OPTIONS['highlight_color'], OPTIONS['text_color'], OPTIONS['link_color']);
             // have to loop backwards since splitting text nodes
             for (var j = scoredCandsToHighlight.length-1; j >= 0; j--) {
+                let highlightColor = OPTIONS['highlight_color'];
+                if (OPTIONS['tinted_highlights']) {
+                    var importance = scoredCandsToHighlight[j].importance;
+                    // XXX: Ad-hoc formula can be improved.
+                    highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
+                    console.log(highlightColor);
+                }
+                var colorSpec = new ColorSpec(
+                    highlightColor, OPTIONS['text_color'], OPTIONS['link_color']);
                 var candidate = scoredCandsToHighlight[j].candidate;
                 var c = CYCLE_COLORS ? getNextColor() : colorSpec;
                 candidate.highlight(c);

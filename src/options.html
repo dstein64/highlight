@@ -2,6 +2,10 @@
 <head>
 <title>*Auto Highlight* Chrome Extension Options</title>
 <style>
+/* *************************************************
+ * * Core
+ * ************************************************* */
+
 #container {
     width: 500px;
     display: block;
@@ -15,6 +19,10 @@ p {
 
 body {
     margin-top: 20px;
+}
+
+table td:first-child {
+  text-align: center;
 }
 
 /*
@@ -46,10 +54,17 @@ body {
     <td><input type="color" id="link-color"></td>
     <td><label for="link-color">Link Color</label></td>
   </tr>
+  <tr class="tinted-highlights">
+    <td><input type="checkbox" id="tinted-highlights"></td>
+    <td><label for="tinted-highlights">Tinted Highlights</label></td>
+  </tr>
 </table>
-<p id="examples">
-Example <span id="example-text">highlighted text</span>.
-Example <a href="#" id="example-link">highlighted link</a>.
+<p>Example <span id="example-text">highlighted text</span>.</p>
+<p>Example <a href="#" id="example-link">highlighted link</a>.</p>
+<p class="tinted-highlights">
+  <em>Tinted Highlights</em> toggles whether highlights are tinted based on
+  predicted sentence importance. Lower importance sentences, which receive
+  more tinting, are highlighted with subsequent clicks of the highlighter icon.
 </p>
 <button id="defaults">Defaults</button>
 <button id="revert">Revert</button>
