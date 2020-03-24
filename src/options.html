@@ -6,15 +6,12 @@
  * * Core
  * ************************************************* */
 
-#container {
-    width: 500px;
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+p {
+    font-size: 14px;
 }
 
-p {
-    font-size: 16px;
+.example {
+  font-size: 16px;
 }
 
 body {
@@ -59,8 +56,8 @@ table td:first-child {
     <td><label for="tinted-highlights">Tinted Highlights</label></td>
   </tr>
 </table>
-<p>Example <span id="example-text">highlighted text</span>.</p>
-<p>Example <a href="#" id="example-link">highlighted link</a>.</p>
+<p class="example">Example <span id="example-text">highlighted text</span>.</p>
+<p class="example">Example <a href="#" id="example-link">highlighted link</a>.</p>
 <p class="at-least-ternary">
   <em>Tinted Highlights</em> toggles whether highlights are tinted based on
   predicted sentence importance. Lower importance sentences, which receive
