@@ -1,11 +1,12 @@
 {
   "name": "Auto Highlight",
-  "version": "1.8.1",
+  "version": "1.9.0",
   "description": "*Auto Highlight* automatically highlights the important content on article pages.",
   "options_ui": {
     "page": "src/options.html"
   },
   "permissions": ["activeTab"],
+  "optional_permissions": ["<all_urls>", "tabs"],
   "background": {
     "scripts": ["src/utils.js", "src/eventPage.js"],
     "persistent": true

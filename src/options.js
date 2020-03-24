@@ -22,6 +22,17 @@ var tintedHighlightsInput = document.getElementById('tinted-highlights');
 var exampleTextElement = document.getElementById('example-text');
 var exampleLinkElement = document.getElementById('example-link');
 
+var globalHighlightIcons = document.getElementById('global-highlight-icons');
+var globalHighlightRevokeButton = document.getElementById('revoke_permissions');
+
+var versionElement = document.getElementById('version');
+
+versionElement.innerText = backgroundPage.getVersion();
+
+/***********************************
+ * Options
+ ***********************************/
+
 // Propagates and saves options.
 var propagateOptions = function() {
     highlightColor = highlightColorInput.value;
@@ -91,6 +102,15 @@ document.getElementById('revert').addEventListener('click', function() {
     statusMessage('Options Reverted', 1200);
 });
 
+// hide elements that are not relevant with less than three highlight states,
+// like tinted highlighting settings and documentation.
+if (backgroundPage.NUM_HIGHLIGHT_STATES < 3) {
+    let items = document.getElementsByClassName('at-least-ternary');
+    for (let i = 0; i < items.length; ++i) {
+        items[i].style.display = 'none';
+    }
+}
+
 // save options on any user input
 (function() {
     highlightColorInput.addEventListener('change', propagateOptions);
@@ -99,14 +119,55 @@ document.getElementById('revert').addEventListener('click', function() {
     tintedHighlightsInput.addEventListener('change', propagateOptions);
 })();
 
-// version
-document.getElementById('version').innerText = backgroundPage.getVersion();
+/***********************************
+ * Global Highlighting
+ ***********************************/
 
-// tinted highlight settings and documentation are not relevant when there
-// are less than 3 highlight states.
-if (backgroundPage.NUM_HIGHLIGHT_STATES < 3) {
-    let items = document.getElementsByClassName('tinted-highlights');
-    for (let i = 0; i < items.length; ++i) {
-        items[i].style.display = 'none';
-    }
+// permissions required for global highlighting
+var globalHighlightPermissions = {
+    permissions: ['tabs'],
+    origins: ['<all_urls>']
+};
+
+// create global highlighting links
+for (let i = 0; i < backgroundPage.NUM_HIGHLIGHT_STATES; ++i) {
+    let img = document.createElement('img');
+    img.style.cursor = 'pointer';
+    let iconName = backgroundPage.highlightStateToIconId(i) + 'highlight';
+    img.src = '../icons/' + iconName + '38x38.png';
+    img.height = 19;
+    img.width = 19;
+    // Have to put call to chrome.permissions.request in here, not backgroundPage.highlightAll,
+    // to avoid "This function must be called during a user gesture" error.
+    img.addEventListener('click', function() {
+        chrome.permissions.request(
+            globalHighlightPermissions,
+            function(granted) {
+                if (granted) {
+                    globalHighlightRevokeButton.disabled = false;
+                    backgroundPage.highlightAll(i);
+                }
+            });
+    });
+    globalHighlightIcons.appendChild(img);
 }
+
+var revokePermissions = function () {
+    chrome.permissions.remove(
+        globalHighlightPermissions,
+        function(removed) {
+            if (removed) {
+                globalHighlightRevokeButton.disabled = true;
+            }
+        });
+};
+
+globalHighlightRevokeButton.addEventListener('click', function() {
+    revokePermissions();
+});
+
+chrome.permissions.contains(
+    globalHighlightPermissions,
+    function(result) {
+        globalHighlightRevokeButton.disabled = !result;
+    });

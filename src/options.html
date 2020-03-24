@@ -39,7 +39,7 @@ table td:first-child {
 <body>
 
 <div id="container">
-<h3><em>Auto Highlight</em> v<span id="version"></span></h3>
+<h3><em>Auto Highlight</em> v<span id="version" onclick="alert('hi'); return false"></span></h3>
 <h2>Options</h2>
 <table>
   <tr>
@@ -54,22 +54,29 @@ table td:first-child {
     <td><input type="color" id="link-color"></td>
     <td><label for="link-color">Link Color</label></td>
   </tr>
-  <tr class="tinted-highlights">
+  <tr class="at-least-ternary">
     <td><input type="checkbox" id="tinted-highlights"></td>
     <td><label for="tinted-highlights">Tinted Highlights</label></td>
   </tr>
 </table>
 <p>Example <span id="example-text">highlighted text</span>.</p>
 <p>Example <a href="#" id="example-link">highlighted link</a>.</p>
-<p class="tinted-highlights">
+<p class="at-least-ternary">
   <em>Tinted Highlights</em> toggles whether highlights are tinted based on
   predicted sentence importance. Lower importance sentences, which receive
   more tinting, are highlighted with subsequent clicks of the highlighter icon.
 </p>
 <button id="defaults">Defaults</button>
 <button id="revert">Revert</button>
-<br><br>
 <span style="margin-left: 7px;" id="status"></span>
+<h2>Global Highlighting</h2>
+<div id="global-highlight-icons"></div>
+<p>
+  Click a highlighter to set the corresponding highlight level on every tab.
+  The button below can be used to revoke additional permissions that were
+  granted for this functionality.
+</p>
+<button disabled="true" id="revoke_permissions">Revoke</button>
 </div>
 </body>
 

@@ -4,6 +4,7 @@
 // * Utilities and Options
 // *****************************
 
+// this is called from options.js.
 var getVersion = function() {
     return chrome.runtime.getManifest().version;
 };
@@ -84,6 +85,10 @@ chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
     tabIdToHighlightState.delete(tabId);
 });
 
+var highlightStateToIconId = function(state) {
+    return state + (state > 0 ? 4 - NUM_HIGHLIGHT_STATES : 0);
+};
+
 // updates highlight state in tabIdToHighlightState, and also used to
 // show the correct highlight icon
 var updateHighlightState = function(tabId, highlight, success) {
@@ -120,7 +125,7 @@ var updateHighlightState = function(tabId, highlight, success) {
     // now that we've updated state, show the corresponding icon.
     // for highlight states greater than 0, jump to a less-full highlighter icon if there are less
     // than 4 total highlight states.
-    var iconName = highlight + (highlight > 0 ? 4 - NUM_HIGHLIGHT_STATES : 0) + 'highlight';
+    var iconName = highlightStateToIconId(highlight) + 'highlight';
     if (success === false)
         iconName = 'Xhighlight';
 
@@ -160,7 +165,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
     //              chrome-extension-message-passing-response-not-sent
 });
 
-var inject = function(callback=function() {}) {
+var inject = function(tabId, callback=function() {}) {
     var scripts = [
         'src/lib/readabilitySAX/readabilitySAX.js',
         'src/lib/Porter-Stemmer/PorterStemmer1980.js',
@@ -180,44 +185,61 @@ var inject = function(callback=function() {}) {
             } else if (script.endsWith('.js')) {
                 inject_ = chrome.tabs.executeScript;
             }
-            inject_({file: script, allFrames: true}, fn_);
+            inject_(tabId, {file: script, allFrames: true}, fn_);
         }
     }
     fn();
 };
 
-chrome.browserAction.onClicked.addListener(function(tab) {
-    var highlight = function() {
-        var highlightState = tabIdToHighlightState.get(tab.id)[0];
+// setting state to null results in automatically incrementing the state.
+var highlight = function(tabId, showError, state=null) {
+    var sendHighlightMessage = function() {
+        if (state === null)
+            state = (tabIdToHighlightState.get(tabId)[0] + 1) % NUM_HIGHLIGHT_STATES;
         chrome.tabs.sendMessage(
-            tab.id,
+            tabId,
             {
                 method: 'highlight',
-                highlightState: (highlightState + 1) % NUM_HIGHLIGHT_STATES
+                highlightState: state
             });
     };
     // First check if the current page is supported by trying to inject no-op code.
     // (e.g., https://chrome.google.com/webstore, chrome://extensions/, and other pages
     // do not support extensions).
     chrome.tabs.executeScript(
+        tabId,
         {code: '(function(){})();'},
         function() {
             if (chrome.runtime.lastError) {
-                alert('highlighting is not supported on this page.');
+                if (showError)
+                    alert('highlighting is not supported on this page.');
                 return;
             }
             chrome.tabs.sendMessage(
-                tab.id,
+                tabId,
                 {method: 'ping'},
                 {},
                 function(resp) {
                     // On Firefox, in some cases just checking for lastError is not
                     // sufficient.
                     if (chrome.runtime.lastError || !resp) {
-                        inject(highlight);
+                        inject(tabId, sendHighlightMessage);
                     } else {
-                        highlight();
+                        sendHighlightMessage();
                     }
                 });
         });
+};
+
+// this is called from options.js.
+var highlightAll = function(state) {
+    chrome.tabs.query({}, function(tabs) {
+        for (var i = 0; i < tabs.length; ++i) {
+            highlight(tabs[i].id, false, state);
+        }
+    });
+};
+
+chrome.browserAction.onClicked.addListener(function(tab) {
+    highlight(tab.id, true, null);
 });
