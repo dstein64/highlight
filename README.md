@@ -24,6 +24,12 @@ The following image shows the highlighting on an article after clicking the
 
 ![Screenshot](screenshots/1.png)
 
+Privacy Policy
+--------------
+
+The *Auto Highlight* browser extension does not collect user data nor transmit user data remotely. Options
+for the extension are saved locally.
+
 License
 -------
 
