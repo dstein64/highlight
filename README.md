@@ -6,11 +6,14 @@ Keywords: tldr, tl;dr, article, summarizer, summarization, summary, highlight, h
 *Auto Highlight* is a browser extension that automatically highlights the important
 content on article sites.
 
-The extension is available for Chrome at
-https://chrome.google.com/webstore/detail/highlight/dnkdpcbijfnmekbkchfjapfneigjomhh.
+The extension is available from various browser add-on repositories.
 
-The extension is available for Firefox at
-https://addons.mozilla.org/en-US/firefox/addon/auto-highlight/.
+* Chrome
+    - https://chrome.google.com/webstore/detail/highlight/dnkdpcbijfnmekbkchfjapfneigjomhh
+* Firefox
+    - https://addons.mozilla.org/en-US/firefox/addon/auto-highlight/
+* Edge
+    - https://microsoftedge.microsoft.com/addons/detail/djobhcecijhljcmdohlobhgiconbhnoo
 
 To use *Auto Highlight*, install the extension, and click the highlighter
 icon in the location bar. Clicking multiple times changes the
