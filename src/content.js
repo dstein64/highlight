@@ -5,19 +5,19 @@
  ***********************************/
 
 // Debugging Options
-var HIGHLIGHT_ALL = false;
-var CYCLE_COLORS = false;
+const HIGHLIGHT_ALL = false;
+const CYCLE_COLORS = false;
 // only highlight readability-extracted text.
 // this has higher precedence than HIGHLIGHT_ALL, which can still
 // be used to highlight all readability-extracted text
-var READABILITY_ONLY = false;
+const READABILITY_ONLY = false;
 
-var OPTIONS = null;
+let OPTIONS = null;
 chrome.runtime.sendMessage({message: 'getOptions'}, function(response) {
     OPTIONS = response;
 });
 
-var NUM_HIGHLIGHT_STATES = null;
+let NUM_HIGHLIGHT_STATES = null;
 chrome.runtime.sendMessage({message: 'getParams'}, function(response) {
     NUM_HIGHLIGHT_STATES = response['numHighlightStates'];
 });
@@ -30,7 +30,7 @@ chrome.runtime.sendMessage({message: 'getParams'}, function(response) {
 //       and generate an alternative accordingly
 // class prefix uses a UUID you generated, so that class names won't
 // (won't with very high probability) clash with class name on some page
-var class_prefix = '_highlight_b08d724a-5194-4bdd-9114-21136a9518ce';
+const class_prefix = '_highlight_b08d724a-5194-4bdd-9114-21136a9518ce';
 
 // needed two highlight wrappers to prevent background color from
 // overlapping on top of text when line height is low idea from:
@@ -38,26 +38,26 @@ var class_prefix = '_highlight_b08d724a-5194-4bdd-9114-21136a9518ce';
 //        CSS-The-background-color-and-overlapping-rows-inline-element
 // inner wrapper for highlighting a text node. The inner wrapper applies
 // font/text styling, and position:relative
-var innerClassName = class_prefix + '_highlightInner';
+const innerClassName = class_prefix + '_highlightInner';
 // outer wrapper for highlighting a text node. The outer wrapper applies
 // background-color, and position:static
-var outerClassName = class_prefix + '_highlightOuter';
+const outerClassName = class_prefix + '_highlightOuter';
 
 // wrapper class for tracking split text nodes
-var splitClassName = class_prefix + '_split';
+const splitClassName = class_prefix + '_split';
 
 // generic class name for all text wrappers, which applies some generic
 // styling
-var wrapperClassName = class_prefix + '_wrapper';
+const wrapperClassName = class_prefix + '_wrapper';
 
-var setPropertyImp = function(element, key, val) {
+const setPropertyImp = function(element, key, val) {
     // have to use setProperty for setting !important. This doesn't work
     // span.style.backgroundColor = 'yellow !important';
     element.style.setProperty(key, val, 'important');
 };
 
-var createTextNodeWrapper = function() {
-    var span = document.createElement('span');
+const createTextNodeWrapper = function() {
+    const span = document.createElement('span');
     span.classList.add(wrapperClassName);
 
     // don't all:inherit. causes some text color to not change, and links
@@ -84,10 +84,10 @@ var createTextNodeWrapper = function() {
 };
 
 // returns the link element we're in, or false if we're not in a link
-var inlink = function(element, depth) {
+const inlink = function(element, depth) {
     depth = typeof depth !== 'undefined' ? depth : 10;
-    var cur = element;
-    var counter = 0;
+    let cur = element;
+    let counter = 0;
     while (cur) {
         if (counter > depth) {
             return false;
@@ -104,12 +104,12 @@ var inlink = function(element, depth) {
     return false;
 };
 
-var descendantOfTag = function(element, tagName, depth) {
+const descendantOfTag = function(element, tagName, depth) {
     // -1 for infinite. not safe.
     depth = typeof depth !== 'undefined' ? depth : -1;
     tagName = tagName.toUpperCase();
-    var cur = element;
-    var counter = 0;
+    let cur = element;
+    let counter = 0;
 
     while (cur) {
         if (depth > -1 && counter > depth) {
@@ -125,18 +125,18 @@ var descendantOfTag = function(element, tagName, depth) {
     return false;
 };
 
-var wrapNode = function(outer, inner) {
+const wrapNode = function(outer, inner) {
     inner.parentElement.replaceChild(outer, inner);
     outer.appendChild(inner);
 };
 
-var ColorSpec = function(highlightColor, textColor, linkColor) {
+const ColorSpec = function(highlightColor, textColor, linkColor) {
     this.highlightColor = highlightColor;
     this.textColor = textColor;
     this.linkColor = linkColor;
 };
 
-var highlightTextNode = function(textNode, colorSpec) {
+const highlightTextNode = function(textNode, colorSpec) {
     // style.css has generic style already applied. Here, we add specific
     // stuff that may vary
 
@@ -146,20 +146,20 @@ var highlightTextNode = function(textNode, colorSpec) {
     if (textNode.parentElement === null)
         return false;
 
-    var _inlink = inlink(textNode, 4);
+    const _inlink = inlink(textNode, 4);
 
     // we need an outer wrapper with around the text node, with position
     // static, and wrap it around another wrapper with
     // position relative. This prevents background color of line l+1 from
     // covering line l.
-    var _span = createTextNodeWrapper();
+    const _span = createTextNodeWrapper();
     _span.classList.add(outerClassName);
     // this is already set by createTextNodeWrapper
     setPropertyImp(_span, 'position', 'static');
     setPropertyImp(_span, 'background-color', colorSpec.highlightColor);
     wrapNode(_span, textNode);
 
-    var span = createTextNodeWrapper();
+    const span = createTextNodeWrapper();
     span.classList.add(innerClassName);
 
     setPropertyImp(span, 'text-shadow', 'none');
@@ -182,22 +182,22 @@ var highlightTextNode = function(textNode, colorSpec) {
     return true;
 };
 
-var removeHighlight = function() {
+const removeHighlight = function() {
     // first remove className, then outerClassName, wrappers
-    var wrappers = [innerClassName, outerClassName];
-    for (var h = 0; h < wrappers.length; h++) {
-        var _class = wrappers[h];
-        var highlighted = document.getElementsByClassName(_class);
+    const wrappers = [innerClassName, outerClassName];
+    for (let h = 0; h < wrappers.length; h++) {
+        const _class = wrappers[h];
+        const highlighted = document.getElementsByClassName(_class);
         // iterate in reverse. It seems like removing child nodes modifies
         // the variables 'elements'
         // maybe not if we convert from nodelist to array... but still
         // keeping iteration order
-        var highlightedA = Array.prototype.slice.call(highlighted);
+        const highlightedA = Array.prototype.slice.call(highlighted);
 
-        for (var i = highlightedA.length-1; i >= 0 ; i--) {
-            var e = highlightedA[i];
+        for (let i = highlightedA.length-1; i >= 0 ; i--) {
+            const e = highlightedA[i];
             // each span has exactly one child
-            var child = e.removeChild(e.firstChild);
+            const child = e.removeChild(e.firstChild);
             e.parentElement.replaceChild(child, e);
         }
     }
@@ -206,11 +206,11 @@ var removeHighlight = function() {
     // sentences starting with a space then a link will lose the space,
     // and cause problems on the next highlight
 
-    var split = document.getElementsByClassName(splitClassName);
-    var splitA = Array.prototype.slice.call(split);
-    for (var i = splitA.length-2; i >= 0 ; i--) {
-        var e1 = splitA[i];
-        var e2 = splitA[i+1];
+    const split = document.getElementsByClassName(splitClassName);
+    let splitA = Array.prototype.slice.call(split);
+    for (let i = splitA.length-2; i >= 0 ; i--) {
+        const e1 = splitA[i];
+        const e2 = splitA[i+1];
         if (e2 === e1.nextElementSibling
             && e1.firstChild
             && e2.firstChild) {
@@ -221,9 +221,9 @@ var removeHighlight = function() {
 
     // split is a live Collection, so don't have to recreate...
     splitA = Array.prototype.slice.call(split);
-    for (var i = splitA.length-1; i >= 0 ; i--) {
-        var e = splitA[i];
-        var child = e.removeChild(e.firstChild);
+    for (let i = splitA.length-1; i >= 0 ; i--) {
+        const e = splitA[i];
+        const child = e.removeChild(e.firstChild);
         e.parentElement.replaceChild(child, e);
     }
 };
@@ -233,9 +233,9 @@ var removeHighlight = function() {
  ***********************************/
 
 // skip level goes from 0 to 3. Higher skip level returns more content.
-var readable = new Readability(document, null, 3);
+const readable = new Readability(document, null, 3);
 
-var countWords = function(text){
+const countWords = function(text){
     // trim
     text = text.trim();
     // consolidate contiguous whitespace
@@ -253,18 +253,18 @@ var countWords = function(text){
 // are constructed just from being at the end of a TextBlock, even without
 // a sentence end.
 // readability indicates whether the sentence is extracted by readability
-var Sentence = function(nodes, s, e, hasEnd) {
+const Sentence = function(nodes, s, e, hasEnd) {
     this.nodes = nodes;
     this.s = s;
     this.e = e;
     this.hasEnd = hasEnd;
     this.nodeCount = this.nodes.length;
 
-    var text = '';
+    let text = '';
     if (this.nodeCount === 1) {
         text = this.nodes[0].textContent.substring(this.s, this.e+1);
     } else if (this.nodeCount >= 2) {
-        var middle = this.nodes.slice(1,this.nodeCount-1);
+        const middle = this.nodes.slice(1,this.nodeCount-1);
         text = this.nodes[0].textContent.substring(this.s)
              + middle.map(function(t){return t.textContent;}).join('')
              + this.nodes[this.nodeCount-1].textContent.substring(0, this.e+1);
@@ -276,14 +276,14 @@ var Sentence = function(nodes, s, e, hasEnd) {
 
     this.avgWordLength = this.textLength / this.wordCount;
 
-    var linkDensityNum = 0;
-    var linkDensityDen = this.textLength;
+    let linkDensityNum = 0;
+    const linkDensityDen = this.textLength;
 
-    for (var i = 0; i < this.nodes.length; i++) {
-        var node = this.nodes[i];
-        var _inlink = inlink(node, 8);
+    for (let i = 0; i < this.nodes.length; i++) {
+        const node = this.nodes[i];
+        const _inlink = inlink(node, 8);
         if (_inlink) {
-            var chars = node.textContent.length;
+            let chars = node.textContent.length;
             if (i === 0)
                 chars -= this.s;
             else if (i === this.nodes.length - 1)
@@ -299,16 +299,16 @@ Sentence.prototype.trimLeft = function() {
     if (this.nodeCount > 0) {
         // this method would not work as intended if the entire first
         // text node and some of the second is whitespace.
-        var node = this.nodes[0];
-        var text = node.textContent;
+        const node = this.nodes[0];
+        const text = node.textContent;
         // let's just loop up to the second to last letter, to make sure
         // we leave at least one char
-        var end = text.length - 2;
+        let end = text.length - 2;
         if (this.nodeCount === 1) {
             end = this.e - 1;  // same in this case. second to last char.
         }
-        for (var i = this.s; i <= end; i++) {
-            var c = text.charAt(i);
+        for (let i = this.s; i <= end; i++) {
+            const c = text.charAt(i);
             if (/\s/.test(c)) {
                 this.s++;
             } else {
@@ -324,26 +324,26 @@ Sentence.prototype.toString = function() {
 
 // split text, and indicate with a <span> wrapper that the text had been
 // split.
-var splitAndWrapText = function(textNode, offset) {
-    var _t = textNode.splitText(offset);
+const splitAndWrapText = function(textNode, offset) {
+    const _t = textNode.splitText(offset);
     // we may have a textNode that has already been split
     alreadySplit = textNode.parentElement.classList.contains(splitClassName);
 
     if (alreadySplit) {
-        var span = createTextNodeWrapper();
+        const span = createTextNodeWrapper();
         span.classList.add(splitClassName);
         wrapNode(span, textNode);
 
-        var parent = span.parentElement;
-        var _span = parent.removeChild(span);
+        const parent = span.parentElement;
+        const _span = parent.removeChild(span);
         parent.parentElement.insertBefore(_span, parent);
     } else {
-        var span = createTextNodeWrapper();
+        let span = createTextNodeWrapper();
         span.classList.add(splitClassName);
         wrapNode(span, textNode);
 
         // and again
-        var span = createTextNodeWrapper();
+        span = createTextNodeWrapper();
         span.classList.add(splitClassName);
         wrapNode(span, _t);
     }
@@ -353,7 +353,7 @@ var splitAndWrapText = function(textNode, offset) {
 
 Sentence.prototype.highlight = function(colorSpec) {
     if (this.nodeCount === 1) {
-        var t = this.nodes[0];
+        let t = this.nodes[0];
         if (t.textContent.length > this.e+1)
             splitAndWrapText(t, this.e+1);
         if (this.s > 0 && t.textContent.length > this.s)
@@ -361,14 +361,14 @@ Sentence.prototype.highlight = function(colorSpec) {
         highlightTextNode(t, colorSpec);
     } else if (this.nodeCount >= 2) {
         // last node
-        var t = this.nodes[this.nodeCount-1];
+        let t = this.nodes[this.nodeCount-1];
         if (t.textContent.length > this.e+1)
             splitAndWrapText(t, this.e+1);
         highlightTextNode(t, colorSpec);
 
         // middle nodes
-        var middle = this.nodes.slice(1,this.nodeCount-1);
-        for (var i = 0; i < middle.length; i++) {
+        const middle = this.nodes.slice(1,this.nodeCount-1);
+        for (let i = 0; i < middle.length; i++) {
             highlightTextNode(middle[i], colorSpec);
         }
 
@@ -381,19 +381,19 @@ Sentence.prototype.highlight = function(colorSpec) {
 };
 
 // a TextBlock is a list of text nodes that are in the same block/segment
-var TextBlock = function(nodes, parseSentences, readability) {
+const TextBlock = function(nodes, parseSentences, readability) {
     // if text node, only keep if there is some text
-    this.nodes = nodes.filter(function(n){
-        var type = n.nodeType;
+    this.nodes = nodes.filter(function(n) {
+        const type = n.nodeType;
         return type === Node.ELEMENT_NODE
                || (type === Node.TEXT_NODE && n.textContent.length > 0);
     });
     this.nodeCount = this.nodes.length;
     this.textNodes = this.nodes.filter(function(n){
-      return n.nodeType === Node.TEXT_NODE;
+        return n.nodeType === Node.TEXT_NODE;
     });
     this.text = this.nodes.map(function(n) {
-        var nodeType = n.nodeType;
+        const nodeType = n.nodeType;
         if (nodeType === Node.TEXT_NODE)
             return n.textContent.replace(/\s+/g, ' ');
         else if (nodeType === Node.ELEMENT_NODE && isElementTagBR(n))
@@ -409,14 +409,14 @@ var TextBlock = function(nodes, parseSentences, readability) {
     // is this a text block with content from readability article?
     this.readability = readability;
 
-    var linkDensityNum = 0;
-    var linkDensityDen = this.textLength;
+    let linkDensityNum = 0;
+    const linkDensityDen = this.textLength;
 
-    for (var i = 0; i < this.nodes.length; i++) {
-        var node = this.nodes[i];
-        var _inlink = inlink(node, 8);
+    for (let i = 0; i < this.nodes.length; i++) {
+        const node = this.nodes[i];
+        const _inlink = inlink(node, 8);
         if (_inlink) {
-            var chars = node.textContent.length;
+            const chars = node.textContent.length;
             linkDensityNum += chars;
         }
     }
@@ -429,11 +429,11 @@ TextBlock.prototype.toString = function() {
 };
 
 TextBlock.prototype.highlight = function(colorSpec) {
-    for (var i = 0; i < this.nodes.length; i++) {
-        var n = this.nodes[i];
+    for (let i = 0; i < this.nodes.length; i++) {
+        const n = this.nodes[i];
         // we may possibly have non-text nodes, like <br>. Only apply
         // highlighting to text nodes.
-        var nodeType = n.nodeType;
+        const nodeType = n.nodeType;
         if (nodeType !== Node.TEXT_NODE)
             continue;
 
@@ -442,60 +442,60 @@ TextBlock.prototype.highlight = function(colorSpec) {
 };
 
 // works on elements and non-elements
-var isElementTag = function(node, tag) {
+const isElementTag = function(node, tag) {
     return node.nodeType === Node.ELEMENT_NODE
            && node.tagName === tag.toUpperCase();
 };
 
-var isElementTagBR = function(node) {
+const isElementTagBR = function(node) {
     return isElementTag(node, 'BR');
 };
 
-var metaTagsl = ['HEAD', 'TITLE', 'BASE', 'LINK', 'META', 'SCRIPT', 'STYLE'];
-var metaTags = new Set(metaTagsl);
+const metaTagsl = ['HEAD', 'TITLE', 'BASE', 'LINK', 'META', 'SCRIPT', 'STYLE'];
+const metaTags = new Set(metaTagsl);
 
 // tags is a Set
-var isElementTags = function(node, tags) {
+const isElementTags = function(node, tags) {
     return node.nodeType === Node.ELEMENT_NODE && tags.has(node.tagName);
 };
 
 // includes all element types containing meta info, not just <meta>
 // only check one node up
-var isInMetaTag = function(node) {
-    var elt = node;
+const isInMetaTag = function(node) {
+    let elt = node;
     if (elt.nodeType !== Node.ELEMENT_NODE)
         elt = elt.parentElement;
-    var inMetaTag = elt
-                 && elt.nodeType === Node.ELEMENT_NODE
-                 && isElementTags(elt, metaTags);
+    const inMetaTag = elt
+        && elt.nodeType === Node.ELEMENT_NODE
+        && isElementTags(elt, metaTags);
     return inMetaTag;
 };
 
-var inputTagsl = ['TEXTAREA', 'INPUT'];
-var inputTags = new Set(inputTagsl);
+const inputTagsl = ['TEXTAREA', 'INPUT'];
+const inputTags = new Set(inputTagsl);
 //only check one node up
-var isUserInput = function(node) {
-    var elt = node;
+const isUserInput = function(node) {
+    let elt = node;
     if (elt.nodeType !== Node.ELEMENT_NODE)
         elt = elt.parentElement;
-    var userInput = elt
-                 && elt.nodeType === Node.ELEMENT_NODE
-                 && isElementTags(elt, inputTags);
+    const userInput = elt
+        && elt.nodeType === Node.ELEMENT_NODE
+        && isElementTags(elt, inputTags);
     return userInput;
 };
 
-var nearestLineBreakNode = function(node) {
-    var cur = node;
+const nearestLineBreakNode = function(node) {
+    let cur = node;
     // <br> has style inline, so handle as a special case
     while (cur) {
-        var isElement = cur.nodeType === Node.ELEMENT_NODE;
-        var display = null;
+        const isElement = cur.nodeType === Node.ELEMENT_NODE;
+        let display = null;
         if (isElement) {
-            var computedStyle = window.getComputedStyle(cur);
+            const computedStyle = window.getComputedStyle(cur);
             if (computedStyle)
                 display = computedStyle.display;
         }
-        var isLineBreakNode = false;
+        let isLineBreakNode = false;
         // display check probably not necessary since we already filtered
         // text nodes with a display:none parent
         if (display
@@ -516,17 +516,17 @@ var nearestLineBreakNode = function(node) {
 };
 
 // whether single <br> should be considered as not separating a block
-var ALLOW_SINGLE_BR_WITHIN_BLOCK = true;
+const ALLOW_SINGLE_BR_WITHIN_BLOCK = true;
 
-var isVisible = function(textNode, docWidth, docHeight) {
-    var visible = true;
+const isVisible = function(textNode, docWidth, docHeight) {
+    let visible = true;
     if (textNode.parentElement !== null) {
-        var parent = textNode.parentElement;
-        var style = window.getComputedStyle(parent);
+        const parent = textNode.parentElement;
+        const style = window.getComputedStyle(parent);
         if (style) {
-            var nonVisibleStyle = style.color === 'rgba(0, 0, 0, 0)'
-                               || style.display === 'none'
-                               || style.visibility === 'hidden';
+            const nonVisibleStyle = style.color === 'rgba(0, 0, 0, 0)'
+                || style.display === 'none'
+                || style.visibility === 'hidden';
             if (nonVisibleStyle)
                 visible = false;
         } else {
@@ -543,9 +543,9 @@ var isVisible = function(textNode, docWidth, docHeight) {
     // TextNodes don't have a getBoundingClientRect method, so create a
     // range
     if (visible) {
-        var range = document.createRange();
+        const range = document.createRange();
         range.selectNode(textNode);
-        var rect = range.getBoundingClientRect();
+        const rect = range.getBoundingClientRect();
 
         // 'The amount of scrolling that has been done of the viewport
         // area (or any other scrollable element) is taken into account
@@ -553,23 +553,23 @@ var isVisible = function(textNode, docWidth, docHeight) {
         // https://developer.mozilla.org/en-US/docs/Web/API/Element/
         //         getBoundingClientRect
 
-        var sx = window.scrollX;
-        var sy = window.scrollY;
+        const sx = window.scrollX;
+        const sy = window.scrollY;
 
-        var top = rect.top + sy;
-        var bottom = rect.bottom + sy;
-        var left = rect.left + sx;
-        var right = rect.right + sx;
-        var height = rect.height;
-        var width = rect.width;
+        const top = rect.top + sy;
+        const bottom = rect.bottom + sy;
+        const left = rect.left + sx;
+        const right = rect.right + sx;
+        const height = rect.height;
+        const width = rect.width;
 
         // don't count stuff that's below the page as being invisible.
         // (top > docHeight)
         // in your experience, such content is not intended to be invisible.
-        var offPage = bottom < 0
-                      || right < 0
-                      || left > docWidth;
-        var zeroDim = width <= 0 || height <= 0;
+        const offPage = bottom < 0
+            || right < 0
+            || left > docWidth;
+        const zeroDim = width <= 0 || height <= 0;
         if (offPage || zeroDim)
             visible = false;
     }
@@ -577,82 +577,82 @@ var isVisible = function(textNode, docWidth, docHeight) {
     return visible;
 };
 
-var getTextBlocks = function(parseSentences) {
-    var html = document.documentElement;
-    var body = document.body;
+const getTextBlocks = function(parseSentences) {
+    const html = document.documentElement;
+    const body = document.body;
 
-    var docHeight = Math.max(html.clientHeight,
-                             html.scrollHeight,
-                             html.offsetHeight,
-                             body.scrollHeight,
-                             body.offsetHeight);
-    var docWidth = Math.max(html.clientWidth,
-                            html.scrollWidth,
-                            html.offsetWidth,
-                            body.scrollWidth,
-                            body.offsetWidth);
+    const docHeight = Math.max(html.clientHeight,
+        html.scrollHeight,
+        html.offsetHeight,
+        body.scrollHeight,
+        body.offsetHeight);
+    const docWidth = Math.max(html.clientWidth,
+        html.scrollWidth,
+        html.offsetWidth,
+        body.scrollWidth,
+        body.offsetWidth);
 
     // parseSentences defaults to true
     if (typeof parseSentences === 'undefined') {
       parseSentences = true;
     }
-    var leaves = []; // textnodes and <br>s
+    const leaves = []; // textnodes and <br>s
     // FILTER_SKIP will continue searching descendants. FILTER_REJECT will
     // not the following walker will traverse all non-empty text nodes and
     // <br>s you're getting leaves by keeping text nodes and <br> nodes.
     // Could possibly alternatively check for nodes with no children, but
     // what you did is fine since you're particularly interested in text
     // nodes and <br>s.
-    var walker = document.createTreeWalker(
+    const walker = document.createTreeWalker(
         document.body,
         NodeFilter.SHOW_ALL,
         function(node) {
-          var filter = NodeFilter.FILTER_SKIP;
-          var type = node.nodeType;
-          if (type === Node.TEXT_NODE
-              && !isInMetaTag(node)
-              && !/^\s+$/.test(node.textContent)
-              && isVisible(node, docWidth, docHeight))
-            filter = NodeFilter.FILTER_ACCEPT;
-          else if (isElementTagBR(node))
-            filter = NodeFilter.FILTER_ACCEPT;
-          return filter;
+            let filter = NodeFilter.FILTER_SKIP;
+            const type = node.nodeType;
+            if (type === Node.TEXT_NODE
+                && !isInMetaTag(node)
+                && !/^\s+$/.test(node.textContent)
+                && isVisible(node, docWidth, docHeight))
+                filter = NodeFilter.FILTER_ACCEPT;
+            else if (isElementTagBR(node))
+                filter = NodeFilter.FILTER_ACCEPT;
+            return filter;
         },
         false);
 
     while (walker.nextNode()) {
-        var leaf = walker.currentNode;
+        const leaf = walker.currentNode;
         leaves.push(leaf);
     }
 
-    var nlbns = [];  // nearest line break nodes
-    for (var i = 0; i < leaves.length; i++) {
-        var leaf = leaves[i];
-        var nlbn = nearestLineBreakNode(leaf);
+    const nlbns = [];  // nearest line break nodes
+    for (let i = 0; i < leaves.length; i++) {
+        const leaf = leaves[i];
+        const nlbn = nearestLineBreakNode(leaf);
         nlbns.push(nlbn);
     }
 
-    var blocks = []; // A list of TextBlocks
+    const blocks = []; // A list of TextBlocks
     // text nodes and possibly some <br>s if they are within a text block
-    var curTextNodes = [];
+    let curTextNodes = [];
     if (nlbns.length > 0 && !isElementTagBR(nlbns[0]))
         curTextNodes.push(leaves[0]);
 
-    var articleNodesl = readable.getArticle(false).getNodes();
-    var articleNodes = new Set(articleNodesl);
+    const articleNodesl = readable.getArticle(false).getNodes();
+    const articleNodes = new Set(articleNodesl);
 
-    for (var i = 1; i < leaves.length; i++) {
-        var leaf = leaves[i];
+    for (let i = 1; i < leaves.length; i++) {
+        const leaf = leaves[i];
 
         // if we only have a single <br>, add it
-        var brToAdd = false;
+        let brToAdd = false;
         if (ALLOW_SINGLE_BR_WITHIN_BLOCK && isElementTagBR(leaf)) {
-            var brBefore = i > 0 && isElementTagBR(nlbns[i-1]);
-            var brAfter = i < nlbns.length-1
-                       && isElementTagBR(nlbns[i+1]);
-            var sameNlbns = i > 0
-                         && i < nlbns.length-1
-                         && nlbns[i-1] === nlbns[i+1];
+            const brBefore = i > 0 && isElementTagBR(nlbns[i-1]);
+            const brAfter = i < nlbns.length - 1
+                && isElementTagBR(nlbns[i+1]);
+            const sameNlbns = i > 0
+                && i < nlbns.length - 1
+                && nlbns[i-1] === nlbns[i+1];
             if (!brBefore && !brAfter && sameNlbns) {
                 brToAdd = true;
                 // THE FOLLOWING LINE IS MODIFYING EXISTING STRUCTURE
@@ -660,18 +660,18 @@ var getTextBlocks = function(parseSentences) {
             }
         }
 
-        var nlbn = nlbns[i];
-        var lastNlbn = nlbns[i-1];
+        const nlbn = nlbns[i];
+        const lastNlbn = nlbns[i-1];
 
         if (nlbn !== lastNlbn && curTextNodes.length > 0) {
             // consider a TextBlock corresponding to readability if its
             // first node was extracted by readability
-            var readability = curTextNodes.length > 0
+            const readability = curTextNodes.length > 0
                            && articleNodes.has(curTextNodes[0]);
 
-            var tb = new TextBlock(curTextNodes,
-                                   parseSentences,
-                                   readability);
+            const tb = new TextBlock(curTextNodes,
+                parseSentences,
+                readability);
             if (!tb.blank)
                 blocks.push(tb);
             curTextNodes = [];
@@ -683,8 +683,8 @@ var getTextBlocks = function(parseSentences) {
     }
     if (curTextNodes.length > 0) {
         // same test as above (but we already checked curTextNodes.length)
-        var readability = articleNodes.has(curTextNodes[0]);
-        var tb = new TextBlock(curTextNodes, parseSentences, readability);
+        const readability = articleNodes.has(curTextNodes[0]);
+        const tb = new TextBlock(curTextNodes, parseSentences, readability);
         if (!tb.blank)
             blocks.push(tb);
     }
@@ -694,7 +694,7 @@ var getTextBlocks = function(parseSentences) {
 
 // this is probably built-in somewhere, but I'm not sure where
 // return a-b would also work (assuming just sign matters, not magnitude)
-var numberCompareFn = function(a, b) {
+const numberCompareFn = function(a, b) {
     if (a === b)
         return 0;
     if (a < b)
@@ -704,16 +704,16 @@ var numberCompareFn = function(a, b) {
 };
 
 // insertion position in sorted arr, using binary search
-var insertPos = function(n, arr, imin, compareFn) {
+const insertPos = function(n, arr, imin, compareFn) {
     imin = typeof imin !== 'undefined' ? imin : 0;
-    var imax = arr.length - 1;
-    var counter = 0;
+    let imax = arr.length - 1;
+    let counter = 0;
     while (imax >= imin) {
-        var imid = Math.floor((imax+imin) / 2);
+        const imid = Math.floor((imax+imin) / 2);
         // shouldn't happen. protection.
         if (imid < 0 || imid >= arr.length)
             return -1;
-        var positionCompare = compareFn(arr[imid], n);
+        const positionCompare = compareFn(arr[imid], n);
         if (positionCompare === 0)
             return imid;
         if (positionCompare < 0) {
@@ -737,20 +737,20 @@ var insertPos = function(n, arr, imin, compareFn) {
 
 // allow sentences across newlines (single <br>, per earlier in the
 // pipeline those could be maintained in a TextBlock)?
-var CROSS_BR = false;
+const CROSS_BR = false;
 
-var getSentences = function(nodes) {
-    var sentences = [];
-    var subblocks = [];
+const getSentences = function(nodes) {
+    const sentences = [];
+    let subblocks = [];
 
     if (CROSS_BR) {
-        subblocks = [nodes.filter(function(n){
-          return n.nodeType === Node.TEXT_NODE;})];
+        subblocks = [nodes.filter(function(n) {
+            return n.nodeType === Node.TEXT_NODE;})];
     } else {
-        var curblock = [];
-        for (var i = 0; i < nodes.length; i++) {
-            var n = nodes[i];
-            var nodeType = n.nodeType;
+        let curblock = [];
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i];
+            const nodeType = n.nodeType;
             if (nodeType === Node.ELEMENT_NODE && isElementTagBR(n)) {
                 if (curblock.length > 0) {
                     subblocks.push(curblock);
@@ -766,22 +766,23 @@ var getSentences = function(nodes) {
 
     // ends are the actual ends, not one position after
     // (like substring would use)
-    for (var i = 0; i < subblocks.length; i++) {
-        var block = subblocks[i];
+    for (let i = 0; i < subblocks.length; i++) {
+        const block = subblocks[i];
 
-        var nodeTextLens = block.map(function(e){
-          return e.textContent.length;});
+        const nodeTextLens = block.map(function(e) {
+            return e.textContent.length;
+        });
 
         // no need to worry about 0 length text. Those are filtered out
         // earlier in the pipeline
-        var nodeTextEnds = []; // cumulative sum of nodeTextLens
+        const nodeTextEnds = []; // cumulative sum of nodeTextLens
         if (nodeTextLens.length > 0) {
             nodeTextEnds.push(nodeTextLens[0]-1);
-            for (var j = 0; j < nodeTextLens.length-1; j++) {
+            for (let j = 0; j < nodeTextLens.length-1; j++) {
                 nodeTextEnds.push(nodeTextEnds[j] + nodeTextLens[j+1]);
             }
         }
-        var nodeTextStarts = [];
+        let nodeTextStarts = [];
         if (nodeTextEnds.length > 0) {
             nodeTextStarts = [0].concat(
                 nodeTextEnds.slice(
@@ -792,31 +793,31 @@ var getSentences = function(nodes) {
         // TODO: make sentences not start on white space
         // (but the next non-whitespace char)
 
-        var text = block.map(function(n){return n.textContent;}).join('');
+        const text = block.map(function(n){return n.textContent;}).join('');
 
-        var segs = NLP.sentenceSegments(text);
-        var ends = segs.ends; // sentence end indices
+        const segs = NLP.sentenceSegments(text);
+        const ends = segs.ends; // sentence end indices
         // flag for whether there was an actual end
         // (block ends may not have sentence ends)
-        var hasEnd = segs.hasEnd;
+        const hasEnd = segs.hasEnd;
 
         // WARN: handling for <pre> until you figure out a better place
         // <pre>'s are composed of their own special types of TextBlocks
         // this doesn't handle syntax highlighted code well. that will
         // need more complex handling.
-        var inPre = block.length > 0
-                 && descendantOfTag(block[0], 'pre', 5);
-        var endsAlready = new Set(ends);
+        const inPre = block.length > 0
+            && descendantOfTag(block[0], 'pre', 5);
+        const endsAlready = new Set(ends);
         if (inPre) {
-            var re = /[\n\r]{2,}/g;
-            var lastNewPos = 0;
+            const re = /[\n\r]{2,}/g;
+            let lastNewPos = 0;
             while ((match = re.exec(text)) !== null) {
-                var idx = match.index;
+                const idx = match.index;
                 if (endsAlready.has(idx)) continue;
-                var newPos = insertPos(idx,
-                                       ends,
-                                       lastNewPos,
-                                       numberCompareFn);
+                const newPos = insertPos(idx,
+                    ends,
+                    lastNewPos,
+                    numberCompareFn);
                 lastNewPos = newPos;
                 if (newPos >= 0) {
                     ends.splice(newPos, 0, idx);
@@ -825,39 +826,40 @@ var getSentences = function(nodes) {
             }
         }
 
-        var starts = [];
+        let starts = [];
         if (ends.length > 0) {
             starts = [0].concat(
-                ends.slice(0,ends.length-1).map(function(e){
-                  return e+1;}));
+                ends.slice(0, ends.length - 1).map(function(e) {
+                    return e + 1;
+                }));
         }
 
-        for (var j = 0; j < starts.length; j++) {
-            var start = starts[j]; // sentence start
-            var end = ends[j]; // sentence ends
-            var _hasEnd = hasEnd[j];
-            var sentenceNodes = [];
-            var maxL = -1;
-            for (var k = 0; k < nodeTextStarts.length; k++) {
+        for (let j = 0; j < starts.length; j++) {
+            const start = starts[j]; // sentence start
+            const end = ends[j]; // sentence ends
+            const _hasEnd = hasEnd[j];
+            const sentenceNodes = [];
+            let maxL = -1;
+            for (let k = 0; k < nodeTextStarts.length; k++) {
                 // we can skip some k if l went higher below
                 k = Math.max(maxL, k);
-                var nodeTextStartL = nodeTextStarts[k];
-                var nodeTextEndL = nodeTextEnds[k];
+                const nodeTextStartL = nodeTextStarts[k];
+                const nodeTextEndL = nodeTextEnds[k];
                 if (start > nodeTextEndL) continue;
-                var withinstart = start - nodeTextStartL;
+                const withinstart = start - nodeTextStartL;
                 sentenceNodes.push(block[k]);
-                for (var l = k; l < nodeTextStarts.length; l++) {
+                for (let l = k; l < nodeTextStarts.length; l++) {
                     maxL = Math.max(maxL, l);
-                    var nodeTextStartR = nodeTextStarts[l];
-                    var nodeTextEndR = nodeTextEnds[l];
+                    const nodeTextStartR = nodeTextStarts[l];
+                    const nodeTextEndR = nodeTextEnds[l];
                     if (end > nodeTextEndR) {
                         if (l > k)
                             sentenceNodes.push(block[l]);
                     } else {
-                        var withinend = end - nodeTextStartR;
+                        const withinend = end - nodeTextStartR;
                         if (l !== k)
                             sentenceNodes.push(block[l]);
-                        var sentenceToAdd = new Sentence(
+                        const sentenceToAdd = new Sentence(
                             sentenceNodes,
                             withinstart,
                             withinend,
@@ -878,46 +880,46 @@ var getSentences = function(nodes) {
  * Highlighting
  ***********************************/
 
-var isCode = function(textblock) {
+const isCode = function(textblock) {
     return textblock.nodes.length > 0
         && descendantOfTag(textblock.nodes[0], 'code', 8);
 };
 
-var getCandidates = function() {
-    var candidates = [];
-    var textblocks = getTextBlocks();
+const getCandidates = function() {
+    let candidates = [];
+    const textblocks = getTextBlocks();
 
     // min number of words to be a candidate
-    var WORD_COUNT_THRESHOLD = 3;
-    var CHAR_COUNT_MIN_THRESHOLD = 15; // min number of characters
-    var LINK_DENSITY_THRESHOLD = .75;
+    const WORD_COUNT_THRESHOLD = 3;
+    const CHAR_COUNT_MIN_THRESHOLD = 15; // min number of characters
+    const LINK_DENSITY_THRESHOLD = .75;
     // max number of words to be consdered a candidate
-    var CHAR_COUNT_MAX_THRESHOLD = 1000;
-    var AVG_WORD_LEN_THRESHOLD = 15;
+    const CHAR_COUNT_MAX_THRESHOLD = 1000;
+    const AVG_WORD_LEN_THRESHOLD = 15;
 
-    for (var h = 0; h < textblocks.length; h++) {
-        var tb = textblocks[h];
-        var sentences = tb.sentences;
-        var readability = tb.readability;
+    for (let h = 0; h < textblocks.length; h++) {
+        const tb = textblocks[h];
+        const sentences = tb.sentences;
+        const readability = tb.readability;
 
-        for (var i = 0; i < sentences.length; i++) {
-            var sentence = sentences[i];
+        for (let i = 0; i < sentences.length; i++) {
+            const sentence = sentences[i];
             // we never want to operate on user input
-            var userInput = sentence.nodes.length > 0
-                         && isUserInput(sentence.nodes[0]);
+            const userInput = sentence.nodes.length > 0
+                && isUserInput(sentence.nodes[0]);
             if (userInput)
                 continue;
 
             // candidates are sentences extracted from readability or other
             // sentences that have a sentence end along with some other
             // constraints.
-            var isCandidate = sentence.wordCount > WORD_COUNT_THRESHOLD
-                           && sentence.textLength > CHAR_COUNT_MIN_THRESHOLD
-                           && sentence.textLength < CHAR_COUNT_MAX_THRESHOLD
-                           && sentence.avgWordLength < AVG_WORD_LEN_THRESHOLD
-                           && sentence.linkDensity < LINK_DENSITY_THRESHOLD
-                           && !isCode(tb)
-                           && (readability || sentence.hasEnd);
+            let isCandidate = sentence.wordCount > WORD_COUNT_THRESHOLD
+                && sentence.textLength > CHAR_COUNT_MIN_THRESHOLD
+                && sentence.textLength < CHAR_COUNT_MAX_THRESHOLD
+                && sentence.avgWordLength < AVG_WORD_LEN_THRESHOLD
+                && sentence.linkDensity < LINK_DENSITY_THRESHOLD
+                && !isCode(tb)
+                && (readability || sentence.hasEnd);
 
             if (HIGHLIGHT_ALL)
                 isCandidate = true; // for debugging
@@ -936,11 +938,11 @@ var getCandidates = function() {
     // duplicates can be part of boilerplate, or also e.g., extracted
     // sentences that are featured in larger font size. Keep the first
     // occurence.
-    var uniques = new Set();
-    var _candidates = [];
-    for (var i = 0; i < candidates.length; i++) {
-        var candidate = candidates[i];
-        var text = candidate.text;
+    const uniques = new Set();
+    const _candidates = [];
+    for (let i = 0; i < candidates.length; i++) {
+        const candidate = candidates[i];
+        const text = candidate.text;
         if (!uniques.has(text))
             _candidates.push(candidate);
         uniques.add(text);
@@ -950,7 +952,7 @@ var getCandidates = function() {
     return candidates;
 };
 
-var ScoredCandidate = function(candidate, score, index, importance) {
+const ScoredCandidate = function(candidate, score, index, importance) {
     this.candidate = candidate;
     this.score = score;
     // index, relative to all original candidates
@@ -964,21 +966,21 @@ var ScoredCandidate = function(candidate, score, index, importance) {
 
 // return the candidates to highlight
 // cth = candidates to highlight
-var cth = function(highlightState) {
+const cth = function(highlightState) {
     // a candidate may be a TextBlock or a Sentence.
-    var candidates = getCandidates();
-    var scores = [];
-    var _tohighlight = [];
+    const candidates = getCandidates();
+    const scores = [];
+    let _tohighlight = [];
 
-    var cstems = candidates.map(function(c){
+    const cstems = candidates.map(function(c){
         return NLP.tokenormalize(c.text);});
     // term sentence frequency
     // (how many times a term appears in a sentence)
-    var tsf = new Map();
+    const tsf = new Map();
 
-    for (var i = 0; i < cstems.length; i++) {
-        var stems = cstems[i];
-        var _set = new Set(stems.keys());
+    for (let i = 0; i < cstems.length; i++) {
+        const stems = cstems[i];
+        const _set = new Set(stems.keys());
         _set.forEach(function(stem) {
             if (tsf.has(stem)) {
                 tsf.set(stem, tsf.get(stem) + 1);
@@ -988,24 +990,24 @@ var cth = function(highlightState) {
         });
     }
 
-    for (var i = 0; i < candidates.length; i++) {
-        var candidate = candidates[i];
-        var stems = cstems[i];
+    for (let i = 0; i < candidates.length; i++) {
+        const candidate = candidates[i];
+        const stems = cstems[i];
 
-        var score = 0;
+        let score = 0;
 
         stems.forEach(function(count, stem) {
-            var tsfScore = Math.log2(tsf.get(stem)) + 1;
+            const tsfScore = Math.log2(tsf.get(stem)) + 1;
             score += (count * tsfScore);
         });
 
         // reduce score of long sentences
         // (being long will give them more weight above)
-        var size = 0;
+        let size = 0;
         for (c of stems.values()) {
             size += c;
         }
-        var factor = 1.0 / (Math.log2(size) + 1);
+        const factor = 1.0 / (Math.log2(size) + 1);
         score *= factor;
 
         scores.push(new ScoredCandidate(candidate, score, i, null));
@@ -1020,7 +1022,7 @@ var cth = function(highlightState) {
     });
 
     // Maps number of highlight states to a map of highlight states to coverage ratios
-    var ratio_lookup = {
+    const ratio_lookup = {
         2: {1: 0.25},
         3: {1: 0.15, 2: 0.30},
         4: {1: 0.10, 2: 0.20, 3: 0.40}
@@ -1030,21 +1032,21 @@ var cth = function(highlightState) {
     if (HIGHLIGHT_ALL)
         ratio = 1; // debugging
 
-    var totalChars = 0;
-    for (var i = 0; i < scores.length; i++) {
-        var scored = scores[i];
-        var candidate = scored.candidate;
+    let totalChars = 0;
+    for (let i = 0; i < scores.length; i++) {
+        const scored = scores[i];
+        const candidate = scored.candidate;
         totalChars += candidate.textLength;
     }
 
-    var highlightCharCounter = 0;
+    let highlightCharCounter = 0;
 
-    for (var i = 0; i < scores.length; i++) {
-        var scored = scores[i];
+    for (let i = 0; i < scores.length; i++) {
+        const scored = scores[i];
         if (HIGHLIGHT_ALL) {
             scored.importance = 1;
         } else {
-            for (var j = 1; j < NUM_HIGHLIGHT_STATES; ++j) {
+            for (let j = 1; j < NUM_HIGHLIGHT_STATES; ++j) {
                 if (highlightCharCounter <= ratio_lookup[NUM_HIGHLIGHT_STATES][j] * totalChars) {
                     scored.importance = j;
                     break;
@@ -1067,10 +1069,10 @@ var cth = function(highlightState) {
     // were looping over _tohighlight, but changed to looping over
     // everything. since you may only have one _tohighlight candidate,
     // which may not have a period.
-    var haveOne = false;
-    for (var i = 0; i < scores.length; i++) {
-        var scored = scores[i];
-        var cand = scored.candidate;
+    let haveOne = false;
+    for (let i = 0; i < scores.length; i++) {
+        const scored = scores[i];
+        const cand = scored.candidate;
         if (cand instanceof Sentence && cand.hasEnd) {
             haveOne = true;
             break;
@@ -1083,7 +1085,7 @@ var cth = function(highlightState) {
     return _tohighlight;
 };
 
-var updateHighlightState = function(highlightState, success) {
+const updateHighlightState = function(highlightState, success) {
     chrome.runtime.sendMessage(
         {
             'message': 'updateHighlightState',
@@ -1092,12 +1094,12 @@ var updateHighlightState = function(highlightState, success) {
         });
 };
 
-var isEmbed = window !== window.parent; // am I in an iframe?
+const isEmbed = window !== window.parent; // am I in an iframe?
 
 // unlike isEmbed, hasEmbed can change, so make it a function
 // even checking for iframe doesn't fix the problem since that can change
 // too.
-var hasEmbed = function() {
+const hasEmbed = function() {
     return window.frames && window.frames.length > 0;
 };
 
@@ -1105,12 +1107,12 @@ var hasEmbed = function() {
 // able to call frames[0].document, if the frame was cross domain, but from
 // the extension it works. This even worked from the extension when you
 // tried with 'all_frames' set to false
-var somethingHighlighted = function(win) {
-    var sh = win.document.getElementsByClassName(innerClassName).length > 0;
+const somethingHighlighted = function(win) {
+    let sh = win.document.getElementsByClassName(innerClassName).length > 0;
     if (!sh) {
-        var nframes = win.frames.length;
-        for (var i = 0; i < nframes; i++) {
-            var _frame = win.frames[i];
+        const nframes = win.frames.length;
+        for (let i = 0; i < nframes; i++) {
+            const _frame = win.frames[i];
             sh = sh || somethingHighlighted(_frame);
             if (sh) break;
         }
@@ -1118,50 +1120,50 @@ var somethingHighlighted = function(win) {
     return sh;
 };
 
-var contentType = document.contentType;
+const contentType = document.contentType;
 // maybe all text/* ???
-var compatible = document.doctype !== null
+const compatible = document.doctype !== null
     || contentType.indexOf('text/html') > -1
     || contentType.indexOf('text/plain') > -1;
 
 // callback takes two args: a number indicating highlight state, and
 // boolean for success
-var getHighlightState = function(callback) {
-    var message = {'message': 'getHighlightState'};
+const getHighlightState = function(callback) {
+    const message = {'message': 'getHighlightState'};
     chrome.runtime.sendMessage(message, function(response) {
-        var curHighlight = response['curHighlight'];
-        var curSuccess = response['curSuccess'];
+        const curHighlight = response['curHighlight'];
+        const curSuccess = response['curSuccess'];
         callback(curHighlight, curSuccess);
     });
 };
 
 // useful for debugging sentence boundary detection
-var cycleCurColor = 0;
-var getNextColor = function() {
-    var yellow = '#FFFF00';
-    var pale_green = '#98FB98';
-    var black = '#000000';
-    var red = '#FF0000';
-    var highlightColor = cycleCurColor === 0 ? yellow : pale_green;
-    var colorSpec = new ColorSpec(highlightColor, black, red);
+let cycleCurColor = 0;
+const getNextColor = function() {
+    const yellow = '#FFFF00';
+    const pale_green = '#98FB98';
+    const black = '#000000';
+    const red = '#FF0000';
+    const highlightColor = cycleCurColor === 0 ? yellow : pale_green;
+    const colorSpec = new ColorSpec(highlightColor, black, red);
     cycleCurColor = (cycleCurColor+1) % 2;
     return colorSpec;
 };
 
 // hacky way to trim spaces if we're not highlighting the preceding
 // sentence destructively modifies its input
-var trimSpaces = function(scoredCandsToHighlight) {
-    for (var j = scoredCandsToHighlight.length-1; j >= 0; j--) {
-        var scoredCand = scoredCandsToHighlight[j];
+const trimSpaces = function(scoredCandsToHighlight) {
+    for (let j = scoredCandsToHighlight.length-1; j >= 0; j--) {
+        const scoredCand = scoredCandsToHighlight[j];
         // could just check the first element earlier, but this is safer
         // (in case multiple types to highlight)
         if (!(scoredCand.candidate instanceof Sentence)) continue;
         // we definitely want to trim first sentence
-        var toTrim = j === 0;
+        let toTrim = j === 0;
         if (j >= 1) {
-            var curIndex = scoredCand.index;
-            var prev = scoredCandsToHighlight[j-1];
-            var prevIndex = prev.index;
+            const curIndex = scoredCand.index;
+            const prev = scoredCandsToHighlight[j-1];
+            const prevIndex = prev.index;
 
             // we want to trim if the preceding candidate is not going
             // to be highlighted
@@ -1175,8 +1177,8 @@ var trimSpaces = function(scoredCandsToHighlight) {
             if (curIndex === prevIndex+1) {
                 // could store whether sentence starts TextBlock,
                 // but let's just check with nearestLineBreakNode()
-                var candNodes = scoredCand.candidate.nodes;
-                var prevNodes = prev.candidate.nodes;
+                const candNodes = scoredCand.candidate.nodes;
+                const prevNodes = prev.candidate.nodes;
                 if (candNodes.length > 0
                         && prevNodes.length > 0
                         && (nearestLineBreakNode(candNodes[0])
@@ -1215,14 +1217,14 @@ const tintColor = function(color, level) {
 
 // keep track of last highlight time, so our timers only operate if we
 // haven't received new highlight requests
-var lastHighlight = (new Date()).getTime();
+let lastHighlight = (new Date()).getTime();
 // you were originally managing highlightState in here. But then when you
 // added iframe support, highlightState management was moved to eventPage.js,
 // so it now gets passed along as an arg. This prevents different iframes
 // from being in different states, in case they were loaded at different
 // times (e.g., one before a highlight and one loaded after)
-var highlight = function(highlightState) {
-    var time = (new Date()).getTime();
+const highlight = function(highlightState) {
+    const time = (new Date()).getTime();
     lastHighlight = time;
     // Where the background page is Inactive
     // (when using 'persistent': false),
@@ -1238,22 +1240,22 @@ var highlight = function(highlightState) {
     } else if (highlightState > 0) {
         updateHighlightState(highlightState, null); // loading
         // use a callback so icon updates right away
-        var fn = function() {
+        const fn = function() {
             removeHighlight();
-            var scoredCandsToHighlight = cth(highlightState);
+            const scoredCandsToHighlight = cth(highlightState);
             trimSpaces(scoredCandsToHighlight);
             // have to loop backwards since splitting text nodes
-            for (var j = scoredCandsToHighlight.length-1; j >= 0; j--) {
+            for (let j = scoredCandsToHighlight.length-1; j >= 0; j--) {
                 let highlightColor = OPTIONS['highlight_color'];
                 if (OPTIONS['tinted_highlights']) {
-                    var importance = scoredCandsToHighlight[j].importance;
+                    const importance = scoredCandsToHighlight[j].importance;
                     // XXX: Ad-hoc formula can be improved.
                     highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
                 }
-                var colorSpec = new ColorSpec(
+                const colorSpec = new ColorSpec(
                     highlightColor, OPTIONS['text_color'], OPTIONS['link_color']);
-                var candidate = scoredCandsToHighlight[j].candidate;
-                var c = CYCLE_COLORS ? getNextColor() : colorSpec;
+                const candidate = scoredCandsToHighlight[j].candidate;
+                const c = CYCLE_COLORS ? getNextColor() : colorSpec;
                 candidate.highlight(c);
             }
 
@@ -1263,8 +1265,8 @@ var highlight = function(highlightState) {
             // icon doesn't flash from no success to success.
             // also, you probably don't *need* to set this up to avoid
             // closure issues, but just in case...
-            var success = scoredCandsToHighlight.length > 0;
-            var notify = (function(state, _success) {
+            const success = scoredCandsToHighlight.length > 0;
+            const notify = (function(state, _success) {
                 return function() {
                     // if we have no highlighting, success is false.
                     // also let background page know if we do have success
@@ -1275,8 +1277,8 @@ var highlight = function(highlightState) {
                 };
             })(highlightState, success);
 
-            var delayMs = 200; // milliseconds
-            var shouldDelay = !success && (isEmbed || hasEmbed());
+            const delayMs = 200; // milliseconds
+            const shouldDelay = !success && (isEmbed || hasEmbed());
             if (shouldDelay) {
                 UTILS.setTimeoutIgnore(notify, delayMs);
             } else {
@@ -1284,7 +1286,7 @@ var highlight = function(highlightState) {
             }
 
             // if we don't have success, turn off icon in 2 seconds
-            var turnoffdelay = 2000;
+            const turnoffdelay = 2000;
             if (!success) {
                 UTILS.setTimeoutIgnore(function() {
                     getHighlightState(function(curHighlight, curSuccess) {
@@ -1304,13 +1306,20 @@ var highlight = function(highlightState) {
 };
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    var method = request.method;
+    const method = request.method;
     if (method === 'highlight') {
         // it's possible we're in an iframe with non-compatible content,
         // so check...
         if (compatible) {
-            var highlightState = request.highlightState;
-            highlight(highlightState);
+            const highlightState = request.highlightState;
+            const delay = request.delay;
+            if (delay === null || delay === undefined) {
+                highlight(highlightState);
+            } else {
+                setTimeout(function() {
+                    highlight(highlightState);
+                }, delay);
+            }
         }
     } else if (method === 'updateOptions') {
         OPTIONS = request.data;
@@ -1340,7 +1349,7 @@ if (!isEmbed && compatible) {
     // file with lots of elements to consider' in 2007,
     // http://ejohn.org/blog/getelementsbyclassname-speed-comparison/)
 
-    var interval = 1200;
+    const interval = 1200;
 
     UTILS.safeSetInterval(function() {
         getHighlightState(function(curHighlight, curSuccess) {
@@ -1348,7 +1357,7 @@ if (!isEmbed && compatible) {
             // curHighlight > 0 and !curSuccess,
             // since we don't keep that icon active for more than X seconds
 
-            var diff = (new Date().getTime()) - lastHighlight;
+            const diff = (new Date().getTime()) - lastHighlight;
 
             if (diff >= interval
                 && curHighlight > 0
