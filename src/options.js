@@ -1,31 +1,31 @@
-var curTimer = null;
-var statusMessage = function(message, time) {
+let curTimer = null;
+const statusMessage = function(message, time) {
     time = (typeof time === 'undefined') ? 1500 : time;
-    var element = document.getElementById('status');
+    const element = document.getElementById('status');
     if (curTimer)
         clearTimeout(curTimer);
     element.innerText = message;
-    var timer = setTimeout(function() {
+    const timer = setTimeout(function() {
         element.innerText = '';
         curTimer = null;
     }, time);
     curTimer = timer;
 };
 
-var backgroundPage = chrome.extension.getBackgroundPage();
+const backgroundPage = chrome.extension.getBackgroundPage();
 
-var highlightColorInput = document.getElementById('highlight-color');
-var textColorInput = document.getElementById('text-color');
-var linkColorInput = document.getElementById('link-color');
-var tintedHighlightsInput = document.getElementById('tinted-highlights');
+const highlightColorInput = document.getElementById('highlight-color');
+const textColorInput = document.getElementById('text-color');
+const linkColorInput = document.getElementById('link-color');
+const tintedHighlightsInput = document.getElementById('tinted-highlights');
 
-var exampleTextElement = document.getElementById('example-text');
-var exampleLinkElement = document.getElementById('example-link');
+const exampleTextElement = document.getElementById('example-text');
+const exampleLinkElement = document.getElementById('example-link');
 
-var globalHighlightIcons = document.getElementById('global-highlight-icons');
-var globalHighlightRevokeButton = document.getElementById('revoke_permissions');
+const globalHighlightIcons = document.getElementById('global-highlight-icons');
+const globalHighlightRevokeButton = document.getElementById('revoke_permissions');
 
-var versionElement = document.getElementById('version');
+const versionElement = document.getElementById('version');
 
 versionElement.innerText = backgroundPage.getVersion();
 
@@ -34,11 +34,11 @@ versionElement.innerText = backgroundPage.getVersion();
  ***********************************/
 
 // Propagates and saves options.
-var propagateOptions = function() {
-    highlightColor = highlightColorInput.value;
-    textColor = textColorInput.value;
-    linkColor = linkColorInput.value;
-    tintedHighlights = tintedHighlightsInput.checked;
+const propagateOptions = function() {
+    const highlightColor = highlightColorInput.value;
+    const textColor = textColorInput.value;
+    const linkColor = linkColorInput.value;
+    const tintedHighlights = tintedHighlightsInput.checked;
 
     // Update example text
     exampleTextElement.style.backgroundColor = highlightColor;
@@ -47,7 +47,7 @@ var propagateOptions = function() {
     exampleLinkElement.style.color = linkColor;
 
     // Save options
-    var options = Object.create(null);
+    const options = Object.create(null);
     options['highlight_color'] = highlightColor;
     options['text_color'] = textColor;
     options['link_color'] = linkColor;
@@ -57,8 +57,8 @@ var propagateOptions = function() {
 
     // Notify tabs of the options
     chrome.tabs.query({}, function(tabs) {
-        for (var i = 0; i < tabs.length; i++) {
-            var tab = tabs[i];
+        for (let i = 0; i < tabs.length; i++) {
+            const tab = tabs[i];
             chrome.tabs.sendMessage(
                 tab.id,
                 {method: 'updateOptions', data: options},
@@ -73,7 +73,7 @@ var propagateOptions = function() {
     });
 };
 
-var loadOptions = function(opts) {
+const loadOptions = function(opts) {
     highlightColorInput.value = opts['highlight_color'];
     textColorInput.value = opts['text_color'];
     linkColorInput.value = opts['link_color'];
@@ -83,7 +83,7 @@ var loadOptions = function(opts) {
     propagateOptions();
 };
 
-var initOpts = JSON.parse(localStorage['options']);
+const initOpts = JSON.parse(localStorage['options']);
 
 // restore saved options
 document.addEventListener('DOMContentLoaded', function() {
@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // load default options
 document.getElementById('defaults').addEventListener('click', function() {
-    var defaults = backgroundPage.defaultOptions();
+    const defaults = backgroundPage.defaultOptions();
     loadOptions(defaults);
     statusMessage('Defaults Loaded', 1200);
 });
@@ -124,7 +124,7 @@ if (backgroundPage.NUM_HIGHLIGHT_STATES < 3) {
  ***********************************/
 
 // permissions required for global highlighting
-var globalHighlightPermissions = {
+const globalHighlightPermissions = {
     permissions: ['tabs'],
     origins: ['<all_urls>']
 };
@@ -152,7 +152,7 @@ for (let i = 0; i < backgroundPage.NUM_HIGHLIGHT_STATES; ++i) {
     globalHighlightIcons.appendChild(img);
 }
 
-var revokePermissions = function () {
+const revokePermissions = function () {
     chrome.permissions.remove(
         globalHighlightPermissions,
         function(removed) {

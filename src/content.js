@@ -1316,7 +1316,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             if (delay === null || delay === undefined) {
                 highlight(highlightState);
             } else {
-                setTimeout(function() {
+                UTILS.setTimeoutIgnore(function() {
                     highlight(highlightState);
                 }, delay);
             }

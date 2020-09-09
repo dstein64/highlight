@@ -1,48 +1,63 @@
 // TODO: Use consistent variable naming (camel case or underscores, not both)
 
+const USER_AGENT = navigator.userAgent.toLowerCase();
+
+// total number of highlight states (min 2, max 4).
+let NUM_HIGHLIGHT_STATES = 4;
+// Firefox for mobile, doesn't show an browserAction icon, so only use two highlight
+// states (on and off).
+if (USER_AGENT.indexOf('android') > -1 && USER_AGENT.indexOf('firefox') > -1)
+    NUM_HIGHLIGHT_STATES = 2;
+
 // *****************************
 // * Utilities and Options
 // *****************************
 
-// this is called from options.js.
-var getVersion = function() {
+// This is called from options.js. Proper scope is necessary (e.g., using
+// a function declaration beginning with a 'function', or using a function
+// expression beginning with 'var', but not a function expression beginning
+// with 'let' or 'const').
+function getVersion() {
     return chrome.runtime.getManifest().version;
-};
+}
 
-var getOptions = function() {
-    var opts = localStorage['options'];
+const getOptions = function() {
+    let opts = localStorage['options'];
     if (opts) {
         opts = JSON.parse(opts);
     }
     return opts;
 };
 
-var defaultOptions = function() {
-    var options = Object.create(null);
-    var yellow = '#FFFF00';
-    var black = '#000000';
-    var red = '#FF0000';
+const defaultOptions = function() {
+    const options = Object.create(null);
+    const yellow = '#FFFF00';
+    const black = '#000000';
+    const red = '#FF0000';
     options['highlight_color'] = yellow;
     options['text_color'] = black;
     options['link_color'] = red;
     options['tinted_highlights'] = false;
+    options['autonomous'] = false;
+    options['autonomous_delay'] = 0;
+    options['autonomous_state'] = 2;
     return options;
 };
 
 // Validate options
 (function() {
-    var opts = getOptions();
+    let opts = getOptions();
     if (!opts) {
         opts = Object.create(null);
     }
 
-    var defaults = defaultOptions();
+    const defaults = defaultOptions();
 
     // Set missing options using defaults.
 
-    var default_keys = Object.keys(defaults);
-    for (var i = 0; i < default_keys.length; i++) {
-        var default_key = default_keys[i];
+    const default_keys = Object.keys(defaults);
+    for (let i = 0; i < default_keys.length; i++) {
+        const default_key = default_keys[i];
         if (!(default_key in opts)) {
             opts[default_key] = defaults[default_key];
         }
@@ -50,9 +65,9 @@ var defaultOptions = function() {
 
     // Remove unknown options (these may have been set
     // by previous versions of the extension).
-    var opt_keys = Object.keys(opts);
-    for (var i = 0; i < opt_keys.length; i++) {
-        var opt_key = opt_keys[i];
+    const opt_keys = Object.keys(opts);
+    for (let i = 0; i < opt_keys.length; i++) {
+        const opt_key = opt_keys[i];
         if (!(opt_key in defaults)) {
             delete opts[opt_key];
         }
@@ -65,19 +80,10 @@ var defaultOptions = function() {
 // * Core
 // *****************************
 
-var USER_AGENT = navigator.userAgent.toLowerCase();
-
-// total number of highlight states (min 2, max 4).
-var NUM_HIGHLIGHT_STATES = 4;
-// Firefox for mobile, doesn't show an browserAction icon, so only use two highlight
-// states (on and off).
-if (USER_AGENT.indexOf('android') > -1 && USER_AGENT.indexOf('firefox') > -1)
-    NUM_HIGHLIGHT_STATES = 2;
-
 // a highlightState is a list with highlight state and success state
 // this is used to manage highlight state, particularly for keeping
 // icon in sync, and telling content.js what state to change to
-var tabIdToHighlightState = new Map();
+const tabIdToHighlightState = new Map();
 
 chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
     // don't have to check if tabId in map. delete will still work, but
@@ -85,13 +91,13 @@ chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
     tabIdToHighlightState.delete(tabId);
 });
 
-var highlightStateToIconId = function(state) {
+const highlightStateToIconId = function(state) {
     return state + (state > 0 ? 4 - NUM_HIGHLIGHT_STATES : 0);
 };
 
 // updates highlight state in tabIdToHighlightState, and also used to
 // show the correct highlight icon
-var updateHighlightState = function(tabId, highlight, success) {
+const updateHighlightState = function(tabId, highlight, success) {
     // null represents 'unknown'
     // true should always clobber false (for iframes)
     success = (typeof success) === 'undefined' ? null : success;
@@ -99,10 +105,10 @@ var updateHighlightState = function(tabId, highlight, success) {
     // to unsuccessful highlighting. This is to accommodate that different
     // iframes can send conflicting status.
     // If one succeeded, keep that state
-    var curHighlight = 0;
-    var curSuccess = null;
+    let curHighlight = 0;
+    let curSuccess = null;
     if (tabIdToHighlightState.has(tabId)) {
-        var curState = tabIdToHighlightState.get(tabId);
+        const curState = tabIdToHighlightState.get(tabId);
         curHighlight = curState[0];
         curSuccess = curState[1];
         // could just check (curSuccess), but since null has meaning too,
@@ -125,7 +131,7 @@ var updateHighlightState = function(tabId, highlight, success) {
     // now that we've updated state, show the corresponding icon.
     // for highlight states greater than 0, jump to a less-full highlighter icon if there are less
     // than 4 total highlight states.
-    var iconName = highlightStateToIconId(highlight) + 'highlight';
+    let iconName = highlightStateToIconId(highlight) + 'highlight';
     if (success === false)
         iconName = 'Xhighlight';
 
@@ -142,15 +148,15 @@ var updateHighlightState = function(tabId, highlight, success) {
 };
 
 chrome.runtime.onMessage.addListener(function(request, sender, response) {
-    var proceed = request && sender && sender.tab;
+    const proceed = request && sender && sender.tab;
     if (!proceed)
         return;
-    var message = request.message;
-    var tabId = sender.tab.id;
+    const message = request.message;
+    const tabId = sender.tab.id;
     if (message === 'updateHighlightState') {
         updateHighlightState(tabId, request.highlight, request.success);
     } else if (message === 'getHighlightState') {
-        var highlightState = tabIdToHighlightState.get(tabId);
+        const highlightState = tabIdToHighlightState.get(tabId);
         response({
             'curHighlight': highlightState[0],
             'curSuccess': highlightState[1]});
@@ -165,8 +171,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
     //              chrome-extension-message-passing-response-not-sent
 });
 
-var inject = function(tabId, callback=function() {}) {
-    var scripts = [
+const inject = function(tabId, callback=function() {}) {
+    const scripts = [
         'src/lib/readabilitySAX/readabilitySAX.js',
         'src/lib/Porter-Stemmer/PorterStemmer1980.js',
         'src/nlp.js',
@@ -175,7 +181,7 @@ var inject = function(tabId, callback=function() {}) {
         'src/style.css'
     ];
     let fn = callback;
-    for (var i = scripts.length - 1; i >= 0; --i) {
+    for (let i = scripts.length - 1; i >= 0; --i) {
         let script = scripts[i];
         let fn_ = fn;
         fn = function() {
@@ -192,15 +198,16 @@ var inject = function(tabId, callback=function() {}) {
 };
 
 // setting state to null results in automatically incrementing the state.
-var highlight = function(tabId, showError, state=null) {
-    var sendHighlightMessage = function() {
+const highlight = function(tabId, showError, state=null, delay=null) {
+    const sendHighlightMessage = function() {
         if (state === null)
             state = (tabIdToHighlightState.get(tabId)[0] + 1) % NUM_HIGHLIGHT_STATES;
         chrome.tabs.sendMessage(
             tabId,
             {
                 method: 'highlight',
-                highlightState: state
+                highlightState: state,
+                delay: delay
             });
     };
     // First check if the current page is supported by trying to inject no-op code.
@@ -231,14 +238,28 @@ var highlight = function(tabId, showError, state=null) {
         });
 };
 
-// this is called from options.js.
-var highlightAll = function(state) {
+// Add a listener for loading new pages, for the autonomous highlight
+// functionality. Without the proper tabs permissions, highlighting will
+// fail (the tabs events can seemingly still be listened for, without some
+// information like URL, and without the ability to inject javascript).
+chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+    const options = getOptions();
+    if (options.autonomous && changeInfo.status === 'complete') {
+        highlight(tab.id, false, options.autonomous_state, options.autonomous_delay);
+    }
+});
+
+// This is called from options.js. Proper scope is necessary (e.g., using
+// a function declaration beginning with a 'function', or using a function
+// expression beginning with 'var', but not a function expression beginning
+// with 'let' or 'const').
+function highlightAll(state) {
     chrome.tabs.query({}, function(tabs) {
-        for (var i = 0; i < tabs.length; ++i) {
+        for (let i = 0; i < tabs.length; ++i) {
             highlight(tabs[i].id, false, state);
         }
     });
-};
+}
 
 chrome.browserAction.onClicked.addListener(function(tab) {
     highlight(tab.id, true, null);
