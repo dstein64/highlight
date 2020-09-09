@@ -29,7 +29,11 @@ const getOptions = function() {
     return opts;
 };
 
-const defaultOptions = function() {
+// This is called from options.js. Proper scope is necessary (e.g., using
+// a function declaration beginning with a 'function', or using a function
+// expression beginning with 'var', but not a function expression beginning
+// with 'let' or 'const').
+function defaultOptions() {
     const options = Object.create(null);
     const yellow = '#FFFF00';
     const black = '#000000';
@@ -42,7 +46,7 @@ const defaultOptions = function() {
     options['autonomous_delay'] = 0;
     options['autonomous_state'] = 2;
     return options;
-};
+}
 
 // Validate options
 (function() {
