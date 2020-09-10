@@ -18,8 +18,12 @@ body {
     margin-top: 20px;
 }
 
-table td:first-child {
+table#table td:first-child {
   text-align: center;
+}
+
+#autonomous-delay-value {
+  font-family: monospace;
 }
 
 /*
@@ -36,9 +40,9 @@ table td:first-child {
 <body>
 
 <div id="container">
-<h3><em>Auto Highlight</em> v<span id="version" onclick="alert('hi'); return false"></span></h3>
+<h3><em>Auto Highlight</em> v<span id="version"></span></h3>
 <h2>Options</h2>
-<table>
+<table id="table">
   <tr>
     <td><input type="color" id="highlight-color"></td>
     <td><label for="highlight-color">Highlight Color</label></td>
@@ -55,6 +59,29 @@ table td:first-child {
     <td><input type="checkbox" id="tinted-highlights"></td>
     <td><label for="tinted-highlights">Tinted Highlights</label></td>
   </tr>
+  <tr>
+    <td><input type="checkbox" id="autonomous-highlights"></td>
+    <td><label for="autonomous-highlights">Autonomous Highlights</label></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td>
+      <table>
+        <tr>
+          <td id="autonomous-delay-value"></td>
+          <td>
+            <input type="range" id="autonomous-delay" name="vol" min="0" max="5000">
+          </td>
+          <td>Delay</td>
+        </tr>
+        <tr class="at-least-ternary">
+          <td></td>
+          <td id="autonomous-state"></td>
+          <td>State</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
 </table>
 <p class="example">Example <span id="example-text">highlighted text</span>.</p>
 <p class="example">Example <a href="#" id="example-link">highlighted link</a>.</p>
@@ -62,6 +89,13 @@ table td:first-child {
   <em>Tinted Highlights</em> toggles whether highlights are tinted based on
   predicted sentence importance. Lower importance sentences, which receive
   more tinting, are highlighted with subsequent clicks of the highlighter icon.
+</p>
+<p>
+  <em>Autonomous Highlights</em> toggles whether pages are highlighted
+  upon loading, without requiring user interaction. <em>Delay</em> specifies
+  how many seconds to wait&mdash;after loading a page&mdash;until autonomous
+  highlighting is applied.<span class="at-least-ternary"> <em>State</em> controls
+  the amount of autonomous highlighting.</span>
 </p>
 <button id="defaults">Defaults</button>
 <button id="revert">Revert</button>
@@ -75,7 +109,7 @@ table td:first-child {
 <h2>Permissions</h2>
 <p>
   The button below can be used to revoke additional permissions that were
-  granted for optional functionality.
+  granted for optional functionality (which will be subsequently disabled).
 </p>
 <button disabled="true" id="revoke_permissions">Revoke</button>
 </div>

@@ -14,16 +14,23 @@ const statusMessage = function(message, time) {
 
 const backgroundPage = chrome.extension.getBackgroundPage();
 
+const numHighlightStates = backgroundPage.getNumHighlightStates();
+
 const highlightColorInput = document.getElementById('highlight-color');
 const textColorInput = document.getElementById('text-color');
 const linkColorInput = document.getElementById('link-color');
 const tintedHighlightsInput = document.getElementById('tinted-highlights');
+const autonomousHighlightsInput = document.getElementById('autonomous-highlights');
+const autonomousDelayInput = document.getElementById('autonomous-delay');
+const autonomousDelayValue = document.getElementById('autonomous-delay-value');
+const autonomousStateInputs = document.getElementById('autonomous-state');
 
 const exampleTextElement = document.getElementById('example-text');
 const exampleLinkElement = document.getElementById('example-link');
 
 const globalHighlightIcons = document.getElementById('global-highlight-icons');
-const globalHighlightRevokeButton = document.getElementById('revoke_permissions');
+
+const revokeButton = document.getElementById('revoke_permissions');
 
 const versionElement = document.getElementById('version');
 
@@ -33,12 +40,68 @@ versionElement.innerText = backgroundPage.getVersion();
  * Options
  ***********************************/
 
+const autonomousHighlightsPermissions = {
+    permissions: ['tabs'],
+    origins: ['<all_urls>']
+};
+
+// 'active' indicates whether the function is initiated through a user gesture. This
+// is required to avoid "This function must be called during a user gesture".
+const setAutonomousHighlights = function(value, active, callback) {
+    const fn = active ? chrome.permissions.request : chrome.permissions.contains;
+    if (value) {
+        fn(
+            autonomousHighlightsPermissions,
+            function(result) {
+                autonomousHighlightsInput.checked = result;
+                if (result)
+                    revokeButton.disabled = false;
+                callback();
+            });
+    } else {
+        autonomousHighlightsInput.checked = false;
+        callback();
+    }
+};
+
+const showAutonomousDelay = function() {
+    const milliseconds = parseInt(autonomousDelayInput.value);
+    const seconds = milliseconds / 1000;
+    autonomousDelayValue.innerText = seconds.toFixed(1);
+};
+
+// create autonomous state radio inputs
+for (let i = 1; i < numHighlightStates; ++i) {
+    const input = document.createElement('input');
+    autonomousStateInputs.appendChild(input);
+    input.type = 'radio';
+    input.name = 'autonomous-state';
+    input.value = i;
+    const id = `autonomous-state-${i}`;
+    input.id = id;
+
+    const label = document.createElement('label');
+    autonomousStateInputs.appendChild(label);
+    label.htmlFor = id;
+
+    const img = document.createElement('img');
+    label.appendChild(img);
+    const iconName = backgroundPage.highlightStateToIconId(i) + 'highlight';
+    img.src = '../icons/' + iconName + '38x38.png';
+    img.height = 19;
+    img.width = 19;
+}
+
 // Propagates and saves options.
 const propagateOptions = function() {
     const highlightColor = highlightColorInput.value;
     const textColor = textColorInput.value;
     const linkColor = linkColorInput.value;
     const tintedHighlights = tintedHighlightsInput.checked;
+    const autonomousHighlights = autonomousHighlightsInput.checked;
+    const autonomousDelay = parseInt(autonomousDelayInput.value);
+    const autonomousState = parseInt(
+        autonomousStateInputs.querySelector('input:checked').value);
 
     // Update example text
     exampleTextElement.style.backgroundColor = highlightColor;
@@ -52,6 +115,9 @@ const propagateOptions = function() {
     options['text_color'] = textColor;
     options['link_color'] = linkColor;
     options['tinted_highlights'] = tintedHighlights;
+    options['autonomous_highlights'] = autonomousHighlights;
+    options['autonomous_delay'] = autonomousDelay;
+    options['autonomous_state'] = autonomousState;
 
     localStorage['options'] = JSON.stringify(options);
 
@@ -73,14 +139,23 @@ const propagateOptions = function() {
     });
 };
 
-const loadOptions = function(opts) {
+const loadOptions = function(opts, active=false) {
     highlightColorInput.value = opts['highlight_color'];
     textColorInput.value = opts['text_color'];
     linkColorInput.value = opts['link_color'];
     tintedHighlightsInput.checked = opts['tinted_highlights'];
-    // onchange/oninput won't fire when loading options with javascript,
-    // so trigger handleChange manually.
-    propagateOptions();
+    setAutonomousHighlights(opts['autonomous_highlights'], active, function() {
+        autonomousDelayInput.value = opts['autonomous_delay'];
+        showAutonomousDelay();
+        document.getElementById(
+            `autonomous-state-${opts['autonomous_state']}`).checked = true;
+        // WARN: calling propagateOptions is not specific for autonomous
+        // highlights, but rather for all the settings above. It's called
+        // here though as part of the callback to setAutonomousHighlights(), not
+        // at the scope of loadOptions(), as a consequence of the asynchronous
+        // handling of setAutonomousHighlights.
+        propagateOptions();
+    });
 };
 
 const initOpts = JSON.parse(localStorage['options']);
@@ -98,13 +173,13 @@ document.getElementById('defaults').addEventListener('click', function() {
 });
 
 document.getElementById('revert').addEventListener('click', function() {
-    loadOptions(initOpts);
+    loadOptions(initOpts, true);
     statusMessage('Options Reverted', 1200);
 });
 
 // hide elements that are not relevant with less than three highlight states,
 // like tinted highlighting settings and documentation.
-if (backgroundPage.NUM_HIGHLIGHT_STATES < 3) {
+if (numHighlightStates < 3) {
     let items = document.getElementsByClassName('at-least-ternary');
     for (let i = 0; i < items.length; ++i) {
         items[i].style.display = 'none';
@@ -117,6 +192,16 @@ if (backgroundPage.NUM_HIGHLIGHT_STATES < 3) {
     textColorInput.addEventListener('change', propagateOptions);
     linkColorInput.addEventListener('change', propagateOptions);
     tintedHighlightsInput.addEventListener('change', propagateOptions);
+    autonomousHighlightsInput.addEventListener('change', function() {
+        setAutonomousHighlights(autonomousHighlightsInput.checked, true, propagateOptions);
+    });
+    autonomousDelayInput.addEventListener('change', propagateOptions);
+    // For range inputs, 'input' events are triggered while dragging, while 'change'
+    // events are triggered after the end of a sliding action.
+    autonomousDelayInput.addEventListener('input', showAutonomousDelay);
+    for (const input of autonomousStateInputs.querySelectorAll('input')) {
+        input.addEventListener('change', propagateOptions);
+    }
 })();
 
 /***********************************
@@ -130,10 +215,10 @@ const globalHighlightPermissions = {
 };
 
 // create global highlighting links
-for (let i = 0; i < backgroundPage.NUM_HIGHLIGHT_STATES; ++i) {
-    let img = document.createElement('img');
+for (let i = 0; i < numHighlightStates; ++i) {
+    const img = document.createElement('img');
     img.style.cursor = 'pointer';
-    let iconName = backgroundPage.highlightStateToIconId(i) + 'highlight';
+    const iconName = backgroundPage.highlightStateToIconId(i) + 'highlight';
     img.src = '../icons/' + iconName + '38x38.png';
     img.height = 19;
     img.width = 19;
@@ -144,7 +229,7 @@ for (let i = 0; i < backgroundPage.NUM_HIGHLIGHT_STATES; ++i) {
             globalHighlightPermissions,
             function(granted) {
                 if (granted) {
-                    globalHighlightRevokeButton.disabled = false;
+                    revokeButton.disabled = false;
                     backgroundPage.highlightAll(i);
                 }
             });
@@ -152,22 +237,41 @@ for (let i = 0; i < backgroundPage.NUM_HIGHLIGHT_STATES; ++i) {
     globalHighlightIcons.appendChild(img);
 }
 
-const revokePermissions = function () {
+/***********************************
+ * Permissions
+ ***********************************/
+
+const permissions = {};
+{
+    const _permissions = new Set();
+    globalHighlightPermissions.permissions.forEach(x => _permissions.add(x));
+    autonomousHighlightsPermissions.permissions.forEach(x => _permissions.add(x));
+    const origins = new Set();
+    globalHighlightPermissions.origins.forEach(x => origins.add(x));
+    autonomousHighlightsPermissions.origins.forEach(x => origins.add(x));
+    permissions.permissions = Array.from(permissions);
+    permissions.origins = Array.from(origins);
+}
+
+const revokePermissions = function() {
     chrome.permissions.remove(
-        globalHighlightPermissions,
+        permissions,
         function(removed) {
             if (removed) {
-                globalHighlightRevokeButton.disabled = true;
+                revokeButton.disabled = true;
+                autonomousHighlightsInput.checked = false;
+                propagateOptions();
             }
         });
 };
 
-globalHighlightRevokeButton.addEventListener('click', function() {
+revokeButton.addEventListener('click', function() {
     revokePermissions();
 });
 
 chrome.permissions.contains(
-    globalHighlightPermissions,
+    permissions,
     function(result) {
-        globalHighlightRevokeButton.disabled = !result;
+        if (result)
+            revokeButton.disabled = !result;
     });

@@ -1,22 +1,30 @@
 // TODO: Use consistent variable naming (camel case or underscores, not both)
 
+// WARN: For functions that are called from the options page, proper scope is
+// necessary (e.g., using a function declaration beginning with a 'function',
+// or using a function expression beginning with 'var', but not a function
+// expression beginning with 'let' or 'const').
+
 const USER_AGENT = navigator.userAgent.toLowerCase();
+const MOBILE = USER_AGENT.indexOf('android') > -1 && USER_AGENT.indexOf('firefox') > -1;
 
 // total number of highlight states (min 2, max 4).
 let NUM_HIGHLIGHT_STATES = 4;
 // Firefox for mobile, doesn't show an browserAction icon, so only use two highlight
 // states (on and off).
-if (USER_AGENT.indexOf('android') > -1 && USER_AGENT.indexOf('firefox') > -1)
+if (MOBILE)
     NUM_HIGHLIGHT_STATES = 2;
 
 // *****************************
 // * Utilities and Options
 // *****************************
 
-// This is called from options.js. Proper scope is necessary (e.g., using
-// a function declaration beginning with a 'function', or using a function
-// expression beginning with 'var', but not a function expression beginning
-// with 'let' or 'const').
+// This is called from options.js (see scope warning above).
+function getNumHighlightStates() {
+    return NUM_HIGHLIGHT_STATES;
+}
+
+// This is called from options.js (see scope warning above).
 function getVersion() {
     return chrome.runtime.getManifest().version;
 }
@@ -29,10 +37,7 @@ const getOptions = function() {
     return opts;
 };
 
-// This is called from options.js. Proper scope is necessary (e.g., using
-// a function declaration beginning with a 'function', or using a function
-// expression beginning with 'var', but not a function expression beginning
-// with 'let' or 'const').
+// This is called from options.js (see scope warning above).
 function defaultOptions() {
     const options = Object.create(null);
     const yellow = '#FFFF00';
@@ -42,9 +47,9 @@ function defaultOptions() {
     options['text_color'] = black;
     options['link_color'] = red;
     options['tinted_highlights'] = false;
-    options['autonomous'] = false;
+    options['autonomous_highlights'] = false;
     options['autonomous_delay'] = 0;
-    options['autonomous_state'] = 2;
+    options['autonomous_state'] = Math.min(2, NUM_HIGHLIGHT_STATES - 1);
     return options;
 }
 
@@ -58,7 +63,6 @@ function defaultOptions() {
     const defaults = defaultOptions();
 
     // Set missing options using defaults.
-
     const default_keys = Object.keys(defaults);
     for (let i = 0; i < default_keys.length; i++) {
         const default_key = default_keys[i];
@@ -95,9 +99,10 @@ chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
     tabIdToHighlightState.delete(tabId);
 });
 
-const highlightStateToIconId = function(state) {
+// This is called from options.js (see scope warning above).
+function highlightStateToIconId(state) {
     return state + (state > 0 ? 4 - NUM_HIGHLIGHT_STATES : 0);
-};
+}
 
 // updates highlight state in tabIdToHighlightState, and also used to
 // show the correct highlight icon
@@ -203,6 +208,10 @@ const inject = function(tabId, callback=function() {}) {
 
 // setting state to null results in automatically incrementing the state.
 const highlight = function(tabId, showError, state=null, delay=null) {
+    if (state !== null && (state < 0 || state >= NUM_HIGHLIGHT_STATES)) {
+        console.error(`invalid state: ${state}`);
+        return;
+    }
     const sendHighlightMessage = function() {
         if (state === null)
             state = (tabIdToHighlightState.get(tabId)[0] + 1) % NUM_HIGHLIGHT_STATES;
@@ -248,15 +257,12 @@ const highlight = function(tabId, showError, state=null, delay=null) {
 // information like URL, and without the ability to inject javascript).
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     const options = getOptions();
-    if (options.autonomous && changeInfo.status === 'complete') {
+    if (options.autonomous_highlights && changeInfo.status === 'complete') {
         highlight(tab.id, false, options.autonomous_state, options.autonomous_delay);
     }
 });
 
-// This is called from options.js. Proper scope is necessary (e.g., using
-// a function declaration beginning with a 'function', or using a function
-// expression beginning with 'var', but not a function expression beginning
-// with 'let' or 'const').
+// This is called from options.js (see scope warning above).
 function highlightAll(state) {
     chrome.tabs.query({}, function(tabs) {
         for (let i = 0; i < tabs.length; ++i) {
