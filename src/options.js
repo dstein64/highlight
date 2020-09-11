@@ -47,20 +47,30 @@ const autonomousHighlightsPermissions = {
 
 // 'active' indicates whether the function is initiated through a user gesture. This
 // is required to avoid "This function must be called during a user gesture".
-const setAutonomousHighlights = function(value, active, callback) {
-    const fn = active ? chrome.permissions.request : chrome.permissions.contains;
+const setAutonomousHighlights = function(value, active=false, callback=null) {
+    const setSubSettingVisibility = function(enabled) {
+        autonomousDelayInput.disabled = !enabled;
+        for (const input of autonomousStateInputs.querySelectorAll('input')) {
+            input.disabled = !enabled;
+        }
+    };
     if (value) {
+        const fn = active ? chrome.permissions.request : chrome.permissions.contains;
         fn(
             autonomousHighlightsPermissions,
             function(result) {
                 autonomousHighlightsInput.checked = result;
+                setSubSettingVisibility(result);
                 if (result)
                     revokeButton.disabled = false;
-                callback();
+                if (callback !== null)
+                    callback();
             });
     } else {
         autonomousHighlightsInput.checked = false;
-        callback();
+        setSubSettingVisibility(false);
+        if (callback !== null)
+            callback();
     }
 };
 
@@ -253,20 +263,15 @@ const permissions = {};
     permissions.origins = Array.from(origins);
 }
 
-const revokePermissions = function() {
+revokeButton.addEventListener('click', function() {
     chrome.permissions.remove(
         permissions,
         function(removed) {
             if (removed) {
                 revokeButton.disabled = true;
-                autonomousHighlightsInput.checked = false;
-                propagateOptions();
+                setAutonomousHighlights(false, true, propagateOptions);
             }
         });
-};
-
-revokeButton.addEventListener('click', function() {
-    revokePermissions();
 });
 
 chrome.permissions.contains(
