@@ -81,6 +81,10 @@ function defaultOptions() {
         }
     }
 
+    // Convert invalid settings to valid settings.
+    if (![...Array(NUM_HIGHLIGHT_STATES).keys()].includes(opts.autonomous_state))
+        opts.autonomous_state = defaults['autonomous_state'];
+
     localStorage['options'] = JSON.stringify(opts);
 })();
 
