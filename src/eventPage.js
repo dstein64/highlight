@@ -184,7 +184,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
     //              chrome-extension-message-passing-response-not-sent
 });
 
-const inject = function(tabId, callback=function() {}) {
+const inject = function(tabId, runAt='document_idle', callback=function() {}) {
     const scripts = [
         'src/lib/readabilitySAX/readabilitySAX.js',
         'src/lib/Porter-Stemmer/PorterStemmer1980.js',
@@ -204,14 +204,14 @@ const inject = function(tabId, callback=function() {}) {
             } else if (script.endsWith('.js')) {
                 inject_ = chrome.tabs.executeScript;
             }
-            inject_(tabId, {file: script, allFrames: true}, fn_);
+            inject_(tabId, {file: script, allFrames: true, runAt: runAt}, fn_);
         }
     }
     fn();
 };
 
 // setting state to null results in automatically incrementing the state.
-const highlight = function(tabId, showError, state=null, delay=null) {
+const highlight = function(tabId, showError, state=null, delay=null, runAt='document_idle') {
     if (state !== null && (state < 0 || state >= NUM_HIGHLIGHT_STATES)) {
         console.error(`invalid state: ${state}`);
         return;
@@ -247,13 +247,16 @@ const highlight = function(tabId, showError, state=null, delay=null) {
                     // On Firefox, in some cases just checking for lastError is not
                     // sufficient.
                     if (chrome.runtime.lastError || !resp) {
-                        inject(tabId, sendHighlightMessage);
+                        inject(tabId, runAt, sendHighlightMessage);
                     } else {
                         sendHighlightMessage();
                     }
                 });
         });
 };
+
+// runAt: 'document_end' is used for manually triggered highlighting, so that
+// highlighting occurs sooner than it otherwise would with 'document_idle'.
 
 // Add a listener for loading new pages, for the autonomous highlight
 // functionality. Without the proper tabs permissions, highlighting will
@@ -262,7 +265,8 @@ const highlight = function(tabId, showError, state=null, delay=null) {
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     const options = getOptions();
     if (options.autonomous_highlights && changeInfo.status === 'complete') {
-        highlight(tab.id, false, options.autonomous_state, options.autonomous_delay);
+        highlight(
+            tab.id, false, options.autonomous_state, options.autonomous_delay, 'document_idle');
     }
 });
 
@@ -270,11 +274,11 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 function highlightAll(state) {
     chrome.tabs.query({}, function(tabs) {
         for (let i = 0; i < tabs.length; ++i) {
-            highlight(tabs[i].id, false, state);
+            highlight(tabs[i].id, false, state, 'document_end');
         }
     });
 }
 
 chrome.browserAction.onClicked.addListener(function(tab) {
-    highlight(tab.id, true, null);
+    highlight(tab.id, true, null, 'document_end');
 });
