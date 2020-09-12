@@ -1230,79 +1230,65 @@ const highlight = function(highlightState) {
     // (when using 'persistent': false),
     // there is a slight delay for the following call
     // we're in a new state, but we don't know whether there is success yet
-
-    if (highlightState === 0) {
-        // no loading icon here
-        updateHighlightState(0, true);
-        UTILS.setTimeoutIgnore(function() {
-            removeHighlight();
-        }, 0);
-    } else if (highlightState > 0) {
-        updateHighlightState(highlightState, null); // loading
-        // use a callback so icon updates right away
-        const fn = function() {
-            removeHighlight();
-            const scoredCandsToHighlight = cth(highlightState);
-            trimSpaces(scoredCandsToHighlight);
-            // have to loop backwards since splitting text nodes
-            for (let j = scoredCandsToHighlight.length-1; j >= 0; j--) {
-                let highlightColor = OPTIONS['highlight_color'];
-                if (OPTIONS['tinted_highlights']) {
-                    const importance = scoredCandsToHighlight[j].importance;
-                    // XXX: Ad-hoc formula can be improved.
-                    highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
-                }
-                const colorSpec = new ColorSpec(
-                    highlightColor, OPTIONS['text_color'], OPTIONS['link_color']);
-                const candidate = scoredCandsToHighlight[j].candidate;
-                const c = CYCLE_COLORS ? getNextColor() : colorSpec;
-                candidate.highlight(c);
+    updateHighlightState(highlightState, null); // loading
+    // use a callback so icon updates right away
+    const fn = function() {
+        removeHighlight();
+        const scoredCandsToHighlight = highlightState > 0 ? cth(highlightState) : [];
+        trimSpaces(scoredCandsToHighlight);
+        // have to loop backwards since splitting text nodes
+        for (let j = scoredCandsToHighlight.length-1; j >= 0; j--) {
+            let highlightColor = OPTIONS['highlight_color'];
+            if (OPTIONS['tinted_highlights']) {
+                const importance = scoredCandsToHighlight[j].importance;
+                // XXX: Ad-hoc formula can be improved.
+                highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
             }
+            const colorSpec = new ColorSpec(
+                highlightColor, OPTIONS['text_color'], OPTIONS['link_color']);
+            const candidate = scoredCandsToHighlight[j].candidate;
+            const c = CYCLE_COLORS ? getNextColor() : colorSpec;
+            candidate.highlight(c);
+        }
 
-            // the following is hacky, but to handle the case where we
-            // don't have success use a slight delay in telling the
-            // eventPage, in case some other iframe has success so that
-            // icon doesn't flash from no success to success.
-            // also, you probably don't *need* to set this up to avoid
-            // closure issues, but just in case...
-            const success = scoredCandsToHighlight.length > 0;
-            const notify = (function(state, _success) {
-                return function() {
-                    // if we have no highlighting, success is false.
-                    // also let background page know if we do have success
-                    // on page (as opposed to null for, I don't know,
-                    // which we told it earlier)
-                    if (lastHighlight === time)
-                        updateHighlightState(highlightState, _success);
-                };
-            })(highlightState, success);
-
-            const delayMs = 200; // milliseconds
-            const shouldDelay = !success && (isEmbed || hasEmbed());
-            if (shouldDelay) {
-                UTILS.setTimeoutIgnore(notify, delayMs);
-            } else {
-                notify();
-            }
-
-            // if we don't have success, turn off icon in 2 seconds
-            const turnoffdelay = 2000;
-            if (!success) {
-                UTILS.setTimeoutIgnore(function() {
-                    getHighlightState(function(curHighlight, curSuccess) {
-                        if (curHighlight === 0
-                            && !curSuccess
-                            && lastHighlight === time) {
-                            updateHighlightState(0, true);
-                        }
-                    });
-                }, turnoffdelay);
-            }
+        // the following is hacky, but to handle the case where we
+        // don't have success use a slight delay in telling the
+        // eventPage, in case some other iframe has success so that
+        // icon doesn't flash from no success to success.
+        const success = highlightState === 0 || scoredCandsToHighlight.length > 0;
+        const notify = function() {
+            // if we have no highlighting, success is false.
+            // also let background page know if we do have success
+            // on page (as opposed to null for, I don't know,
+            // which we told it earlier)
+            if (lastHighlight === time)
+                updateHighlightState(highlightState, success);
         };
-        UTILS.setTimeoutIgnore(function() {
-            fn();
-        }, 0);
-    }
+        const shouldDelay = !success && (isEmbed || hasEmbed());
+        if (shouldDelay) {
+            const delayMs = 200; // milliseconds
+            UTILS.setTimeoutIgnore(notify, delayMs);
+        } else {
+            notify();
+        }
+
+        // if we don't have success, turn off icon in 2 seconds
+        const turnoffdelay = 2000;
+        if (!success) {
+            UTILS.setTimeoutIgnore(function() {
+                getHighlightState(function(curHighlight, curSuccess) {
+                    if (curHighlight === 0
+                        && !curSuccess
+                        && lastHighlight === time) {
+                        updateHighlightState(0, true);
+                    }
+                });
+            }, turnoffdelay);
+        }
+    };
+    UTILS.setTimeoutIgnore(function() {
+        fn();
+    }, 0);
 };
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
