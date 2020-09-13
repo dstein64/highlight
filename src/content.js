@@ -1230,7 +1230,7 @@ const highlight = function(highlightState) {
     // (when using 'persistent': false),
     // there is a slight delay for the following call
     // we're in a new state, but we don't know whether there is success yet
-    updateHighlightState(highlightState, null); // loading
+    updateHighlightState(highlightState, null);  // loading
     // use a callback so icon updates right away
     const fn = function() {
         removeHighlight();
@@ -1251,39 +1251,22 @@ const highlight = function(highlightState) {
             candidate.highlight(c);
         }
 
-        // the following is hacky, but to handle the case where we
-        // don't have success use a slight delay in telling the
-        // eventPage, in case some other iframe has success so that
-        // icon doesn't flash from no success to success.
         const success = highlightState === 0 || scoredCandsToHighlight.length > 0;
-        const notify = function() {
-            // if we have no highlighting, success is false.
-            // also let background page know if we do have success
-            // on page (as opposed to null for, I don't know,
-            // which we told it earlier)
-            if (lastHighlight === time)
-                updateHighlightState(highlightState, success);
-        };
-        const shouldDelay = !success && (isEmbed || hasEmbed());
-        if (shouldDelay) {
-            const delayMs = 200; // milliseconds
-            UTILS.setTimeoutIgnore(notify, delayMs);
-        } else {
-            notify();
-        }
-
-        // if we don't have success, turn off icon in 2 seconds
-        const turnoffdelay = 2000;
-        if (!success) {
-            UTILS.setTimeoutIgnore(function() {
-                getHighlightState(function(curHighlight, curSuccess) {
-                    if (curHighlight === 0
-                        && !curSuccess
-                        && lastHighlight === time) {
-                        updateHighlightState(0, true);
-                    }
-                });
-            }, turnoffdelay);
+        if (lastHighlight === time) {
+            updateHighlightState(highlightState, success);
+            // if we don't have success, turn off icon in 2 seconds
+            if (!success) {
+                const turnoffdelay = 2000;
+                UTILS.setTimeoutIgnore(function() {
+                    getHighlightState(function(curHighlight, curSuccess) {
+                        if (curHighlight === 0
+                            && !curSuccess
+                            && lastHighlight === time) {
+                            updateHighlightState(0, true);
+                        }
+                    });
+                }, turnoffdelay);
+            }
         }
     };
     UTILS.setTimeoutIgnore(function() {

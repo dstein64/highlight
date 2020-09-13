@@ -114,50 +114,42 @@ const updateHighlightState = function(tabId, highlight, success) {
     // null represents 'unknown'
     // true should always clobber false (for iframes)
     success = (typeof success) === 'undefined' ? null : success;
-    // never change state indicating successful highlighting
-    // to unsuccessful highlighting. This is to accommodate that different
-    // iframes can send conflicting status.
-    // If one succeeded, keep that state
-    let curHighlight = 0;
-    let curSuccess = null;
-    if (tabIdToHighlightState.has(tabId)) {
-        const curState = tabIdToHighlightState.get(tabId);
-        curHighlight = curState[0];
-        curSuccess = curState[1];
-        // could just check (curSuccess), but since null has meaning too,
-        // this is clearer IMO
-        if (success === false
-                && curSuccess === true
-                && curHighlight > 0) {
-            // if state has not changed, and we already have a successful
-            // icon, keep it (to prevent iframe overriding)
-            return;
-        }
-    }
 
     // have to check for false. for null we don't want to set to zero.
     if (success === false)
         highlight = 0;
 
-    tabIdToHighlightState.set(tabId, [highlight, success]);
+    tabIdToHighlightState.set(tabId, {highlight: highlight, success: success});
 
-    // now that we've updated state, show the corresponding icon.
-    // for highlight states greater than 0, jump to a less-full highlighter icon if there are less
-    // than 4 total highlight states.
-    let iconName = highlightStateToIconId(highlight) + 'highlight';
-    if (success === false)
-        iconName = 'Xhighlight';
+    const setIcon = function(iconId) {
+        const path19 = 'icons/' + iconId + 'highlight19x19.png';
+        const path38 = 'icons/' + iconId + 'highlight38x38.png';
+        chrome.browserAction.setIcon({
+            path: {
+                '19': path19,
+                '38': path38
+            },
+            tabId: tabId
+        });
+    };
 
-    path19 = 'icons/' + iconName + '19x19.png';
-    path38 = 'icons/' + iconName + '38x38.png';
-
-    chrome.browserAction.setIcon({
-        path: {
-            '19': path19,
-            '38': path38
-        },
-        tabId: tabId
-    });
+    if (success === null) {
+        setIcon(highlightStateToIconId(highlight));
+        // Wait to show the loading icon, to prevent jumpiness for pages that
+        // highlight quickly.
+        const timeout = 250;
+        setTimeout(function() {
+            if (!tabIdToHighlightState.has(tabId))
+                return;
+            const state = tabIdToHighlightState.get(tabId);
+            if (state.highlight === highlight && state.success === null)
+                setIcon('_');
+        }, timeout);
+    } else if (success === true) {
+        setIcon(highlightStateToIconId(highlight));
+    } else if (success === false) {
+        setIcon('X');
+    }
 };
 
 chrome.runtime.onMessage.addListener(function(request, sender, response) {
@@ -171,8 +163,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
     } else if (message === 'getHighlightState') {
         const highlightState = tabIdToHighlightState.get(tabId);
         response({
-            'curHighlight': highlightState[0],
-            'curSuccess': highlightState[1]});
+            'curHighlight': highlightState.highlight,
+            'curSuccess': highlightState.success});
     } else if (message === 'getOptions') {
         response(getOptions());
     } else if (message === 'getParams') {
@@ -204,7 +196,11 @@ const inject = function(tabId, runAt='document_idle', callback=function() {}) {
             } else if (script.endsWith('.js')) {
                 inject_ = chrome.tabs.executeScript;
             }
-            inject_(tabId, {file: script, allFrames: true, runAt: runAt}, fn_);
+            // Only inject into the top-level frame. More permissions than activeTab
+            // would be required for iframes of different origins.
+            // https://stackoverflow.com/questions/59166046/using-tabs-executescript-in-iframe
+            // The same permissions used for global highlighting seem to suffice.
+            inject_(tabId, {file: script, allFrames: false, runAt: runAt}, fn_);
         }
     }
     fn();
@@ -218,7 +214,7 @@ const highlight = function(tabId, showError, state=null, delay=null, runAt='docu
     }
     const sendHighlightMessage = function() {
         if (state === null)
-            state = (tabIdToHighlightState.get(tabId)[0] + 1) % NUM_HIGHLIGHT_STATES;
+            state = (tabIdToHighlightState.get(tabId).highlight + 1) % NUM_HIGHLIGHT_STATES;
         chrome.tabs.sendMessage(
             tabId,
             {
