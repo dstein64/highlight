@@ -5,11 +5,11 @@ var UTILS = (function() {
     me.hasOwnProperty = function(obj, key) {
         return Object.prototype.hasOwnProperty.call(obj, key);
     };
-    
+
     me.isNumericType = function(x) {
         return (typeof x === 'number');
     };
-    
+
     // safeSetInterval kill an interval timer if there is an error.
     // this is useful for intervals that communicate with the background
     // page, since we can lose communication if the extension reloads.
@@ -32,7 +32,7 @@ var UTILS = (function() {
         }].concat(rest));
         return timerId;
     };
-    
+
     // sets a timeout and ignores exceptions
     me.setTimeoutIgnore = function() {
         var args = [];
@@ -44,7 +44,7 @@ var UTILS = (function() {
         setTimeout.apply(null, [function() {
             try {
                 fn();
-            } catch(err) {} // ignore errors
+            } catch(err) {}  // ignore errors
         }].concat(rest));
     };
 

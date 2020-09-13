@@ -56,8 +56,8 @@ const setPropertyImp = function(element, key, val) {
     element.style.setProperty(key, val, 'important');
 };
 
-const createTextNodeWrapper = function() {
-    const span = document.createElement('span');
+const createTextNodeWrapper = function(doc) {
+    const span = doc.createElement('span');
     span.classList.add(wrapperClassName);
 
     // don't all:inherit. causes some text color to not change, and links
@@ -152,14 +152,14 @@ const highlightTextNode = function(textNode, colorSpec) {
     // static, and wrap it around another wrapper with
     // position relative. This prevents background color of line l+1 from
     // covering line l.
-    const _span = createTextNodeWrapper();
+    const _span = createTextNodeWrapper(textNode.ownerDocument);
     _span.classList.add(outerClassName);
     // this is already set by createTextNodeWrapper
     setPropertyImp(_span, 'position', 'static');
     setPropertyImp(_span, 'background-color', colorSpec.highlightColor);
     wrapNode(_span, textNode);
 
-    const span = createTextNodeWrapper();
+    const span = createTextNodeWrapper(textNode.ownerDocument);
     span.classList.add(innerClassName);
 
     setPropertyImp(span, 'text-shadow', 'none');
@@ -182,12 +182,12 @@ const highlightTextNode = function(textNode, colorSpec) {
     return true;
 };
 
-const removeHighlight = function() {
+const removeHighlight = function(doc) {
     // first remove className, then outerClassName, wrappers
     const wrappers = [innerClassName, outerClassName];
     for (let h = 0; h < wrappers.length; h++) {
         const _class = wrappers[h];
-        const highlighted = document.getElementsByClassName(_class);
+        const highlighted = doc.getElementsByClassName(_class);
         // iterate in reverse. It seems like removing child nodes modifies
         // the variables 'elements'
         // maybe not if we convert from nodelist to array... but still
@@ -206,7 +206,7 @@ const removeHighlight = function() {
     // sentences starting with a space then a link will lose the space,
     // and cause problems on the next highlight
 
-    const split = document.getElementsByClassName(splitClassName);
+    const split = doc.getElementsByClassName(splitClassName);
     let splitA = Array.prototype.slice.call(split);
     for (let i = splitA.length-2; i >= 0 ; i--) {
         const e1 = splitA[i];
@@ -228,14 +228,37 @@ const removeHighlight = function() {
     }
 };
 
+const removeHighlightAllDocs = function() {
+    const documents = getDocuments();
+    for (const doc of documents)
+        removeHighlight(doc);
+};
+
 /***********************************
  * Content Extraction
  ***********************************/
 
-// skip level goes from 0 to 3. Higher skip level returns more content.
-const readable = new Readability(document, null, 3);
+// Returns the documents that are eligible for highlighting.
+const getDocuments = function() {
+    const documents = [document];
+    for (let i = 0; i < window.frames.length; ++i) {
+        const frame = window.frames[i];
+        // Cross-origin frames are blocked by default. Try creating a text node,
+        // and appending it to the DOM, to see if the frame is eligible for
+        // highlighting.
+        try {
+            if (frame.document.contentType !== 'text/html')
+                continue;
+            const node = frame.document.createTextNode('');
+            frame.document.body.appendChild(node);
+            frame.document.body.removeChild(node);
+            documents.push(frame.document);
+        } catch(err) {}
+    }
+    return documents;
+};
 
-const countWords = function(text){
+const countWords = function(text) {
     // trim
     text = text.trim();
     // consolidate contiguous whitespace
@@ -330,7 +353,7 @@ const splitAndWrapText = function(textNode, offset) {
     alreadySplit = textNode.parentElement.classList.contains(splitClassName);
 
     if (alreadySplit) {
-        const span = createTextNodeWrapper();
+        const span = createTextNodeWrapper(textNode.ownerDocument);
         span.classList.add(splitClassName);
         wrapNode(span, textNode);
 
@@ -338,12 +361,12 @@ const splitAndWrapText = function(textNode, offset) {
         const _span = parent.removeChild(span);
         parent.parentElement.insertBefore(_span, parent);
     } else {
-        let span = createTextNodeWrapper();
+        let span = createTextNodeWrapper(textNode.ownerDocument);
         span.classList.add(splitClassName);
         wrapNode(span, textNode);
 
         // and again
-        span = createTextNodeWrapper();
+        span = createTextNodeWrapper(textNode.ownerDocument);
         span.classList.add(splitClassName);
         wrapNode(span, _t);
     }
@@ -372,7 +395,7 @@ Sentence.prototype.highlight = function(colorSpec) {
             highlightTextNode(middle[i], colorSpec);
         }
 
-        //first node
+        // first node
         t = this.nodes[0];
         if (this.s > 0 && t.textContent.length > this.s)
             t = splitAndWrapText(t, this.s);
@@ -512,7 +535,7 @@ const nearestLineBreakNode = function(node) {
             cur = cur.parentElement;
         }
     }
-    return document.body;
+    return node.ownerDocument.body;
 };
 
 // whether single <br> should be considered as not separating a block
@@ -543,7 +566,7 @@ const isVisible = function(textNode, docWidth, docHeight) {
     // TextNodes don't have a getBoundingClientRect method, so create a
     // range
     if (visible) {
-        const range = document.createRange();
+        const range = textNode.ownerDocument.createRange();
         range.selectNode(textNode);
         const rect = range.getBoundingClientRect();
 
@@ -577,9 +600,9 @@ const isVisible = function(textNode, docWidth, docHeight) {
     return visible;
 };
 
-const getTextBlocks = function(parseSentences) {
-    const html = document.documentElement;
-    const body = document.body;
+const getTextBlocks = function(doc, parseSentences=true) {
+    const html = doc.documentElement;
+    const body = doc.body;
 
     const docHeight = Math.max(html.clientHeight,
         html.scrollHeight,
@@ -592,10 +615,6 @@ const getTextBlocks = function(parseSentences) {
         body.scrollWidth,
         body.offsetWidth);
 
-    // parseSentences defaults to true
-    if (typeof parseSentences === 'undefined') {
-      parseSentences = true;
-    }
     const leaves = []; // textnodes and <br>s
     // FILTER_SKIP will continue searching descendants. FILTER_REJECT will
     // not the following walker will traverse all non-empty text nodes and
@@ -603,8 +622,8 @@ const getTextBlocks = function(parseSentences) {
     // Could possibly alternatively check for nodes with no children, but
     // what you did is fine since you're particularly interested in text
     // nodes and <br>s.
-    const walker = document.createTreeWalker(
-        document.body,
+    const walker = doc.createTreeWalker(
+        doc.body,
         NodeFilter.SHOW_ALL,
         function(node) {
             let filter = NodeFilter.FILTER_SKIP;
@@ -632,11 +651,14 @@ const getTextBlocks = function(parseSentences) {
         nlbns.push(nlbn);
     }
 
-    const blocks = []; // A list of TextBlocks
+    const blocks = [];  // A list of TextBlocks
     // text nodes and possibly some <br>s if they are within a text block
     let curTextNodes = [];
     if (nlbns.length > 0 && !isElementTagBR(nlbns[0]))
         curTextNodes.push(leaves[0]);
+
+    // skip level goes from 0 to 3. Higher skip level returns more content.
+    const readable = new Readability(doc, null, 3);
 
     const articleNodesl = readable.getArticle(false).getNodes();
     const articleNodes = new Set(articleNodesl);
@@ -887,7 +909,10 @@ const isCode = function(textblock) {
 
 const getCandidates = function() {
     let candidates = [];
-    const textblocks = getTextBlocks();
+    const textblocks = [];
+    for (const doc of getDocuments()) {
+        textblocks.push(...getTextBlocks(doc))
+    }
 
     // min number of words to be a candidate
     const WORD_COUNT_THRESHOLD = 3;
@@ -1197,6 +1222,8 @@ let lastHighlight = (new Date()).getTime();
 // so it now gets passed along as an arg. This prevents different iframes
 // from being in different states, in case they were loaded at different
 // times (e.g., one before a highlight and one loaded after)
+// XXX Update 2020/9/13: You're no longer injecting the script into iframes,
+// so the changed approach mentioned above can possibly be reverted.
 const highlight = function(highlightState) {
     const time = (new Date()).getTime();
     lastHighlight = time;
@@ -1207,7 +1234,7 @@ const highlight = function(highlightState) {
     updateHighlightState(highlightState, null);  // loading
     // use a callback so icon updates right away
     const fn = function() {
-        removeHighlight();
+        removeHighlightAllDocs();
         const scoredCandsToHighlight = highlightState > 0 ? cth(highlightState) : [];
         trimSpaces(scoredCandsToHighlight);
         // have to loop backwards since splitting text nodes
@@ -1284,5 +1311,5 @@ if (compatible) {
     // we may have existing highlighting. clear so we're in sync with icon.
     // after injecting content.js, remove highlighting. (will ensure icon
     // and page in sync)
-    removeHighlight();
+    removeHighlightAllDocs();
 }
