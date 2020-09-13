@@ -1229,7 +1229,7 @@ const highlight = function(highlightState) {
         // Before updating highlight state, wait until at least 0.5 seconds has elapsed
         // since this function started. This prevents jumpiness of the loading icon.
         const delay = Math.max(0, 500 - ((new Date()).getTime() - time));
-        setTimeout(function() {
+        UTILS.setTimeoutIgnore(function() {
             if (lastHighlight === time) {
                 updateHighlightState(highlightState, success);
                 // if we don't have success, turn off icon in 2 seconds
