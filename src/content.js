@@ -1252,22 +1252,27 @@ const highlight = function(highlightState) {
         }
 
         const success = highlightState === 0 || scoredCandsToHighlight.length > 0;
-        if (lastHighlight === time) {
-            updateHighlightState(highlightState, success);
-            // if we don't have success, turn off icon in 2 seconds
-            if (!success) {
-                const turnoffdelay = 2000;
-                UTILS.setTimeoutIgnore(function() {
-                    getHighlightState(function(curHighlight, curSuccess) {
-                        if (curHighlight === 0
-                            && !curSuccess
-                            && lastHighlight === time) {
-                            updateHighlightState(0, true);
-                        }
-                    });
-                }, turnoffdelay);
+        // Before updating highlight state, wait until at least 0.5 seconds has elapsed
+        // since this function started. This prevents jumpiness of the loading icon.
+        const delay = Math.max(0, 500 - ((new Date()).getTime() - time));
+        setTimeout(function() {
+            if (lastHighlight === time) {
+                updateHighlightState(highlightState, success);
+                // if we don't have success, turn off icon in 2 seconds
+                if (!success) {
+                    const turnoffdelay = 2000;
+                    UTILS.setTimeoutIgnore(function() {
+                        getHighlightState(function(curHighlight, curSuccess) {
+                            if (curHighlight === 0
+                                && !curSuccess
+                                && lastHighlight === time) {
+                                updateHighlightState(0, true);
+                            }
+                        });
+                    }, turnoffdelay);
+                }
             }
-        }
+        }, delay);
     };
     UTILS.setTimeoutIgnore(function() {
         fn();

@@ -133,23 +133,13 @@ const updateHighlightState = function(tabId, highlight, success) {
         });
     };
 
-    if (success === null) {
-        setIcon(highlightStateToIconId(highlight));
-        // Wait to show the loading icon, to prevent jumpiness for pages that
-        // highlight quickly.
-        const timeout = 250;
-        setTimeout(function() {
-            if (!tabIdToHighlightState.has(tabId))
-                return;
-            const state = tabIdToHighlightState.get(tabId);
-            if (state.highlight === highlight && state.success === null)
-                setIcon('_');
-        }, timeout);
-    } else if (success === true) {
-        setIcon(highlightStateToIconId(highlight));
-    } else if (success === false) {
-        setIcon('X');
-    }
+    let iconId = highlightStateToIconId(highlight);
+    if (success === null)
+        iconId = '_';
+    else if (success === false)
+        iconId = 'X';
+
+    setIcon(iconId);
 };
 
 chrome.runtime.onMessage.addListener(function(request, sender, response) {
