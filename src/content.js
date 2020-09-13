@@ -1094,32 +1094,6 @@ const updateHighlightState = function(highlightState, success) {
         });
 };
 
-const isEmbed = window !== window.parent; // am I in an iframe?
-
-// unlike isEmbed, hasEmbed can change, so make it a function
-// even checking for iframe doesn't fix the problem since that can change
-// too.
-const hasEmbed = function() {
-    return window.frames && window.frames.length > 0;
-};
-
-// This works even on cross domain iframes. In general, a page wouldn't be
-// able to call frames[0].document, if the frame was cross domain, but from
-// the extension it works. This even worked from the extension when you
-// tried with 'all_frames' set to false
-const somethingHighlighted = function(win) {
-    let sh = win.document.getElementsByClassName(innerClassName).length > 0;
-    if (!sh) {
-        const nframes = win.frames.length;
-        for (let i = 0; i < nframes; i++) {
-            const _frame = win.frames[i];
-            sh = sh || somethingHighlighted(_frame);
-            if (sh) break;
-        }
-    }
-    return sh;
-};
-
 const contentType = document.contentType;
 // maybe all text/* ???
 const compatible = document.doctype !== null
@@ -1303,49 +1277,12 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     sendResponse(true);
 });
 
-if (!isEmbed && compatible) {
-    // if top frame and html page, tell eventPage our initial status, so
-    // it shows the icon
+if (compatible) {
+    // tell eventPage our initial status, so it shows the icon
     updateHighlightState(0, true);
-
-    // if we're the top frame, continuously check if we (or our child
-    // frames) have highlighting it's possible that changing URLs in a
-    // child frame caused the highlighting to turn off. If so, let's turn
-    // off the icon and update highlight state. This is somewhat hacky,
-    // but the alternatives are as well. For example, an alternative would
-    // require monitoring all events that can trigger highlighting to
-    // disappear (iframe changes, DOM modications, etc.).
-    // Alternatively, it would possibly be more elegant to handle this in
-    // eventPage, but that would require additional message passing which
-    // becomes a mess IMO.
-    // Also, somethingHighlighted() is fast
-    // (it uses getElementsByClassName: 1.97ms on 'a considerably large
-    // file with lots of elements to consider' in 2007,
-    // http://ejohn.org/blog/getelementsbyclassname-speed-comparison/)
-
-    const interval = 1200;
-
-    UTILS.safeSetInterval(function() {
-        getHighlightState(function(curHighlight, curSuccess) {
-            // don't have to worry about a page change in the case where
-            // curHighlight > 0 and !curSuccess,
-            // since we don't keep that icon active for more than X seconds
-
-            const diff = (new Date().getTime()) - lastHighlight;
-
-            if (diff >= interval
-                && curHighlight > 0
-                && curSuccess
-                && !somethingHighlighted(window)) {
-                updateHighlightState(0, true);
-            }
-        });
-    }, interval);
 }
 
 // we may have existing highlighting. clear so we're in sync with icon.
 // after injecting content.js, remove highlighting. (will ensure icon
 // and page in sync)
-// NOTE: you noticed the code executing multiple times on some tabs.
-// that's because it executes for each frame
 removeHighlight();
