@@ -23,6 +23,39 @@ chrome.runtime.sendMessage({message: 'getParams'}, function(response) {
 });
 
 /***********************************
+ * DOM Checking and Querying Functionality
+ ***********************************/
+
+const compatibleDocument = function(doc) {
+    const contentType = doc.contentType;
+    // maybe all text/* ???
+    const compatible = doc.doctype !== null
+        || contentType.indexOf('text/html') > -1
+        || contentType.indexOf('text/plain') > -1;
+    return compatible;
+};
+
+// Returns the documents that are eligible for highlighting.
+const getDocuments = function() {
+    const documents = [document];
+    for (let i = 0; i < window.frames.length; ++i) {
+        try {
+            const frame = window.frames[i];
+            // Cross-origin frames are blocked by default. Try creating a text node,
+            // and appending it to the DOM, to see if the frame is eligible for
+            // highlighting.
+            if (!compatibleDocument(frame.document))
+                continue;
+            const node = frame.document.createTextNode('');
+            frame.document.body.appendChild(node);
+            frame.document.body.removeChild(node);
+            documents.push(frame.document);
+        } catch(err) {}
+    }
+    return documents;
+};
+
+/***********************************
  * Node Highlighting Functionality
  ***********************************/
 
@@ -237,26 +270,6 @@ const removeHighlightAllDocs = function() {
 /***********************************
  * Content Extraction
  ***********************************/
-
-// Returns the documents that are eligible for highlighting.
-const getDocuments = function() {
-    const documents = [document];
-    for (let i = 0; i < window.frames.length; ++i) {
-        const frame = window.frames[i];
-        // Cross-origin frames are blocked by default. Try creating a text node,
-        // and appending it to the DOM, to see if the frame is eligible for
-        // highlighting.
-        try {
-            if (frame.document.contentType !== 'text/html')
-                continue;
-            const node = frame.document.createTextNode('');
-            frame.document.body.appendChild(node);
-            frame.document.body.removeChild(node);
-            documents.push(frame.document);
-        } catch(err) {}
-    }
-    return documents;
-};
 
 const countWords = function(text) {
     // trim
@@ -1119,12 +1132,6 @@ const updateHighlightState = function(highlightState, success) {
         });
 };
 
-const contentType = document.contentType;
-// maybe all text/* ???
-const compatible = document.doctype !== null
-    || contentType.indexOf('text/html') > -1
-    || contentType.indexOf('text/plain') > -1;
-
 // callback takes two args: a number indicating highlight state, and
 // boolean for success
 const getHighlightState = function(callback) {
@@ -1285,7 +1292,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     if (method === 'highlight') {
         // it's possible we're in an iframe with non-compatible content,
         // so check...
-        if (compatible) {
+        if (compatibleDocument(document)) {
             const highlightState = request.highlightState;
             const delay = request.delay;
             if (delay === null || delay === undefined) {
@@ -1304,7 +1311,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     sendResponse(true);
 });
 
-if (compatible) {
+if (compatibleDocument(document)) {
     // tell eventPage our initial status, so it shows the icon
     updateHighlightState(0, true);
 
