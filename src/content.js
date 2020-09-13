@@ -55,6 +55,18 @@ const getDocuments = function() {
     return documents;
 };
 
+const getDocumentWindow = function(doc, _default=null) {
+    if (window.document === doc)
+        return window;
+    for (let i = 0; i < window.frames.length; ++i) {
+        try {
+            if (window.frames[i].document === doc)
+                return window.frames[i];
+        } catch(err) {}
+    }
+    return _default;
+};
+
 /***********************************
  * Node Highlighting Functionality
  ***********************************/
@@ -554,11 +566,11 @@ const nearestLineBreakNode = function(node) {
 // whether single <br> should be considered as not separating a block
 const ALLOW_SINGLE_BR_WITHIN_BLOCK = true;
 
-const isVisible = function(textNode, docWidth, docHeight) {
+const isVisible = function(win, textNode, docWidth, docHeight) {
     let visible = true;
     if (textNode.parentElement !== null) {
         const parent = textNode.parentElement;
-        const style = window.getComputedStyle(parent);
+        const style = win.getComputedStyle(parent);
         if (style) {
             const nonVisibleStyle = style.color === 'rgba(0, 0, 0, 0)'
                 || style.display === 'none'
@@ -589,8 +601,8 @@ const isVisible = function(textNode, docWidth, docHeight) {
         // https://developer.mozilla.org/en-US/docs/Web/API/Element/
         //         getBoundingClientRect
 
-        const sx = window.scrollX;
-        const sy = window.scrollY;
+        const sx = win.scrollX;
+        const sy = win.scrollY;
 
         const top = rect.top + sy;
         const bottom = rect.bottom + sy;
@@ -635,6 +647,7 @@ const getTextBlocks = function(doc, parseSentences=true) {
     // Could possibly alternatively check for nodes with no children, but
     // what you did is fine since you're particularly interested in text
     // nodes and <br>s.
+    const win = getDocumentWindow(doc, window);
     const walker = doc.createTreeWalker(
         doc.body,
         NodeFilter.SHOW_ALL,
@@ -644,7 +657,7 @@ const getTextBlocks = function(doc, parseSentences=true) {
             if (type === Node.TEXT_NODE
                 && !isInMetaTag(node)
                 && !/^\s+$/.test(node.textContent)
-                && isVisible(node, docWidth, docHeight))
+                && isVisible(win, node, docWidth, docHeight))
                 filter = NodeFilter.FILTER_ACCEPT;
             else if (isElementTagBR(node))
                 filter = NodeFilter.FILTER_ACCEPT;
