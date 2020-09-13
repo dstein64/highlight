@@ -11,6 +11,7 @@ ARGS+=("manifest.json")
 # exclude
 ARGS+=("-x")
 ARGS+=("*.DS_Store")
+ARGS+=("*Thumbs.db")
 
 archive="archive.zip"
 
