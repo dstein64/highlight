@@ -1280,9 +1280,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 if (compatible) {
     // tell eventPage our initial status, so it shows the icon
     updateHighlightState(0, true);
-}
 
-// we may have existing highlighting. clear so we're in sync with icon.
-// after injecting content.js, remove highlighting. (will ensure icon
-// and page in sync)
-removeHighlight();
+    // we may have existing highlighting. clear so we're in sync with icon.
+    // after injecting content.js, remove highlighting. (will ensure icon
+    // and page in sync)
+    removeHighlight();
+}
