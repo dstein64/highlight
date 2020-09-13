@@ -288,8 +288,11 @@ const removeHighlight = function(doc) {
 
 const removeHighlightAllDocs = function() {
     const documents = getDocuments();
-    for (const doc of documents)
-        removeHighlight(doc);
+    for (const doc of documents) {
+        try {
+            removeHighlight(doc);
+        } catch (err) {}
+    }
 };
 
 /***********************************
@@ -1251,66 +1254,61 @@ const tintColor = function(color, level) {
 // keep track of last highlight time, so our timers only operate if we
 // haven't received new highlight requests
 let lastHighlight = (new Date()).getTime();
-// you were originally managing highlightState in here. But then when you
-// added iframe support, highlightState management was moved to eventPage.js,
-// so it now gets passed along as an arg. This prevents different iframes
-// from being in different states, in case they were loaded at different
-// times (e.g., one before a highlight and one loaded after)
-// XXX Update 2020/9/13: You're no longer injecting the script into iframes,
-// so the changed approach mentioned above can possibly be reverted.
+
 const highlight = function(highlightState) {
     const time = (new Date()).getTime();
     lastHighlight = time;
-    // Where the background page is Inactive
-    // (when using 'persistent': false),
-    // there is a slight delay for the following call
     // we're in a new state, but we don't know whether there is success yet
     updateHighlightState(highlightState, null);  // loading
-    // use a callback so icon updates right away
-    const fn = function() {
-        removeHighlightAllDocs();
-        const scoredCandsToHighlight = highlightState > 0 ? cth(highlightState) : [];
-        trimSpaces(scoredCandsToHighlight);
-        // have to loop backwards since splitting text nodes
-        for (let j = scoredCandsToHighlight.length-1; j >= 0; j--) {
-            let highlightColor = OPTIONS['highlight_color'];
-            if (OPTIONS['tinted_highlights']) {
-                const importance = scoredCandsToHighlight[j].importance;
-                // XXX: Ad-hoc formula can be improved.
-                highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
-            }
-            const colorSpec = new ColorSpec(
-                highlightColor, OPTIONS['text_color'], OPTIONS['link_color']);
-            const candidate = scoredCandsToHighlight[j].candidate;
-            const c = CYCLE_COLORS ? getNextColor() : colorSpec;
-            candidate.highlight(c);
-        }
-
-        const success = highlightState === 0 || scoredCandsToHighlight.length > 0;
-        // Before updating highlight state, wait until at least 0.5 seconds has elapsed
-        // since this function started. This prevents jumpiness of the loading icon.
-        const delay = Math.max(0, 500 - ((new Date()).getTime() - time));
-        UTILS.setTimeoutIgnore(function() {
-            if (lastHighlight === time) {
-                updateHighlightState(highlightState, success);
-                // if we don't have success, turn off icon in 2 seconds
-                if (!success) {
-                    const turnoffdelay = 2000;
-                    UTILS.setTimeoutIgnore(function() {
-                        getHighlightState(function(curHighlight, curSuccess) {
-                            if (curHighlight === 0
-                                && !curSuccess
-                                && lastHighlight === time) {
-                                updateHighlightState(0, true);
-                            }
-                        });
-                    }, turnoffdelay);
-                }
-            }
-        }, delay);
-    };
+    // use a timeout so icon updates right away
     UTILS.setTimeoutIgnore(function() {
-        fn();
+        let success = false;
+        // A try/catch/finally block is used so that a thrown error won't leave the extension
+        // in a loading state (with the icon indicating so).
+        try {
+            removeHighlightAllDocs();
+            const scoredCandsToHighlight = highlightState > 0 ? cth(highlightState) : [];
+            trimSpaces(scoredCandsToHighlight);
+            // have to loop backwards since splitting text nodes
+            for (let j = scoredCandsToHighlight.length-1; j >= 0; j--) {
+                let highlightColor = OPTIONS['highlight_color'];
+                if (OPTIONS['tinted_highlights']) {
+                    const importance = scoredCandsToHighlight[j].importance;
+                    // XXX: Ad-hoc formula can be improved.
+                    highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
+                }
+                const colorSpec = new ColorSpec(
+                    highlightColor, OPTIONS['text_color'], OPTIONS['link_color']);
+                const candidate = scoredCandsToHighlight[j].candidate;
+                const c = CYCLE_COLORS ? getNextColor() : colorSpec;
+                candidate.highlight(c);
+            }
+            success = highlightState === 0 || scoredCandsToHighlight.length > 0;
+        } catch (err) {
+            removeHighlightAllDocs();
+        } finally {
+            // Before updating highlight state, wait until at least 0.5 seconds has elapsed
+            // since this function started. This prevents jumpiness of the loading icon.
+            const delay = Math.max(0, 500 - ((new Date()).getTime() - time));
+            UTILS.setTimeoutIgnore(function() {
+                if (lastHighlight === time) {
+                    updateHighlightState(highlightState, success);
+                    // if we don't have success, turn off icon in 2 seconds
+                    if (!success) {
+                        const turnoffdelay = 2000;
+                        UTILS.setTimeoutIgnore(function() {
+                            getHighlightState(function(curHighlight, curSuccess) {
+                                if (curHighlight === 0
+                                    && !curSuccess
+                                    && lastHighlight === time) {
+                                    updateHighlightState(0, true);
+                                }
+                            });
+                        }, turnoffdelay);
+                    }
+                }
+            }, delay);
+        }
     }, 0);
 };
 
