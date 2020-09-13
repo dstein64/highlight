@@ -55,17 +55,30 @@ const getDocuments = function() {
     return documents;
 };
 
-const getDocumentWindow = function(doc, _default=null) {
-    if (window.document === doc)
-        return window;
-    for (let i = 0; i < window.frames.length; ++i) {
-        try {
-            if (window.frames[i].document === doc)
-                return window.frames[i];
-        } catch(err) {}
-    }
-    return _default;
-};
+// signature:
+//   window getDocumentWindow(document doc, object default)
+const getDocumentWindow = function() {
+    const windowCache = new Map();
+    const closure = function(doc, _default=null) {
+        if (windowCache.has(doc))
+            return windowCache.get(doc);
+        if (window.document === doc) {
+            windowCache.set(doc, window);
+            return window;
+        }
+        for (let i = 0; i < window.frames.length; ++i) {
+            try {
+                if (window.frames[i].document === doc) {
+                    windowCache.set(doc, window.frames[i]);
+                    return window.frames[i];
+                }
+            } catch(err) {}
+        }
+        return _default;
+    };
+    return closure;
+}();
+
 
 /***********************************
  * Node Highlighting Functionality
@@ -539,7 +552,8 @@ const nearestLineBreakNode = function(node) {
         const isElement = cur.nodeType === Node.ELEMENT_NODE;
         let display = null;
         if (isElement) {
-            const computedStyle = window.getComputedStyle(cur);
+            const win = getDocumentWindow(node.ownerDocument, window);
+            const computedStyle = win.getComputedStyle(cur);
             if (computedStyle)
                 display = computedStyle.display;
         }
