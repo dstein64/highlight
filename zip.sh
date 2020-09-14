@@ -16,7 +16,7 @@ ARGS+=("*Thumbs.db")
 archive="archive.zip"
 
 if [ -f "${archive}" ]; then
-	rm "${archive}"
+  rm "${archive}"
 fi
 
 zip -r "${archive}" "${ARGS[@]}"
