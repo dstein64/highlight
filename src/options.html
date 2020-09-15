@@ -34,6 +34,10 @@ table#table td:first-child {
   content: '\200b';
 }
 
+#autonomous-delay-value, #autonomous-delay {
+  vertical-align: middle;
+}
+
 /* *************************************************
  * * Tooltip
  * ************************************************* */
@@ -120,14 +124,13 @@ a.tooltip > span {
     <td>
       <table>
         <tr>
-          <td id="autonomous-delay-value"></td>
           <td>
+            <span id="autonomous-delay-value"></span>
             <input type="range" id="autonomous-delay" min="0" max="5000">
           </td>
           <td><label for="autonomous-delay">Delay</label></td>
         </tr>
         <tr class="at-least-ternary">
-          <td></td>
           <td id="autonomous-state"></td>
           <td><label>State</label></td>
         </tr>
