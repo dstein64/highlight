@@ -108,12 +108,7 @@ details {
     margin-bottom: 16px;
 }
 
-details:last-child {
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-
-details > *:not(summary){
+details > div {
     margin-left: 32px;
 }
 
@@ -124,4 +119,18 @@ summary {
 .summary {
     cursor: pointer;
     border-bottom: 1px dotted;
+}
+
+.pattern, .url {
+    color: blue;
+    font-family: monospace;
+}
+
+.nested {
+    margin-left: 32px;
+}
+
+.nested p {
+    margin-top: 7px ;
+    margin-bottom: 7px ;
 }

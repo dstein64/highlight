@@ -109,27 +109,45 @@
   Example <a href="#" id="example-link">link</a>.
 </p>
 <details>
-  <summary>* <span class="summary">Block/Allow List Instructions</span></summary>
-  <p>
-    The optional <em>allow list</em> and <em>block list</em> can be used to customize
-    which URLs receive autonomous highlighting.
-  </p>
-  <p>
-    The lists are comprised of
-    <a target="_blank" rel="noopener noreferrer"
-       href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Match_patterns#Match_pattern_structure">
-    match patterns</a>&mdash;used for specifying groups of URLs&mdash;with one pattern
-    entered on each line.
-  </p>
-  <p>
-    Patterns on the <em>allow list</em> take precedence over patterns on the
-    <em>block list</em>.
-  </p>
-  <p>
-    To apply autonomous highlighting only for URLs matching specific patterns,
-    add <code>&lt;all_urls&gt;</code> to the block list, and also add the specific
-    patterns to the allow list.
-  </p>
+  <summary>* <span class="summary">Block/Allow List Information</span></summary>
+  <div>
+    <p>
+      The optional <em>allow list</em> and <em>block list</em> can be used to customize
+      which URLs receive autonomous highlighting.
+    </p>
+    <p>
+      The lists are comprised of
+      <a target="_blank" rel="noopener noreferrer"
+         href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Match_patterns#Match_pattern_structure">
+        match patterns</a>&mdash;used for specifying groups of URLs&mdash;<strong>with one
+      pattern entered on each line</strong>.
+    </p>
+    <p>
+      <strong>Patterns on the <em>allow list</em> take precedence over patterns on the
+        <em>block list</em></strong>.
+    </p>
+    <div class="nested">
+      <p>
+        For example, suppose <span class="pattern">*://*.dannyadam.com</span>
+        is on the block list, and <span class="pattern">*://*.dannyadam.com/blog/*</span> is
+        on the allow list.
+      </p>
+      <p>
+        In that case, autonomous highlighting would be applied for
+        <span class="url">https://www.dannyadam.com/blog/2015/04/article-highlighter/</span>,
+        since it matches an allow list pattern, even though it also matches a block list pattern.
+      </p>
+      <p>
+        Autonomous highlighting would not be applied for <span class="url">https://www.dannyadam.com/</span>,
+        since it matches a block list pattern, but not an allow list pattern.
+      </p>
+    </div>
+    <p>
+      To apply autonomous highlighting only for URLs matching specific patterns,
+      add <code>&lt;all_urls&gt;</code> to the block list, and also add the specific
+      patterns to the allow list.
+    </p>
+  </div>
 </details>
 <button id="defaults">Defaults</button>
 <button id="revert">Revert</button>
