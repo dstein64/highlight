@@ -4,7 +4,7 @@ Auto Highlight
 Keywords: tldr, tl;dr, article, summarizer, summarization, summary, highlight, highlighting, highlighter
 
 *Auto Highlight* is a browser extension that automatically highlights the important
-content on article sites.
+content on article pages.
 
 The extension is available from various browser add-on repositories.
 
