@@ -34,16 +34,20 @@ table#table td:first-child {
     vertical-align: middle;
 }
 
-table#autonomous-settings td:first-child {
+#autonomous-settings {
+    border: none;
+}
+
+#autonomous-settings table td:first-child {
     text-align: right;
 }
 
-table#autonomous-settings.disabled td:first-child,
-table#autonomous-settings.disabled #autonomous-delay-value {
+#autonomous-settings[disabled] td:first-child,
+#autonomous-settings[disabled] #autonomous-delay-value {
     color: rgb(197, 197, 197);
 }
 
-table#autonomous-settings.disabled img {
+#autonomous-settings[disabled] img {
     opacity: 23%;
 }
 

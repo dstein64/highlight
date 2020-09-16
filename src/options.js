@@ -53,28 +53,13 @@ const autonomousHighlightsPermissions = {
 // 'active' indicates whether the function is initiated through a user gesture. This
 // is required to avoid "This function must be called during a user gesture".
 const setAutonomousHighlights = function(value, active=false, callback=null) {
-    const setSubSettingVisibility = function(enabled) {
-        if (enabled) {
-            autonomousSettings.classList.remove('disabled');
-        } else {
-            autonomousSettings.classList.add('disabled');
-        }
-        autonomousDelayInput.disabled = !enabled;
-        for (const input of autonomousStateInputs.querySelectorAll('input')) {
-            input.disabled = !enabled;
-        }
-        autonomousBlockListInput.disabled = !enabled;
-        autonomousBlockListButton.disabled = !enabled;
-        autonomousAllowListInput.disabled = !enabled;
-        autonomousAllowListButton.disabled = !enabled;
-    };
     if (value) {
         const fn = active ? chrome.permissions.request : chrome.permissions.contains;
         fn(
             autonomousHighlightsPermissions,
             function(result) {
                 autonomousHighlightsInput.checked = result;
-                setSubSettingVisibility(result);
+                autonomousSettings.disabled = !result;
                 if (result)
                     revokeButton.disabled = false;
                 if (callback !== null)
@@ -82,7 +67,7 @@ const setAutonomousHighlights = function(value, active=false, callback=null) {
             });
     } else {
         autonomousHighlightsInput.checked = false;
-        setSubSettingVisibility(false);
+        autonomousSettings.disabled = true;
         if (callback !== null)
             callback();
     }

@@ -52,55 +52,57 @@
   <tr>
     <td></td>
     <td>
-      <table id="autonomous-settings">
-        <tr>
-          <td>
-            <label for="autonomous-delay">
-              <a class="tooltip"><span>Specifies how many seconds to wait&mdash;after
+      <fieldset id="autonomous-settings">
+        <table>
+          <tr>
+            <td>
+              <label for="autonomous-delay">
+                <a class="tooltip"><span>Specifies how many seconds to wait&mdash;after
                 loading a page&mdash;until autonomous highlighting is applied.
                 </span>Delay</a>
-            </label>
-          </td>
-          <td>
-            <input type="range" id="autonomous-delay" min="0" max="5000">
-            <span id="autonomous-delay-value"></span>
-          </td>
-        </tr>
-        <tr class="at-least-ternary">
-          <td>
-            <label>
-              <a class="tooltip"><span>Controls the amount of autonomous
+              </label>
+            </td>
+            <td>
+              <input type="range" id="autonomous-delay" min="0" max="5000">
+              <span id="autonomous-delay-value"></span>
+            </td>
+          </tr>
+          <tr class="at-least-ternary">
+            <td>
+              <label>
+                <a class="tooltip"><span>Controls the amount of autonomous
                 highlighting.</span>State</a>
-            </label>
-          </td>
-          <td id="autonomous-state"></td>
-        </tr>
-        <tr>
-          <td>
-            <label for="block-list" class="mobile-remove-for">
-              <a class="tooltip"><span>Disables autonomous highlighting for URLs matching
+              </label>
+            </td>
+            <td id="autonomous-state"></td>
+          </tr>
+          <tr>
+            <td>
+              <label for="block-list" class="mobile-remove-for">
+                <a class="tooltip"><span>Disables autonomous highlighting for URLs matching
               the specified match patterns.</span>Block List</a>*
-            </label>
-          </td>
-          <td>
-            <input type="checkbox" id="block-list">
-            <button id="block-list-button">0 items</button>
-          </td>
-        </tr>
-        <tr>
-          <td>
-            <label for="allow-list" class="mobile-remove-for">
-              <a class="tooltip"><span>Enables autonomous highlighting for URLs matching
+              </label>
+            </td>
+            <td>
+              <input type="checkbox" id="block-list">
+              <button id="block-list-button">0 items</button>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <label for="allow-list" class="mobile-remove-for">
+                <a class="tooltip"><span>Enables autonomous highlighting for URLs matching
               the specified match patterns.</span>
-              Allow List</a>*
-            </label>
-          </td>
-          <td>
-            <input type="checkbox" id="allow-list">
-            <button id="allow-list-button">0 items</button>
-          </td>
-        </tr>
-      </table>
+                  Allow List</a>*
+              </label>
+            </td>
+            <td>
+              <input type="checkbox" id="allow-list">
+              <button id="allow-list-button">0 items</button>
+            </td>
+          </tr>
+        </table>
+      </fieldset>
     </td>
   </tr>
 </table>
