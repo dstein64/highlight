@@ -50,6 +50,8 @@ function defaultOptions() {
     options['autonomous_highlights'] = false;
     options['autonomous_delay'] = 0;
     options['autonomous_state'] = Math.min(2, NUM_HIGHLIGHT_STATES - 1);
+    options['autonomous_block_list'] = false;
+    options['autonomous_allow_list'] = false;
     return options;
 }
 

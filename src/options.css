@@ -1,0 +1,127 @@
+/* *************************************************
+ * * Core
+ * ************************************************* */
+
+p {
+    font-size: 14px;
+}
+
+.example {
+    font-size: 16px;
+}
+
+body {
+    margin-top: 20px;
+}
+
+table#table td:first-child {
+    text-align: center;
+}
+
+#autonomous-delay-value {
+    font-family: monospace;
+}
+
+/*
+ * Force the empty #status span to take up space
+ * (\200b is Unicode zero-width space).
+ */
+#status:after {
+    content: '\200b';
+}
+
+#autonomous-delay-value, #autonomous-delay {
+    vertical-align: middle;
+}
+
+table#autonomous-settings td:first-child {
+    text-align: right;
+}
+
+table#autonomous-settings.disabled td:first-child,
+table#autonomous-settings.disabled #autonomous-delay-value {
+    color: rgb(197, 197, 197);
+}
+
+table#autonomous-settings.disabled img {
+    opacity: 23%;
+}
+
+/* *************************************************
+ * * Tooltip
+ * ************************************************* */
+
+a.tooltip {
+    outline: none;
+    border-bottom: 1px dotted;
+}
+
+a.tooltip:hover {
+    text-decoration: none;
+}
+
+a.tooltip > span {
+    z-index: 10;
+    position: absolute;
+    left: 0;
+    display: none;
+    padding: 14px 20px;
+    margin-top: 40px;
+    margin-left: 20px;
+    width: auto;
+    max-width: 300px;
+    line-height: 16px;
+    text-align: left;
+}
+
+a.tooltip.top > span {
+    margin-top: -20px;
+    transform: translateY(-100%);
+}
+
+a.tooltip:hover > span {
+    display: inline;
+    color: #111;
+    border: 1px solid #DCA;
+    background: #fffAF0;
+}
+
+a.tooltip > span {
+    border-radius:4px;
+    box-shadow: 5px 5px 8px #CCC;
+}
+
+/* *************************************************
+ * * Miscellaneous
+ * ************************************************* */
+
+#forkme {
+    position: absolute;
+    top: 0;
+    right: 0;
+    border: 0;
+    width: 149px;
+    height: 149px;
+}
+
+details {
+    margin-bottom: 16px;
+}
+
+details:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+details > *:not(summary){
+    margin-left: 32px;
+}
+
+summary {
+    outline: none;
+}
+
+.summary {
+    cursor: pointer;
+    border-bottom: 1px dotted;
+}

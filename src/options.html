@@ -1,86 +1,17 @@
-<html>
+<html lang="en">
 <head>
 <title>*Auto Highlight* Extension Options</title>
-<style>
-/* *************************************************
- * * Core
- * ************************************************* */
-
-p {
-    font-size: 14px;
-}
-
-.example {
-  font-size: 16px;
-}
-
-body {
-    margin-top: 20px;
-}
-
-table#table td:first-child {
-  text-align: center;
-}
-
-#autonomous-delay-value {
-  font-family: monospace;
-}
-
-/*
- * Force the empty #status span to take up space
- * (\200b is Unicode zero-width space).
- */
-#status:after {
-  content: '\200b';
-}
-
-#autonomous-delay-value, #autonomous-delay {
-  vertical-align: middle;
-}
-
-/* *************************************************
- * * Tooltip
- * ************************************************* */
-
-a.tooltip {
-  outline: none;
-  border-bottom: 1px dotted;
-}
-
-a.tooltip:hover {
-  text-decoration: none;
-}
-
-a.tooltip > span {
-  z-index: 10;
-  display: none;
-  padding: 14px 20px;
-  margin-top: 40px;
-  margin-left: 20px;
-  width: auto;
-  max-width: 300px;
-  line-height: 16px;
-}
-
-a.tooltip:hover > span {
-  display: inline;
-  position: absolute;
-  color: #111;
-  border: 1px solid #DCA;
-  background:#fffAF0;
-}
-
-a.tooltip > span {
-  border-radius:4px;
-  box-shadow: 5px 5px 8px #CCC;
-}
-
-</style>
+<link href="options.css" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
-
-<div id="container">
+<!-- Surround the body in a <div>. Otherwise, in Firefox, top-level buttons
+ have display:block instead of display:inline-block, and they take the full
+ width of the page. CSS rules don't fix the problem. -->
+<div>
+<a href="https://github.com/dstein64/highlight" target="_blank" rel="noopener noreferrer">
+  <img id="forkme" src="forkme_right_white_ffffff.png" alt="Fork me on GitHub">
+</a>
 <h3><em>Auto Highlight</em> v<span id="version"></span></h3>
 <h2>Options</h2>
 <table id="table">
@@ -111,35 +42,95 @@ a.tooltip > span {
     <td><input type="checkbox" id="autonomous-highlights"></td>
     <td>
       <label for="autonomous-highlights" class="mobile-remove-for">
-        <a class="tooltip"><span>Toggles whether pages are highlighted upon loading,
-          without requiring user interaction. <em>Delay</em> specifies how many seconds
-          to wait&mdash;after loading a page&mdash;until autonomous highlighting is applied.
-          <span class="at-least-ternary"> <em>State</em> controls the amount of autonomous
-          highlighting.</span></span>Autonomous Highlights</a>
+        <!-- Display Autonomous Highlights tooltip above the label, so it doesn't block
+         the corresponding settings.-->
+        <a class="tooltip top"><span>Toggles whether pages are highlighted upon loading,
+          without requiring user interaction.</span>Autonomous Highlights</a>
       </label>
     </td>
   </tr>
   <tr>
     <td></td>
     <td>
-      <table>
+      <table id="autonomous-settings">
         <tr>
           <td>
-            <span id="autonomous-delay-value"></span>
-            <input type="range" id="autonomous-delay" min="0" max="5000">
+            <label for="autonomous-delay">
+              <a class="tooltip"><span>Specifies how many seconds to wait&mdash;after
+                loading a page&mdash;until autonomous highlighting is applied.
+                </span>Delay</a>
+            </label>
           </td>
-          <td><label for="autonomous-delay">Delay</label></td>
+          <td>
+            <input type="range" id="autonomous-delay" min="0" max="5000">
+            <span id="autonomous-delay-value"></span>
+          </td>
         </tr>
         <tr class="at-least-ternary">
+          <td>
+            <label>
+              <a class="tooltip"><span>Controls the amount of autonomous
+                highlighting.</span>State</a>
+            </label>
+          </td>
           <td id="autonomous-state"></td>
-          <td><label>State</label></td>
+        </tr>
+        <tr>
+          <td>
+            <label for="block-list" class="mobile-remove-for">
+              <a class="tooltip"><span>Disables autonomous highlighting for URLs matching
+              the specified match patterns.</span>Block List</a>*
+            </label>
+          </td>
+          <td>
+            <input type="checkbox" id="block-list">
+            <button id="block-list-button">0 items</button>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="allow-list" class="mobile-remove-for">
+              <a class="tooltip"><span>Enables autonomous highlighting for URLs matching
+              the specified match patterns.</span>
+              Allow List</a>*
+            </label>
+          </td>
+          <td>
+            <input type="checkbox" id="allow-list">
+            <button id="allow-list-button">0 items</button>
+          </td>
         </tr>
       </table>
     </td>
   </tr>
 </table>
-<p class="example">Example <span id="example-text">highlighted text</span>.</p>
-<p class="example">Example <a href="#" id="example-link">highlighted link</a>.</p>
+<p class="example">
+  Example <span id="example-text">text</span>.
+  Example <a href="#" id="example-link">link</a>.
+</p>
+<details>
+  <summary>* <span class="summary">Block/Allow List Instructions</span></summary>
+  <p>
+    The optional <em>allow list</em> and <em>block list</em> can be used to customize
+    which URLs receive autonomous highlighting.
+  </p>
+  <p>
+    The lists are comprised of
+    <a target="_blank" rel="noopener noreferrer"
+       href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Match_patterns#Match_pattern_structure">
+    match patterns</a>&mdash;used for specifying groups of URLs&mdash;with one pattern
+    entered on each line.
+  </p>
+  <p>
+    Patterns on the <em>allow list</em> take precedence over patterns on the
+    <em>block list</em>.
+  </p>
+  <p>
+    To apply autonomous highlighting only for URLs matching specific patterns,
+    add <code>&lt;all_urls&gt;</code> to the block list, and also add the specific
+    patterns to the allow list.
+  </p>
+</details>
 <button id="defaults">Defaults</button>
 <button id="revert">Revert</button>
 <span style="margin-left: 7px;" id="status"></span>
@@ -154,7 +145,7 @@ a.tooltip > span {
   The button below can be used to revoke additional permissions that were
   granted for optional functionality (which will be subsequently disabled).
 </p>
-<button disabled="true" id="revoke_permissions">Revoke</button>
+<button disabled id="revoke-permissions">Revoke</button>
 </div>
 </body>
 
