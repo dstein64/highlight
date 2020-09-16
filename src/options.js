@@ -73,6 +73,14 @@ const setAutonomousHighlights = function(value, active=false, callback=null) {
     }
 };
 
+const syncBlockListButtonState = function() {
+    autonomousBlockListButton.disabled = !autonomousBlockListInput.checked;
+};
+
+const syncAllowListButtonState = function() {
+    autonomousAllowListButton.disabled = !autonomousAllowListInput.checked;
+};
+
 const showAutonomousDelay = function() {
     const milliseconds = parseInt(autonomousDelayInput.value);
     const seconds = milliseconds / 1000;
@@ -153,6 +161,8 @@ const propagateOptions = function() {
 };
 
 const loadOptions = function(opts, active=false) {
+    // onchange doesn't fire when setting 'checked' and other values with javascript,
+    // so some form synchronization must be triggered manually.
     highlightColorInput.value = opts['highlight_color'];
     textColorInput.value = opts['text_color'];
     linkColorInput.value = opts['link_color'];
@@ -163,7 +173,9 @@ const loadOptions = function(opts, active=false) {
         document.getElementById(
             `autonomous-state-${opts['autonomous_state']}`).checked = true;
         autonomousBlockListInput.checked = opts['autonomous_block_list'];
+        syncBlockListButtonState();
         autonomousAllowListInput.checked = opts['autonomous_allow_list'];
+        syncAllowListButtonState();
         // WARN: calling propagateOptions is not specific for autonomous
         // highlights, but rather for all the settings above. It's called
         // here though as part of the callback to setAutonomousHighlights(), not
@@ -209,7 +221,7 @@ if (window.matchMedia('(pointer: coarse)').matches) {
     }
 }
 
-// save options on any user input
+// save options and synchronize form on any user input
 (function() {
     highlightColorInput.addEventListener('change', propagateOptions);
     textColorInput.addEventListener('change', propagateOptions);
@@ -225,8 +237,14 @@ if (window.matchMedia('(pointer: coarse)').matches) {
     for (const input of autonomousStateInputs.querySelectorAll('input')) {
         input.addEventListener('change', propagateOptions);
     }
-    autonomousBlockListInput.addEventListener('change', propagateOptions);
-    autonomousAllowListInput.addEventListener('change', propagateOptions);
+    autonomousBlockListInput.addEventListener('change', function() {
+        syncBlockListButtonState();
+        propagateOptions();
+    });
+    autonomousAllowListInput.addEventListener('change', function() {
+        syncAllowListButtonState();
+        propagateOptions();
+    });
 })();
 
 /***********************************
