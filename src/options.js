@@ -135,8 +135,8 @@ for (let i = 1; i < numHighlightStates; ++i) {
     img.width = 19;
 }
 
-// Propagates and saves options.
-const propagateOptions = function(forceNotify=false) {
+// Propagates and saves options, if there was a change (or force=true).
+const propagateOptions = function(force=false) {
     const highlightColor = highlightColorInput.value;
     const textColor = textColorInput.value;
     const linkColor = linkColorInput.value;
@@ -165,9 +165,11 @@ const propagateOptions = function(forceNotify=false) {
     options['autonomous_block_list'] = autonomousBlockList;
 
     const prior = localStorage['options'];
-    localStorage['options'] = JSON.stringify(options);
+    const updated = JSON.stringify(options);
 
-    if (forceNotify || prior !== localStorage['options']) {
+    if (force || prior !== updated) {
+        localStorage['options'] = updated;
+
         // Notify tabs of the options
         chrome.tabs.query({}, function(tabs) {
             for (let i = 0; i < tabs.length; i++) {
