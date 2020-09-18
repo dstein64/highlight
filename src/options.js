@@ -292,3 +292,19 @@ for (let i = 0; i < numHighlightStates; ++i) {
     });
     globalHighlightIcons.appendChild(img);
 }
+
+/***********************************
+ * External Updates
+ ***********************************/
+
+chrome.runtime.onMessage.addListener(function(request, sender, response) {
+    if (request.message === 'optionsPageReload') {
+        // Reload options when there are any external updates that could modify the
+        // settings (e.g., permissions granted, changes to the blocklist).
+        loadOptions(JSON.parse(localStorage['options']));
+    }
+    // NOTE: if you're going to call response asynchronously,
+    //       be sure to return true from this function.
+    //       http://stackoverflow.com/questions/20077487/
+    //              chrome-extension-message-passing-response-not-sent
+});

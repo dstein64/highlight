@@ -442,8 +442,11 @@ chrome.browserAction.onClicked.addListener(function(tab) {
             chrome.permissions.request(
                 getPermissions('global_highlighting'),
                 function (granted) {
-                    if (granted)
+                    if (granted) {
                         highlightAll(level);
+                        // Send reloadOptions button, since the state of permissions may have changed.
+                        chrome.runtime.sendMessage(chrome.runtime.id, {message: 'optionsPageReload'});
+                    }
                 });
         } else if (id.match(options_re)) {
             chrome.runtime.openOptionsPage();

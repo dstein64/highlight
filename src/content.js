@@ -1332,6 +1332,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
         OPTIONS = request.data;
     } else if (method === 'ping') {
         // response is sent below
+    } else {
+        // Unhandled method (e.g., optionsPageReload, which is intended for the options page)
     }
     sendResponse(true);
 });
