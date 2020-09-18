@@ -444,7 +444,8 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 function (granted) {
                     if (granted) {
                         highlightAll(level);
-                        // Send reloadOptions button, since the state of permissions may have changed.
+                        // Send message to options page to reload options,
+                        // since the state of permissions may have changed.
                         chrome.runtime.sendMessage(chrome.runtime.id, {message: 'optionsPageReload'});
                     }
                 });
