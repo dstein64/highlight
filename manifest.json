@@ -5,7 +5,7 @@
   "options_ui": {
     "page": "src/options.html"
   },
-  "permissions": ["activeTab"],
+  "permissions": ["activeTab", "contextMenus"],
   "optional_permissions": ["<all_urls>", "tabs"],
   "background": {
     "scripts": ["src/utils.js", "src/eventPage.js"],
@@ -19,7 +19,9 @@
     "default_title": "Toggle highlighting"
   },
   "icons": {
-    "128": "icons/128x128.png",
-    "48": "icons/48x48.png"},
+    "16": "icons/16x16.png",
+    "48": "icons/48x48.png",
+    "128": "icons/128x128.png"
+  },
   "manifest_version": 2
 }

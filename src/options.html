@@ -80,7 +80,7 @@
             <td>
               <label for="blocklist" class="mobile-remove-for">
                 <a class="tooltip"><span>Controls which pages do not receive autonomous
-                  highlighting.</span>Blocklist</a>*
+                  highlighting.</span>Blocklist</a><sup>*</sup>
               </label>
             </td>
             <td>
@@ -136,8 +136,7 @@
           <tr>
             <td><span class="label">address</span></td>
             <td>
-              <span class="url">https://www<wbr>.dannyadam<wbr>.com<wbr>/blog<wbr>
-              /2015<wbr>/04<wbr>/article-highlighter/</span>
+              <span class="url">https://www<wbr>.dannyadam<wbr>.com<wbr>/blog<wbr>/2015<wbr>/04<wbr>/article-highlighter/</span>
             </td>
           </tr>
           <tr>
@@ -157,20 +156,21 @@
     </p>
     <div class="nested">
       <p>
-        For example, suppose <span class="label">domain</span> <span class="domain">www<wbr>
-        .dannyadam<wbr>.com </span> is an item on the blocklist, and <span class="label">pattern
-        </span> <span class="pattern">*://*.dannyadam<wbr>.com<wbr>/blog<wbr>/*</span> is included
+        For example, suppose <span class="label">domain</span>
+        <span class="domain">www<wbr>.dannyadam<wbr>.com</span> is an item on the blocklist,
+        and <span class="label">pattern</span>
+        <span class="pattern">*://*.dannyadam<wbr>.com<wbr>/blog<wbr>/*</span> is included
         on the list of exceptions.
       </p>
       <p>
         In that case, autonomous highlighting would be applied for
-        <span class="url">https://www<wbr>.dannyadam<wbr>.com<wbr>/blog<wbr>/2015<wbr>
-        /04<wbr>/article-highlighter/</span>, since it matches an exception, even
-        though it also matches a blocklist item.
+        <span class="url">https://www<wbr>.dannyadam<wbr>.com<wbr>/blog<wbr>/2015<wbr>/04<wbr>/article-highlighter/</span>,
+        since it matches an exception, even though it also matches a blocklist item.
       </p>
       <p>
-        Autonomous highlighting would not be applied for <span class="url">https://www<wbr>
-        .dannyadam<wbr>.com/</span>, since it matches a blocklist item, but not an exception.
+        Autonomous highlighting would not be applied for
+        <span class="url">https://www<wbr>.dannyadam<wbr>.com/</span>, since it matches a
+        blocklist item, but not an exception.
       </p>
     </div>
     <h3>Allowing Certain Pages</h3>

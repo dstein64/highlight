@@ -1,6 +1,6 @@
 // module pattern to keep things organized
-var UTILS = (function() {
-    var me = Object.create(null);
+this.UTILS = (function() {
+    const me = Object.create(null);
 
     me.hasOwnProperty = function(obj, key) {
         return Object.prototype.hasOwnProperty.call(obj, key);
@@ -16,14 +16,14 @@ var UTILS = (function() {
     // Syntax: safeSetInterval(function,milliseconds,param1,param2,...)
     me.safeSetInterval = function() {
         // arguments is not an Array. It's array-like. Let's create one
-        var args = [];
-        for (var i = 0; i < arguments.length; i++) {
+        const args = [];
+        for (let i = 0; i < arguments.length; i++) {
             args.push(arguments[i]);
         }
 
-        var fn = args[0];
-        var rest = args.slice(1);
-        var timerId = setInterval.apply(null, [function() {
+        const fn = args[0];
+        const rest = args.slice(1);
+        const timerId = setInterval.apply(null, [function() {
             try {
                 fn();
             } catch(err) {
@@ -35,12 +35,12 @@ var UTILS = (function() {
 
     // sets a timeout and ignores exceptions
     me.setTimeoutIgnore = function() {
-        var args = [];
-        for (var i = 0; i < arguments.length; i++) {
+        const args = [];
+        for (let i = 0; i < arguments.length; i++) {
             args.push(arguments[i]);
         }
-        var fn = args[0];
-        var rest = args.slice(1);
+        const fn = args[0];
+        const rest = args.slice(1);
         setTimeout.apply(null, [function() {
             try {
                 fn();

@@ -16,6 +16,9 @@ const backgroundPage = chrome.extension.getBackgroundPage();
 
 const numHighlightStates = backgroundPage.getNumHighlightStates();
 
+const autonomousHighlightsPermissions = backgroundPage.getPermissions('autonomous_highlights');
+const globalHighlightingPermissions = backgroundPage.getPermissions('global_highlighting');
+
 const highlightColorInput = document.getElementById('highlight-color');
 const textColorInput = document.getElementById('text-color');
 const linkColorInput = document.getElementById('link-color');
@@ -43,11 +46,6 @@ versionElement.innerText = backgroundPage.getVersion();
 /***********************************
  * Options
  ***********************************/
-
-const autonomousHighlightsPermissions = {
-    permissions: ['tabs'],
-    origins: ['<all_urls>']
-};
 
 // 'active' indicates whether the function is initiated through a user gesture. This
 // is required to avoid "This function must be called during a user gesture".
@@ -239,12 +237,6 @@ if (window.matchMedia('(pointer: coarse)').matches) {
  * Global Highlighting
  ***********************************/
 
-// permissions required for global highlighting
-const globalHighlightPermissions = {
-    permissions: ['tabs'],
-    origins: ['<all_urls>']
-};
-
 // create global highlighting links
 for (let i = 0; i < numHighlightStates; ++i) {
     const img = document.createElement('img');
@@ -257,7 +249,7 @@ for (let i = 0; i < numHighlightStates; ++i) {
     // to avoid "This function must be called during a user gesture" error.
     img.addEventListener('click', function() {
         chrome.permissions.request(
-            globalHighlightPermissions,
+            globalHighlightingPermissions,
             function(granted) {
                 if (granted) {
                     revokeButton.disabled = false;
@@ -275,10 +267,10 @@ for (let i = 0; i < numHighlightStates; ++i) {
 const permissions = {};
 {
     const _permissions = new Set();
-    globalHighlightPermissions.permissions.forEach(x => _permissions.add(x));
+    globalHighlightingPermissions.permissions.forEach(x => _permissions.add(x));
     autonomousHighlightsPermissions.permissions.forEach(x => _permissions.add(x));
     const origins = new Set();
-    globalHighlightPermissions.origins.forEach(x => origins.add(x));
+    globalHighlightingPermissions.origins.forEach(x => origins.add(x));
     autonomousHighlightsPermissions.origins.forEach(x => origins.add(x));
     permissions.permissions = Array.from(permissions);
     permissions.origins = Array.from(origins);

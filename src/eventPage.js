@@ -29,6 +29,21 @@ function getVersion() {
     return chrome.runtime.getManifest().version;
 }
 
+// This is called from options.js (see scope warning above).
+function getPermissions(scope) {
+    const permissions = {
+        'autonomous_highlights': {
+            permissions: ['tabs'],
+            origins: ['<all_urls>']
+        },
+        'global_highlighting': {
+            permissions: ['tabs'],
+            origins: ['<all_urls>']
+        }
+    };
+    return permissions[scope];
+}
+
 const getOptions = function() {
     let opts = localStorage['options'];
     if (opts) {
@@ -285,3 +300,144 @@ function highlightAll(state) {
 chrome.browserAction.onClicked.addListener(function(tab) {
     highlight(tab.id, true, null, 'document_end');
 });
+
+// *****************************
+// * Context Menu
+// *****************************
+
+{
+    const is_firefox = chrome.runtime.getURL('').startsWith('moz-extension://');
+    let properties;
+
+    chrome.contextMenus.create({
+        type: 'normal',
+        id: 'page_main',
+        title: 'Auto Highlight',
+        contexts: ['page']
+    });
+
+    const level_name_lookup = {
+        2: {0: 'Off', 1: 'On'},
+        3: {0: 'None', 1: 'Partial', 2: 'Max'},
+        4: {0: 'None', 1: 'Low', 2: 'High', 3: 'Max'}
+    };
+
+    for (const context of ['page', 'browser_action']) {
+        // Add highlighting items.
+        let highlight_menu_id = null;
+        // Use a submenu for the browser action, to prevent Firefox from automatically
+        // putting items beyond the fourth in a submenu (i.e., keep the number of
+        // Firefox browser action items less than or equal to four), and to prevent
+        // Chrome from truncating items beyond the fifth (i.e., keep the number of
+        // Chrome browser action items less than or equal to five).
+        if (context === 'browser_action') {
+            highlight_menu_id = 'highlight_' + context;
+            properties = {
+                type: 'normal',
+                id: highlight_menu_id,
+                title: 'State',
+                contexts: [context]
+            };
+            chrome.contextMenus.create(properties);
+        }
+        for (let i = 0; i < NUM_HIGHLIGHT_STATES; ++i) {
+            const id = 'highlight_' + i + '_' + context;
+            properties = {
+                type: 'normal',
+                id: id,
+                title: level_name_lookup[NUM_HIGHLIGHT_STATES][i],
+                contexts: [context]
+            };
+            // TODO: Set the right icons
+            // Chrome does not support icons.
+            if (is_firefox) {
+                properties.icons = {
+                    '16': 'icons/16x16.png'
+                }
+            }
+            if (context === 'page') {
+                properties.parentId = 'page_main';
+            } else if (highlight_menu_id !== null) {
+                properties.parentId = highlight_menu_id;
+            }
+            chrome.contextMenus.create(properties);
+        }
+
+        // Add separator if we're in the page context
+        if (context === 'page') {
+            properties = {
+                type: 'separator',
+                contexts: [context],
+            };
+            if (context === 'page')
+                properties.parentId = 'page_main';
+            chrome.contextMenus.create(properties);
+        }
+
+        // Add global highlighting items
+        const global_menu_id = 'global_' + context;
+        properties = {
+            type: 'normal',
+            id: global_menu_id,
+            title: 'Global Highlighting',
+            contexts: [context],
+        };
+        if (context === 'page')
+            properties.parentId = 'page_main';
+        chrome.contextMenus.create(properties);
+        for (let i = 0; i < NUM_HIGHLIGHT_STATES; ++i) {
+            const id = 'global_' + i + '_' + context;
+            properties = {
+                type: 'normal',
+                id: id,
+                title: level_name_lookup[NUM_HIGHLIGHT_STATES][i],
+                contexts: [context],
+                parentId: global_menu_id
+            };
+            // TODO: Set the right icons
+            // Chrome does not support icons.
+            if (is_firefox) {
+                properties.icons = {
+                    '16': 'icons/16x16.png'
+                }
+            }
+            chrome.contextMenus.create(properties);
+        }
+
+        // Add an options item for 1) the 'page' context and 2) the 'browser_action' context
+        // on Firefox, since it doesn't have an Options item. This is not added for the
+        // 'browser_action' context on Chrome, since it already has an Options item.
+        if (context === 'page' || is_firefox) {
+            const options_id = 'options_' + context;
+            properties = {
+                type: 'normal',
+                id: options_id,
+                title: 'Options',
+                contexts: [context]
+            };
+            if (context === 'page')
+                properties.parentId = 'page_main';
+            chrome.contextMenus.create(properties);
+        }
+    }
+
+    chrome.contextMenus.onClicked.addListener(function(info, tab) {
+        const id = info.menuItemId;
+        // TODO: USE MORE PRECISE MATCH FOR highlight_ and global_
+        // TODO: i.e., check for the number suffix and the _ suffix
+        if (id.startsWith('highlight_')) {
+            const level = parseInt(id.slice('highlight_'.length).split('_')[0]);
+            highlight(tab.id, true, level, 'document_end');
+        } else if (id.startsWith('global_')) {
+            const level = parseInt(id.slice('global_'.length).split('_')[0]);
+            chrome.permissions.request(
+                getPermissions('global_highlighting'),
+                function (granted) {
+                    if (granted)
+                        highlightAll(level);
+                });
+        } else if (id.startsWith('options_')) {
+            chrome.runtime.openOptionsPage();
+        }
+    });
+}
