@@ -65,7 +65,12 @@ revokeButton.addEventListener('click', function() {
         function(removed) {
             if (removed) {
                 revokeButton.disabled = true;
-                setAutonomousHighlights(false, true, propagateOptions);
+                setAutonomousHighlights(false, true, function() {
+                    // Force notification, since without this, the only consideration
+                    // for notification is whether any options changed (which may not
+                    // be the case when manually revoking permissions).
+                    propagateOptions(true);
+                });
             }
         });
 });
@@ -131,7 +136,7 @@ for (let i = 1; i < numHighlightStates; ++i) {
 }
 
 // Propagates and saves options.
-const propagateOptions = function() {
+const propagateOptions = function(forceNotify=false) {
     const highlightColor = highlightColorInput.value;
     const textColor = textColorInput.value;
     const linkColor = linkColorInput.value;
@@ -159,24 +164,31 @@ const propagateOptions = function() {
     options['autonomous_state'] = autonomousState;
     options['autonomous_block_list'] = autonomousBlockList;
 
+    const prior = localStorage['options'];
     localStorage['options'] = JSON.stringify(options);
 
-    // Notify tabs of the options
-    chrome.tabs.query({}, function(tabs) {
-        for (let i = 0; i < tabs.length; i++) {
-            const tab = tabs[i];
-            chrome.tabs.sendMessage(
-                tab.id,
-                {method: 'updateOptions', data: options},
-                function(resp) {
-                    // Check for lastError, to avoid:
-                    //   'Unchecked lastError value: Error: Could not establish connection.
-                    //   Receiving end does not exist.'
-                    // Which would occur for tabs without the content script injected.
-                    if (chrome.runtime.lastError) {}
-                });
-        }
-    });
+    if (forceNotify || prior !== localStorage['options']) {
+        // Notify tabs of the options
+        chrome.tabs.query({}, function(tabs) {
+            for (let i = 0; i < tabs.length; i++) {
+                const tab = tabs[i];
+                chrome.tabs.sendMessage(
+                    tab.id,
+                    {method: 'updateOptions', data: options},
+                    function(resp) {
+                        // Check for lastError, to avoid:
+                        //   'Unchecked lastError value: Error: Could not establish connection.
+                        //   Receiving end does not exist.'
+                        // Which would occur for tabs without the content script injected.
+                        if (chrome.runtime.lastError) {}
+                    });
+            }
+        });
+
+        // Send message to options page to reload options,
+        // since the state of permissions may have changed.
+        chrome.runtime.sendMessage(chrome.runtime.id, {message: 'optionsPageReload'});
+    }
 };
 
 const loadOptions = function(opts, active=false) {
@@ -196,8 +208,7 @@ const loadOptions = function(opts, active=false) {
         chrome.permissions.contains(
             PERMISSIONS,
             function(result) {
-                if (result)
-                    revokeButton.disabled = !result;
+                revokeButton.disabled = !result;
             });
         // WARN: calling propagateOptions is not specific for autonomous
         // highlights, but rather for all the settings above. It's called
@@ -246,9 +257,13 @@ if (window.matchMedia('(pointer: coarse)').matches) {
 
 // save options and synchronize form on any user input
 (function() {
-    highlightColorInput.addEventListener('change', propagateOptions);
-    textColorInput.addEventListener('change', propagateOptions);
-    linkColorInput.addEventListener('change', propagateOptions);
+    // For color inputs, 'input' events are triggered during selection, while 'change'
+    // events are triggered after closing the dialog.
+    for (const type of ['change', 'input']) {
+        highlightColorInput.addEventListener(type, propagateOptions);
+        textColorInput.addEventListener(type, propagateOptions);
+        linkColorInput.addEventListener(type, propagateOptions);
+    }
     tintedHighlightsInput.addEventListener('change', propagateOptions);
     autonomousHighlightsInput.addEventListener('change', function() {
         setAutonomousHighlights(autonomousHighlightsInput.checked, true, propagateOptions);
@@ -256,7 +271,10 @@ if (window.matchMedia('(pointer: coarse)').matches) {
     autonomousDelayInput.addEventListener('change', propagateOptions);
     // For range inputs, 'input' events are triggered while dragging, while 'change'
     // events are triggered after the end of a sliding action.
-    autonomousDelayInput.addEventListener('input', showAutonomousDelay);
+    autonomousDelayInput.addEventListener('input', function() {
+        showAutonomousDelay();
+        propagateOptions();
+    });
     for (const input of autonomousStateInputs.querySelectorAll('input')) {
         input.addEventListener('change', propagateOptions);
     }
