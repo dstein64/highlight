@@ -66,10 +66,7 @@ revokeButton.addEventListener('click', function() {
             if (removed) {
                 revokeButton.disabled = true;
                 setAutonomousHighlights(false, true, function() {
-                    // Force notification, since without this, the only consideration
-                    // for notification is whether any options changed (which may not
-                    // be the case when manually revoking permissions).
-                    propagateOptions(true);
+                    saveOptions();
                 });
             }
         });
@@ -135,8 +132,8 @@ for (let i = 1; i < numHighlightStates; ++i) {
     img.width = 19;
 }
 
-// Propagates and saves options, if there was a change (or force=true).
-const propagateOptions = function(force=false) {
+// Saves options.
+const saveOptions = function() {
     const highlightColor = highlightColorInput.value;
     const textColor = textColorInput.value;
     const linkColor = linkColorInput.value;
@@ -164,32 +161,9 @@ const propagateOptions = function(force=false) {
     options['autonomous_state'] = autonomousState;
     options['autonomous_block_list'] = autonomousBlockList;
 
-    const prior = localStorage['options'];
-    const updated = JSON.stringify(options);
+    localStorage['options'] = JSON.stringify(options);
 
-    if (force || prior !== updated) {
-        localStorage['options'] = updated;
-
-        // Notify tabs of the options
-        chrome.tabs.query({}, function(tabs) {
-            for (let i = 0; i < tabs.length; i++) {
-                const tab = tabs[i];
-                chrome.tabs.sendMessage(
-                    tab.id,
-                    {method: 'updateOptions', data: options},
-                    function(resp) {
-                        // Check for lastError, to avoid:
-                        //   'Unchecked lastError value: Error: Could not establish connection.
-                        //   Receiving end does not exist.'
-                        // Which would occur for tabs without the content script injected.
-                        if (chrome.runtime.lastError) {}
-                    });
-            }
-        });
-
-        // Send message to other options pages to reload options.
-        chrome.runtime.sendMessage(chrome.runtime.id, {message: 'optionsPageReload'});
-    }
+    backgroundPage.propagateOptions();
 };
 
 const loadOptions = function(opts, active=false) {
@@ -211,12 +185,12 @@ const loadOptions = function(opts, active=false) {
             function(result) {
                 revokeButton.disabled = !result;
             });
-        // WARN: calling propagateOptions is not specific for autonomous
+        // WARN: calling saveOptions is not specific for autonomous
         // highlights, but rather for all the settings above. It's called
         // here though as part of the callback to setAutonomousHighlights(), not
         // at the scope of loadOptions(), as a consequence of the asynchronous
         // handling of setAutonomousHighlights.
-        propagateOptions();
+        saveOptions();
     });
 };
 
@@ -261,27 +235,27 @@ if (window.matchMedia('(pointer: coarse)').matches) {
     // For color inputs, 'input' events are triggered during selection, while 'change'
     // events are triggered after closing the dialog.
     for (const type of ['change', 'input']) {
-        highlightColorInput.addEventListener(type, propagateOptions);
-        textColorInput.addEventListener(type, propagateOptions);
-        linkColorInput.addEventListener(type, propagateOptions);
+        highlightColorInput.addEventListener(type, saveOptions);
+        textColorInput.addEventListener(type, saveOptions);
+        linkColorInput.addEventListener(type, saveOptions);
     }
-    tintedHighlightsInput.addEventListener('change', propagateOptions);
+    tintedHighlightsInput.addEventListener('change', saveOptions);
     autonomousHighlightsInput.addEventListener('change', function() {
-        setAutonomousHighlights(autonomousHighlightsInput.checked, true, propagateOptions);
+        setAutonomousHighlights(autonomousHighlightsInput.checked, true, saveOptions);
     });
-    autonomousDelayInput.addEventListener('change', propagateOptions);
+    autonomousDelayInput.addEventListener('change', saveOptions);
     // For range inputs, 'input' events are triggered while dragging, while 'change'
     // events are triggered after the end of a sliding action.
     autonomousDelayInput.addEventListener('input', function() {
         showAutonomousDelay();
-        propagateOptions();
+        //saveOptions();
     });
     for (const input of autonomousStateInputs.querySelectorAll('input')) {
-        input.addEventListener('change', propagateOptions);
+        input.addEventListener('change', saveOptions);
     }
     autonomousBlocklistInput.addEventListener('change', function() {
         syncBlocklistButtons();
-        propagateOptions();
+        saveOptions();
     });
 })();
 

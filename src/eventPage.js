@@ -106,6 +106,32 @@ function defaultOptions() {
     localStorage['options'] = JSON.stringify(opts);
 })();
 
+// This is called from options.js (see scope warning above).
+function propagateOptions() {
+    // Notify tabs of the options
+    const options = getOptions();
+    chrome.tabs.query({}, function(tabs) {
+        for (let i = 0; i < tabs.length; i++) {
+            const tab = tabs[i];
+            chrome.tabs.sendMessage(
+                tab.id,
+                {method: 'updateOptions', data: options},
+                function(resp) {
+                    // Check for lastError, to avoid:
+                    //   'Unchecked lastError value: Error: Could not establish connection.
+                    //   Receiving end does not exist.'
+                    // Which would occur for tabs without the content script injected.
+                    if (chrome.runtime.lastError) {}
+                });
+        }
+    });
+}
+
+// Reload options page
+const optionsPageReload = function() {
+    chrome.runtime.sendMessage(chrome.runtime.id, {message: 'optionsPageReload'});
+};
+
 // *****************************
 // * Core
 // *****************************
@@ -446,7 +472,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                         highlightAll(level);
                         // Send message to options page to reload options,
                         // since the state of permissions may have changed.
-                        chrome.runtime.sendMessage(chrome.runtime.id, {message: 'optionsPageReload'});
+                        optionsPageReload();
                     }
                 });
         } else if (id.match(options_re)) {
