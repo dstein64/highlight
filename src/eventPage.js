@@ -322,7 +322,8 @@ chrome.browserAction.onClicked.addListener(function(tab) {
         4: {0: 'None', 1: 'Low', 2: 'High', 3: 'Max'}
     };
 
-    for (const context of ['page', 'browser_action']) {
+    const contexts = ['page', 'browser_action'];
+    for (const context of contexts) {
         // Add highlighting items.
         let highlight_menu_id = null;
         // Use a submenu for the browser action, to prevent Firefox from automatically
@@ -423,14 +424,20 @@ chrome.browserAction.onClicked.addListener(function(tab) {
         }
     }
 
+    const joined_contexts = contexts.join('|');
+    // Matches pattern: 'highlight_NUM_CONTEXT'
+    const highlight_re = new RegExp('^highlight_[0-3]_(?:' + joined_contexts + ')$');
+    // Matches pattern: 'global_NUM_CONTEXT'
+    const global_re = new RegExp('^global_[0-3]_(?:' + joined_contexts + ')$');
+    // Matches pattern: 'global_CONTEXT'
+    const options_re = new RegExp('^options_(?:' + joined_contexts + ')$');
+
     chrome.contextMenus.onClicked.addListener(function(info, tab) {
         const id = info.menuItemId;
-        // TODO: USE MORE PRECISE MATCH FOR highlight_ and global_
-        // TODO: i.e., check for the number suffix and the _ suffix
-        if (id.startsWith('highlight_')) {
+        if (id.match(highlight_re) !== null) {
             const level = parseInt(id.slice('highlight_'.length).split('_')[0]);
             highlight(tab.id, true, level, 'document_end');
-        } else if (id.startsWith('global_')) {
+        } else if (id.match(global_re) !== null) {
             const level = parseInt(id.slice('global_'.length).split('_')[0]);
             chrome.permissions.request(
                 getPermissions('global_highlighting'),
@@ -438,7 +445,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                     if (granted)
                         highlightAll(level);
                 });
-        } else if (id.startsWith('options_')) {
+        } else if (id.match(options_re)) {
             chrome.runtime.openOptionsPage();
         }
     });
