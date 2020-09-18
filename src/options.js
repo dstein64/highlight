@@ -44,6 +44,33 @@ const versionElement = document.getElementById('version');
 versionElement.innerText = backgroundPage.getVersion();
 
 /***********************************
+ * Permissions
+ ***********************************/
+
+const PERMISSIONS = {};
+{
+    const _permissions = new Set();
+    globalHighlightingPermissions.permissions.forEach(x => _permissions.add(x));
+    autonomousHighlightsPermissions.permissions.forEach(x => _permissions.add(x));
+    const origins = new Set();
+    globalHighlightingPermissions.origins.forEach(x => origins.add(x));
+    autonomousHighlightsPermissions.origins.forEach(x => origins.add(x));
+    PERMISSIONS.permissions = Array.from(PERMISSIONS);
+    PERMISSIONS.origins = Array.from(origins);
+}
+
+revokeButton.addEventListener('click', function() {
+    chrome.permissions.remove(
+        PERMISSIONS,
+        function(removed) {
+            if (removed) {
+                revokeButton.disabled = true;
+                setAutonomousHighlights(false, true, propagateOptions);
+            }
+        });
+});
+
+/***********************************
  * Options
  ***********************************/
 
@@ -166,6 +193,12 @@ const loadOptions = function(opts, active=false) {
             `autonomous-state-${opts['autonomous_state']}`).checked = true;
         autonomousBlocklistInput.checked = opts['autonomous_block_list'];
         syncBlocklistButtons();
+        chrome.permissions.contains(
+            PERMISSIONS,
+            function(result) {
+                if (result)
+                    revokeButton.disabled = !result;
+            });
         // WARN: calling propagateOptions is not specific for autonomous
         // highlights, but rather for all the settings above. It's called
         // here though as part of the callback to setAutonomousHighlights(), not
@@ -259,37 +292,3 @@ for (let i = 0; i < numHighlightStates; ++i) {
     });
     globalHighlightIcons.appendChild(img);
 }
-
-/***********************************
- * Permissions
- ***********************************/
-
-const permissions = {};
-{
-    const _permissions = new Set();
-    globalHighlightingPermissions.permissions.forEach(x => _permissions.add(x));
-    autonomousHighlightsPermissions.permissions.forEach(x => _permissions.add(x));
-    const origins = new Set();
-    globalHighlightingPermissions.origins.forEach(x => origins.add(x));
-    autonomousHighlightsPermissions.origins.forEach(x => origins.add(x));
-    permissions.permissions = Array.from(permissions);
-    permissions.origins = Array.from(origins);
-}
-
-revokeButton.addEventListener('click', function() {
-    chrome.permissions.remove(
-        permissions,
-        function(removed) {
-            if (removed) {
-                revokeButton.disabled = true;
-                setAutonomousHighlights(false, true, propagateOptions);
-            }
-        });
-});
-
-chrome.permissions.contains(
-    permissions,
-    function(result) {
-        if (result)
-            revokeButton.disabled = !result;
-    });
