@@ -51,6 +51,10 @@ table#table td:first-child {
     opacity: 23%;
 }
 
+#blocklist-information {
+    margin-top: 16px;
+}
+
 /* *************************************************
  * * Tooltip
  * ************************************************* */
@@ -91,13 +95,18 @@ a.tooltip:hover > span {
 }
 
 a.tooltip > span {
-    border-radius:4px;
+    border-radius: 4px;
     box-shadow: 5px 5px 8px #CCC;
 }
 
 /* *************************************************
  * * Miscellaneous
  * ************************************************* */
+
+.button-spacer {
+    display: block;
+    height: 4px;
+}
 
 #forkme {
     position: absolute;
@@ -125,9 +134,19 @@ summary {
     border-bottom: 1px dotted;
 }
 
-.pattern, .url {
+.pattern, .url, .domain {
     color: blue;
     font-family: monospace;
+}
+
+.label {
+    color: #586069;
+    border: 1px solid #e1e4e8;
+    border-radius: 7px;
+    padding: 1px 7px;
+    font-family: sans-serif;
+    font-size: 12px;
+    display: inline-block;
 }
 
 .nested {

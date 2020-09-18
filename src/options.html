@@ -78,27 +78,24 @@
           </tr>
           <tr>
             <td>
-              <label for="block-list" class="mobile-remove-for">
-                <a class="tooltip"><span>Disables autonomous highlighting for URLs matching
-              the specified match patterns.</span>Block List</a>*
+              <label for="blocklist" class="mobile-remove-for">
+                <a class="tooltip"><span>Controls which pages do not receive autonomous
+                  highlighting.</span>Blocklist</a>*
               </label>
             </td>
             <td>
-              <input type="checkbox" id="block-list">
-              <button id="block-list-button">0 items</button>
-            </td>
-          </tr>
-          <tr>
-            <td>
-              <label for="allow-list" class="mobile-remove-for">
-                <a class="tooltip"><span>Enables autonomous highlighting for URLs matching
-              the specified match patterns.</span>
-                  Allow List</a>*
-              </label>
-            </td>
-            <td>
-              <input type="checkbox" id="allow-list">
-              <button id="allow-list-button">0 items</button>
+              <table>
+                <tr>
+                  <td>
+                    <input type="checkbox" id="blocklist">
+                  </td>
+                  <td>
+                    <button id="blocklist-items-button">0 items</button>
+                    <div class="button-spacer"></div>
+                    <button id="blocklist-exceptions-button">0 exceptions</button>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
         </table>
@@ -110,50 +107,88 @@
   Example <span id="example-text">text</span>.
   Example <a href="#" id="example-link">link</a>.
 </p>
-<details>
-  <summary>* <span class="summary">Block/Allow List Information</span></summary>
-  <div>
-    <p>
-      The optional <em>allow list</em> and <em>block list</em> can be used to customize
-      which URLs receive autonomous highlighting.
-    </p>
-    <p>
-      The lists are comprised of
-      <a target="_blank" rel="noopener noreferrer"
-         href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Match_patterns#Match_pattern_structure">
-        match patterns</a>&mdash;used for specifying groups of URLs&mdash;<strong>with one
-      pattern entered on each line</strong>.
-    </p>
-    <p>
-      <strong>Patterns on the <em>allow list</em> take precedence over patterns on the
-        <em>block list</em></strong>.
-    </p>
-    <div class="nested">
-      <p>
-        For example, suppose <span class="pattern">*://*.dannyadam.com</span>
-        is on the block list, and <span class="pattern">*://*.dannyadam.com/blog/*</span> is
-        on the allow list.
-      </p>
-      <p>
-        In that case, autonomous highlighting would be applied for
-        <span class="url">https://www.dannyadam.com/blog/2015/04/article-highlighter/</span>,
-        since it matches an allow list pattern, even though it also matches a block list pattern.
-      </p>
-      <p>
-        Autonomous highlighting would not be applied for <span class="url">https://www.dannyadam.com/</span>,
-        since it matches a block list pattern, but not an allow list pattern.
-      </p>
-    </div>
-    <p>
-      To apply autonomous highlighting only for URLs matching specific patterns,
-      add <code>&lt;all_urls&gt;</code> to the block list, and also add the specific
-      patterns to the allow list.
-    </p>
-  </div>
-</details>
 <button id="defaults">Defaults</button>
 <button id="revert">Revert</button>
 <span style="margin-left: 7px;" id="status"></span>
+<details id="blocklist-information">
+  <summary>* <span class="summary">Blocklist Information</span>
+  </summary>
+  <div>
+    <h3>Blocking Certain Pages</h3>
+    <p>
+      The optional blocklist can be used to prevent certain pages from receiving
+      autonomous highlighting.
+    </p>
+    <p>
+      The list is comprised of domains, the addresses of specific pages, and/or
+      <a target="_blank" rel="noopener noreferrer"
+         href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Match_patterns#Match_pattern_structure">
+        match patterns</a>.
+    </p>
+    <div class="nested">
+      <h4>Example Items</h4>
+      <table>
+        <tbody>
+          <tr>
+            <td><span class="label">domain</span></td>
+            <td><span class="domain">www.dannyadam.com</span></td>
+          </tr>
+          <tr>
+            <td><span class="label">address</span></td>
+            <td>
+              <span class="url">https://www<wbr>.dannyadam<wbr>.com<wbr>/blog<wbr>
+              /2015<wbr>/04<wbr>/article-highlighter/</span>
+            </td>
+          </tr>
+          <tr>
+            <td><span class="label">pattern</span></td>
+            <td>
+              <span class="pattern">*://*.dannyadam<wbr>.com<wbr>/blog<wbr>/*</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <h3>Blocking Exceptions</h3>
+    <p>
+      Exceptions override items on the blocklist, thus <em>permitting</em> autonomous
+      highlighting for pages that would otherwise be blocked. The list of exceptions is
+      comprised of domains, addresses, and/or patterns.
+    </p>
+    <div class="nested">
+      <p>
+        For example, suppose <span class="label">domain</span> <span class="domain">www<wbr>
+        .dannyadam<wbr>.com </span> is an item on the blocklist, and <span class="label">pattern
+        </span> <span class="pattern">*://*.dannyadam<wbr>.com<wbr>/blog<wbr>/*</span> is included
+        on the list of exceptions.
+      </p>
+      <p>
+        In that case, autonomous highlighting would be applied for
+        <span class="url">https://www<wbr>.dannyadam<wbr>.com<wbr>/blog<wbr>/2015<wbr>
+        /04<wbr>/article-highlighter/</span>, since it matches an exception, even
+        though it also matches a blocklist item.
+      </p>
+      <p>
+        Autonomous highlighting would not be applied for <span class="url">https://www<wbr>
+        .dannyadam<wbr>.com/</span>, since it matches a blocklist item, but not an exception.
+      </p>
+    </div>
+    <h3>Allowing Certain Pages</h3>
+    <p>
+      The blocklist is intended for preventing autonomous highlighting where
+      it would not be applicable. Rather than <em>blocking</em> autonomous highlighting
+      on certain pages, the blocklist can alternatively be used for <em>allowing</em>
+      autonomous highlighting on certain pages.
+    </p>
+    <p>
+      To achieve this functionality, add
+      <span class="label">pattern</span> <span class="pattern"> &lt;all_urls&gt;</span> to
+      the blocklist, and add items specifying allowed pages to the list of exceptions. This
+      way, autonomous highlighting will be blocked by default on all pages, except for those
+      that match the specified exceptions.
+    </p>
+  </div>
+</details>
 <h2>Global Highlighting</h2>
 <div id="global-highlight-icons"></div>
 <p>

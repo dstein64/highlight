@@ -25,10 +25,9 @@ const autonomousSettings = document.getElementById('autonomous-settings');
 const autonomousDelayInput = document.getElementById('autonomous-delay');
 const autonomousDelayValue = document.getElementById('autonomous-delay-value');
 const autonomousStateInputs = document.getElementById('autonomous-state');
-const autonomousBlockListInput = document.getElementById('block-list');
-const autonomousBlockListButton = document.getElementById('block-list-button');
-const autonomousAllowListInput = document.getElementById('allow-list');
-const autonomousAllowListButton = document.getElementById('allow-list-button');
+const autonomousBlocklistInput = document.getElementById('blocklist');
+const autonomousBlocklistItemsButton = document.getElementById('blocklist-items-button');
+const autonomousBlocklistExceptionsButton = document.getElementById('blocklist-exceptions-button');
 
 const exampleTextElement = document.getElementById('example-text');
 const exampleLinkElement = document.getElementById('example-link');
@@ -73,12 +72,9 @@ const setAutonomousHighlights = function(value, active=false, callback=null) {
     }
 };
 
-const syncBlockListButtonState = function() {
-    autonomousBlockListButton.disabled = !autonomousBlockListInput.checked;
-};
-
-const syncAllowListButtonState = function() {
-    autonomousAllowListButton.disabled = !autonomousAllowListInput.checked;
+const syncBlocklistButtons = function() {
+    autonomousBlocklistItemsButton.disabled = !autonomousBlocklistInput.checked;
+    autonomousBlocklistExceptionsButton.disabled = !autonomousBlocklistInput.checked;
 };
 
 const showAutonomousDelay = function() {
@@ -119,8 +115,7 @@ const propagateOptions = function() {
     const autonomousDelay = parseInt(autonomousDelayInput.value);
     const autonomousState = parseInt(
         autonomousStateInputs.querySelector('input:checked').value);
-    const autonomousBlockList = autonomousBlockListInput.checked;
-    const autonomousAllowList = autonomousAllowListInput.checked;
+    const autonomousBlockList = autonomousBlocklistInput.checked;
 
     // Update example text
     exampleTextElement.style.backgroundColor = highlightColor;
@@ -138,7 +133,6 @@ const propagateOptions = function() {
     options['autonomous_delay'] = autonomousDelay;
     options['autonomous_state'] = autonomousState;
     options['autonomous_block_list'] = autonomousBlockList;
-    options['autonomous_allow_list'] = autonomousAllowList;
 
     localStorage['options'] = JSON.stringify(options);
 
@@ -172,10 +166,8 @@ const loadOptions = function(opts, active=false) {
         showAutonomousDelay();
         document.getElementById(
             `autonomous-state-${opts['autonomous_state']}`).checked = true;
-        autonomousBlockListInput.checked = opts['autonomous_block_list'];
-        syncBlockListButtonState();
-        autonomousAllowListInput.checked = opts['autonomous_allow_list'];
-        syncAllowListButtonState();
+        autonomousBlocklistInput.checked = opts['autonomous_block_list'];
+        syncBlocklistButtons();
         // WARN: calling propagateOptions is not specific for autonomous
         // highlights, but rather for all the settings above. It's called
         // here though as part of the callback to setAutonomousHighlights(), not
@@ -237,12 +229,8 @@ if (window.matchMedia('(pointer: coarse)').matches) {
     for (const input of autonomousStateInputs.querySelectorAll('input')) {
         input.addEventListener('change', propagateOptions);
     }
-    autonomousBlockListInput.addEventListener('change', function() {
-        syncBlockListButtonState();
-        propagateOptions();
-    });
-    autonomousAllowListInput.addEventListener('change', function() {
-        syncAllowListButtonState();
+    autonomousBlocklistInput.addEventListener('change', function() {
+        syncBlocklistButtons();
         propagateOptions();
     });
 })();

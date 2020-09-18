@@ -51,7 +51,8 @@ function defaultOptions() {
     options['autonomous_delay'] = 0;
     options['autonomous_state'] = Math.min(2, NUM_HIGHLIGHT_STATES - 1);
     options['autonomous_block_list'] = false;
-    options['autonomous_allow_list'] = false;
+    options['autonomous_block_list_items'] = [];
+    options['autonomous_block_list_exceptions'] = [];
     return options;
 }
 
@@ -253,6 +254,20 @@ const highlight = function(tabId, showError, state=null, delay=null, runAt='docu
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     const options = getOptions();
     if (options.autonomous_highlights && changeInfo.status === 'complete') {
+        if (options.autonomous_block_list) {
+            const url = tab.url;
+            if (url === undefined) return;
+            let exception = false;
+            for (const pattern of options.autonomous_block_list_exceptions) {
+                // TODO: if url matches pattern, set exception=true and break
+            }
+            if (!exception) {
+                for (const pattern of options.autonomous_block_list_items) {
+                    // TODO: if url matches pattern, return
+                    return;
+                }
+            }
+        }
         highlight(
             tab.id, false, options.autonomous_state, options.autonomous_delay, 'document_idle');
     }
