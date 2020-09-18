@@ -348,11 +348,12 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 title: level_name_lookup[NUM_HIGHLIGHT_STATES][i],
                 contexts: [context]
             };
-            // TODO: Set the right icons
             // Chrome does not support icons.
             if (is_firefox) {
+                const iconName = highlightStateToIconId(i) + 'highlight';
                 properties.icons = {
-                    '16': 'icons/16x16.png'
+                    '16': 'icons/' + iconName + '16x16.png',
+                    '32': 'icons/' + iconName + '32x32.png',
                 }
             }
             if (context === 'page') {
@@ -394,11 +395,12 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 contexts: [context],
                 parentId: global_menu_id
             };
-            // TODO: Set the right icons
             // Chrome does not support icons.
             if (is_firefox) {
+                const iconName = highlightStateToIconId(i) + 'highlight';
                 properties.icons = {
-                    '16': 'icons/16x16.png'
+                    '16': 'icons/' + iconName + '16x16.png',
+                    '32': 'icons/' + iconName + '32x32.png',
                 }
             }
             chrome.contextMenus.create(properties);
