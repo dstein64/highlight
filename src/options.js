@@ -185,8 +185,7 @@ const propagateOptions = function(forceNotify=false) {
             }
         });
 
-        // Send message to options page to reload options,
-        // since the state of permissions may have changed.
+        // Send message to other options pages to reload options.
         chrome.runtime.sendMessage(chrome.runtime.id, {message: 'optionsPageReload'});
     }
 };
