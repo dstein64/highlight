@@ -354,7 +354,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 properties.icons = {
                     '16': 'icons/16x16.png',
                     '32': 'icons/32x32.png',
-                }
+                };
             }
             chrome.contextMenus.create(properties);
         }
@@ -371,7 +371,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 properties.icons = {
                     '16': `icons/${iconName}16x16.png`,
                     '32': `icons/${iconName}32x32.png`,
-                }
+                };
             }
             if (main_menu_id !== null) {
                 properties.parentId = main_menu_id;
@@ -404,7 +404,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
             properties.icons = {
                 '16': 'icons/global16x16.png',
                 '32': 'icons/global32x32.png',
-            }
+            };
         }
         if (main_menu_id !== null)
             properties.parentId = main_menu_id;
@@ -423,7 +423,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 properties.icons = {
                     '16': `icons/${iconName}16x16.png`,
                     '32': `icons/${iconName}32x32.png`,
-                }
+                };
             }
             chrome.contextMenus.create(properties);
         }
@@ -440,7 +440,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
             properties.icons = {
                 '16': 'icons/autonomous16x16.png',
                 '32': 'icons/autonomous32x32.png',
-            }
+            };
         }
         if (main_menu_id !== null)
             properties.parentId = main_menu_id;
@@ -464,9 +464,9 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 };
                 if (icons_supported) {
                     properties.icons = {
-                        '16': `icons/${item_type}_${target}16x16.png`,
-                        '32': `icons/${item_type}_${target}32x32.png`,
-                    }
+                        '16': `icons/autonomous_${item_type}_${target}16x16.png`,
+                        '32': `icons/autonomous_${item_type}_${target}32x32.png`,
+                    };
                 }
                 chrome.contextMenus.create(properties);
             }
