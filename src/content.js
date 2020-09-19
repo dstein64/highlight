@@ -12,16 +12,6 @@ const CYCLE_COLORS = false;
 // be used to highlight all readability-extracted text
 const READABILITY_ONLY = false;
 
-let OPTIONS = null;
-chrome.runtime.sendMessage({message: 'getOptions'}, function(response) {
-    OPTIONS = response;
-});
-
-let NUM_HIGHLIGHT_STATES = null;
-chrome.runtime.sendMessage({message: 'getParams'}, function(response) {
-    NUM_HIGHLIGHT_STATES = response['numHighlightStates'];
-});
-
 /***********************************
  * DOM Checking and Querying Functionality
  ***********************************/
@@ -391,7 +381,7 @@ Sentence.prototype.toString = function() {
 const splitAndWrapText = function(textNode, offset) {
     const _t = textNode.splitText(offset);
     // we may have a textNode that has already been split
-    alreadySplit = textNode.parentElement.classList.contains(splitClassName);
+    const alreadySplit = textNode.parentElement.classList.contains(splitClassName);
 
     if (alreadySplit) {
         const span = createTextNodeWrapper(textNode.ownerDocument);
@@ -876,6 +866,7 @@ const getSentences = function(nodes) {
         if (inPre) {
             const re = /[\n\r]{2,}/g;
             let lastNewPos = 0;
+            let match = null;
             while ((match = re.exec(text)) !== null) {
                 const idx = match.index;
                 if (endsAlready.has(idx)) continue;
@@ -1034,7 +1025,7 @@ const ScoredCandidate = function(candidate, score, index, importance) {
 
 // return the candidates to highlight
 // cth = candidates to highlight
-const cth = function(highlightState) {
+const cth = function(highlightState, numHighlightStates) {
     // a candidate may be a TextBlock or a Sentence.
     const candidates = getCandidates();
     const scores = [];
@@ -1095,7 +1086,7 @@ const cth = function(highlightState) {
         3: {1: 0.15, 2: 0.30},
         4: {1: 0.10, 2: 0.20, 3: 0.40}
     };
-    ratio = ratio_lookup[NUM_HIGHLIGHT_STATES][highlightState];
+    let ratio = ratio_lookup[numHighlightStates][highlightState];
 
     if (HIGHLIGHT_ALL)
         ratio = 1; // debugging
@@ -1114,8 +1105,8 @@ const cth = function(highlightState) {
         if (HIGHLIGHT_ALL) {
             scored.importance = 1;
         } else {
-            for (let j = 1; j < NUM_HIGHLIGHT_STATES; ++j) {
-                if (highlightCharCounter <= ratio_lookup[NUM_HIGHLIGHT_STATES][j] * totalChars) {
+            for (let j = 1; j < numHighlightStates; ++j) {
+                if (highlightCharCounter <= ratio_lookup[numHighlightStates][j] * totalChars) {
                     scored.importance = j;
                     break;
                 }
@@ -1255,7 +1246,7 @@ const tintColor = function(color, level) {
 // haven't received new highlight requests
 let lastHighlight = (new Date()).getTime();
 
-const highlight = function(highlightState) {
+const highlight = function(highlightState, options, params) {
     const time = (new Date()).getTime();
     lastHighlight = time;
     // we're in a new state, but we don't know whether there is success yet
@@ -1267,18 +1258,20 @@ const highlight = function(highlightState) {
         // in a loading state (with the icon indicating so).
         try {
             removeHighlightAllDocs();
-            const scoredCandsToHighlight = highlightState > 0 ? cth(highlightState) : [];
+            const scoredCandsToHighlight = [];
+            if (highlightState > 0)
+                scoredCandsToHighlight.push(...cth(highlightState, params['numHighlightStates']));
             trimSpaces(scoredCandsToHighlight);
             // have to loop backwards since splitting text nodes
             for (let j = scoredCandsToHighlight.length-1; j >= 0; j--) {
-                let highlightColor = OPTIONS['highlight_color'];
-                if (OPTIONS['tinted_highlights']) {
+                let highlightColor = options['highlight_color'];
+                if (options['tinted_highlights']) {
                     const importance = scoredCandsToHighlight[j].importance;
                     // XXX: Ad-hoc formula can be improved.
                     highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
                 }
                 const colorSpec = new ColorSpec(
-                    highlightColor, OPTIONS['text_color'], OPTIONS['link_color']);
+                    highlightColor, options['text_color'], options['link_color']);
                 const candidate = scoredCandsToHighlight[j].candidate;
                 const c = CYCLE_COLORS ? getNextColor() : colorSpec;
                 candidate.highlight(c);
@@ -1315,21 +1308,23 @@ const highlight = function(highlightState) {
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     const method = request.method;
     if (method === 'highlight') {
-        // it's possible we're in an iframe with non-compatible content,
-        // so check...
         if (compatibleDocument(document)) {
-            const highlightState = request.highlightState;
-            const delay = request.delay;
-            if (delay === null || delay === undefined) {
-                highlight(highlightState);
-            } else {
-                UTILS.setTimeoutIgnore(function() {
-                    highlight(highlightState);
-                }, delay);
-            }
+            chrome.runtime.sendMessage({message: 'getOptions'}, function (response) {
+                const options = response;
+                chrome.runtime.sendMessage({message: 'getParams'}, function (response) {
+                    const params = response;
+                    const highlightState = request.highlightState;
+                    const delay = request.delay;
+                    if (delay === null || delay === undefined) {
+                        highlight(highlightState, options, params);
+                    } else {
+                        UTILS.setTimeoutIgnore(function () {
+                            highlight(highlightState, options, params);
+                        }, delay);
+                    }
+                });
+            });
         }
-    } else if (method === 'updateOptions') {
-        OPTIONS = request.data;
     } else if (method === 'ping') {
         // response is sent below
     } else {

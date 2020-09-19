@@ -162,8 +162,6 @@ const saveOptions = function() {
     options['autonomous_block_list'] = autonomousBlockList;
 
     localStorage['options'] = JSON.stringify(options);
-
-    backgroundPage.propagateOptions();
 };
 
 const loadOptions = function(opts, active=false) {
