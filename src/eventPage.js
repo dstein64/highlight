@@ -312,14 +312,9 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 
 {
     const is_firefox = chrome.runtime.getURL('').startsWith('moz-extension://');
+    // As of 2019/9/18, Chrome does not support icons.
+    const icons_supported = is_firefox;
     let properties;
-
-    chrome.contextMenus.create({
-        type: 'normal',
-        id: 'page_main',
-        title: 'Auto Highlight',
-        contexts: ['page']
-    });
 
     const level_name_lookup = {
         2: {0: 'Off', 1: 'On'},
@@ -329,6 +324,17 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 
     const contexts = ['page', 'browser_action'];
     for (const context of contexts) {
+        let main_menu_id = null;
+        if (context === 'page') {
+            main_menu_id = 'main_' + context;
+            chrome.contextMenus.create({
+                type: 'normal',
+                id: main_menu_id,
+                title: 'Auto Highlight',
+                contexts: ['page']
+            });
+        }
+
         // Add highlighting items.
         let highlight_menu_id = null;
         // Use a submenu for the browser action, to prevent Firefox from automatically
@@ -344,6 +350,12 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 title: 'State',
                 contexts: [context]
             };
+            if (icons_supported) {
+                properties.icons = {
+                    '16': 'icons/16x16.png',
+                    '32': 'icons/32x32.png',
+                }
+            }
             chrome.contextMenus.create(properties);
         }
         for (let i = 0; i < NUM_HIGHLIGHT_STATES; ++i) {
@@ -354,16 +366,15 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 title: level_name_lookup[NUM_HIGHLIGHT_STATES][i],
                 contexts: [context]
             };
-            // As of 2019/9/18, Chrome does not support icons.
-            if (is_firefox) {
+            if (icons_supported) {
                 const iconName = highlightStateToIconId(i) + 'highlight';
                 properties.icons = {
                     '16': 'icons/' + iconName + '16x16.png',
                     '32': 'icons/' + iconName + '32x32.png',
                 }
             }
-            if (context === 'page') {
-                properties.parentId = 'page_main';
+            if (main_menu_id !== null) {
+                properties.parentId = main_menu_id;
             } else if (highlight_menu_id !== null) {
                 properties.parentId = highlight_menu_id;
             }
@@ -376,8 +387,8 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 type: 'separator',
                 contexts: [context],
             };
-            if (context === 'page')
-                properties.parentId = 'page_main';
+            if (main_menu_id !== null)
+                properties.parentId = main_menu_id;
             chrome.contextMenus.create(properties);
         }
 
@@ -389,8 +400,14 @@ chrome.browserAction.onClicked.addListener(function(tab) {
             title: 'Global Highlighting',
             contexts: [context],
         };
-        if (context === 'page')
-            properties.parentId = 'page_main';
+        if (icons_supported) {
+            properties.icons = {
+                '16': 'icons/global16x16.png',
+                '32': 'icons/global32x32.png',
+            }
+        }
+        if (main_menu_id !== null)
+            properties.parentId = main_menu_id;
         chrome.contextMenus.create(properties);
         for (let i = 0; i < NUM_HIGHLIGHT_STATES; ++i) {
             const id = 'global_' + i + '_' + context;
@@ -401,8 +418,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 contexts: [context],
                 parentId: global_menu_id
             };
-            // As of 2019/9/18, Chrome does not support icons.
-            if (is_firefox) {
+            if (icons_supported) {
                 const iconName = highlightStateToIconId(i) + 'highlight';
                 properties.icons = {
                     '16': 'icons/' + iconName + '16x16.png',
@@ -423,8 +439,14 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 title: 'Options',
                 contexts: [context]
             };
-            if (context === 'page')
-                properties.parentId = 'page_main';
+            if (icons_supported) {
+                properties.icons = {
+                    '16': 'icons/options16x16.png',
+                    '32': 'icons/options32x32.png',
+                }
+            }
+            if (main_menu_id !== null)
+                properties.parentId = main_menu_id;
             chrome.contextMenus.create(properties);
         }
     }
