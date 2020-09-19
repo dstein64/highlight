@@ -359,7 +359,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
             chrome.contextMenus.create(properties);
         }
         for (let i = 0; i < NUM_HIGHLIGHT_STATES; ++i) {
-            const id = 'highlight_' + i + '_' + context;
+            const id = `highlight_${i}_${context}`;
             properties = {
                 type: 'normal',
                 id: id,
@@ -369,8 +369,8 @@ chrome.browserAction.onClicked.addListener(function(tab) {
             if (icons_supported) {
                 const iconName = highlightStateToIconId(i) + 'highlight';
                 properties.icons = {
-                    '16': 'icons/' + iconName + '16x16.png',
-                    '32': 'icons/' + iconName + '32x32.png',
+                    '16': `icons/${iconName}16x16.png`,
+                    '32': `icons/${iconName}32x32.png`,
                 }
             }
             if (main_menu_id !== null) {
@@ -410,7 +410,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
             properties.parentId = main_menu_id;
         chrome.contextMenus.create(properties);
         for (let i = 0; i < NUM_HIGHLIGHT_STATES; ++i) {
-            const id = 'global_' + i + '_' + context;
+            const id = `global_${i}_${context}`;
             properties = {
                 type: 'normal',
                 id: id,
@@ -421,11 +421,55 @@ chrome.browserAction.onClicked.addListener(function(tab) {
             if (icons_supported) {
                 const iconName = highlightStateToIconId(i) + 'highlight';
                 properties.icons = {
-                    '16': 'icons/' + iconName + '16x16.png',
-                    '32': 'icons/' + iconName + '32x32.png',
+                    '16': `icons/${iconName}16x16.png`,
+                    '32': `icons/${iconName}32x32.png`,
                 }
             }
             chrome.contextMenus.create(properties);
+        }
+
+        // Add autonomous highlights items
+        const autonomous_menu_id = 'autonomous_' + context;
+        properties = {
+            type: 'normal',
+            id: autonomous_menu_id,
+            title: 'Autonomous Highlights',
+            contexts: [context],
+        };
+        if (icons_supported) {
+            properties.icons = {
+                '16': 'icons/autonomous16x16.png',
+                '32': 'icons/autonomous32x32.png',
+            }
+        }
+        if (main_menu_id !== null)
+            properties.parentId = main_menu_id;
+        chrome.contextMenus.create(properties);
+        const autonomous_titles = {
+            domain_blocklist: 'Add domain to blocklist',
+            address_blocklist: 'Add page address to blocklist',
+            domain_exception: 'Add domain as blocklist exception',
+            address_exception: 'Add page address as blocklist exception',
+        };
+        for (const target of ['blocklist', 'exception']) {
+            for (const item_type of ['domain', 'address']) {
+                const id = `autonomous_${item_type}_${target}_${context}`;
+                const title = autonomous_titles[`${item_type}_${target}`];
+                properties = {
+                    type: 'normal',
+                    id: id,
+                    title: title,
+                    contexts: [context],
+                    parentId: autonomous_menu_id
+                };
+                if (icons_supported) {
+                    properties.icons = {
+                        '16': `icons/${item_type}_${target}16x16.png`,
+                        '32': `icons/${item_type}_${target}32x32.png`,
+                    }
+                }
+                chrome.contextMenus.create(properties);
+            }
         }
 
         // Add an options item for 1) the 'page' context and 2) the 'browser_action' context
@@ -459,7 +503,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
     const global_re = new RegExp(
         `^global_[0-${NUM_HIGHLIGHT_STATES - 1}]_(?:${joined_contexts})$`);
     // Matches pattern: 'global_CONTEXT'
-    const options_re = new RegExp('^options_(?:' + joined_contexts + ')$');
+    const options_re = new RegExp(`^options_(?:${joined_contexts})$`);
 
     chrome.contextMenus.onClicked.addListener(function(info, tab) {
         const id = info.menuItemId;
