@@ -453,9 +453,11 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 
     const joined_contexts = contexts.join('|');
     // Matches pattern: 'highlight_NUM_CONTEXT'
-    const highlight_re = new RegExp('^highlight_[0-3]_(?:' + joined_contexts + ')$');
+    const highlight_re = new RegExp(
+        `^highlight_[0-${NUM_HIGHLIGHT_STATES - 1}]_(?:${joined_contexts})$`);
     // Matches pattern: 'global_NUM_CONTEXT'
-    const global_re = new RegExp('^global_[0-3]_(?:' + joined_contexts + ')$');
+    const global_re = new RegExp(
+        `^global_[0-${NUM_HIGHLIGHT_STATES - 1}]_(?:${joined_contexts})$`);
     // Matches pattern: 'global_CONTEXT'
     const options_re = new RegExp('^options_(?:' + joined_contexts + ')$');
 
