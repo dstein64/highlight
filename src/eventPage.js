@@ -354,7 +354,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 title: level_name_lookup[NUM_HIGHLIGHT_STATES][i],
                 contexts: [context]
             };
-            // Chrome does not support icons.
+            // As of 2019/9/18, Chrome does not support icons.
             if (is_firefox) {
                 const iconName = highlightStateToIconId(i) + 'highlight';
                 properties.icons = {
@@ -401,7 +401,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 contexts: [context],
                 parentId: global_menu_id
             };
-            // Chrome does not support icons.
+            // As of 2019/9/18, Chrome does not support icons.
             if (is_firefox) {
                 const iconName = highlightStateToIconId(i) + 'highlight';
                 properties.icons = {
