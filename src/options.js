@@ -67,6 +67,11 @@ revokeButton.addEventListener('click', function() {
                 revokeButton.disabled = true;
                 setAutonomousHighlights(false, true, function() {
                     saveOptions();
+                    // Send message indicating that permissions have been updated.
+                    // (i.e., so the revoke button is properly toggled on other
+                    // options pages).
+                    chrome.runtime.sendMessage(
+                        chrome.runtime.id, {message: 'permissionsUpdated'});
                 });
             }
         });
@@ -159,12 +164,15 @@ const saveOptions = function() {
     options['autonomous_highlights'] = autonomousHighlights;
     options['autonomous_delay'] = autonomousDelay;
     options['autonomous_state'] = autonomousState;
-    options['autonomous_block_list'] = autonomousBlockList;
+    options['autonomous_blocklist'] = autonomousBlockList;
+    // TODO: HAVE TO ACTUALLY SET THE FOLLOWING VALUES
+    options['autonomous_blocklist_items'] = backgroundPage.getOptions().autonomous_blocklist_items;
+    options['autonomous_blocklist_exceptions'] = backgroundPage.getOptions().autonomous_blocklist_exceptions;
 
-    localStorage['options'] = JSON.stringify(options);
+    backgroundPage.saveOptions(options);
 };
 
-const loadOptions = function(opts, active=false) {
+const loadOptions = function(opts, active=false, save=true) {
     // onchange doesn't fire when setting 'checked' and other values with javascript,
     // so some form synchronization must be triggered manually.
     highlightColorInput.value = opts['highlight_color'];
@@ -176,7 +184,7 @@ const loadOptions = function(opts, active=false) {
         showAutonomousDelay();
         document.getElementById(
             `autonomous-state-${opts['autonomous_state']}`).checked = true;
-        autonomousBlocklistInput.checked = opts['autonomous_block_list'];
+        autonomousBlocklistInput.checked = opts['autonomous_blocklist'];
         syncBlocklistButtons();
         chrome.permissions.contains(
             PERMISSIONS,
@@ -188,11 +196,12 @@ const loadOptions = function(opts, active=false) {
         // here though as part of the callback to setAutonomousHighlights(), not
         // at the scope of loadOptions(), as a consequence of the asynchronous
         // handling of setAutonomousHighlights.
-        saveOptions();
+        if (save)
+            saveOptions();
     });
 };
 
-const initOpts = JSON.parse(localStorage['options']);
+const initOpts = backgroundPage.getOptions();
 
 // restore saved options
 document.addEventListener('DOMContentLoaded', function() {
@@ -246,7 +255,7 @@ if (window.matchMedia('(pointer: coarse)').matches) {
     // events are triggered after the end of a sliding action.
     autonomousDelayInput.addEventListener('input', function() {
         showAutonomousDelay();
-        //saveOptions();
+        saveOptions();
     });
     for (const input of autonomousStateInputs.querySelectorAll('input')) {
         input.addEventListener('change', saveOptions);
@@ -289,13 +298,21 @@ for (let i = 0; i < numHighlightStates; ++i) {
  ***********************************/
 
 chrome.runtime.onMessage.addListener(function(request, sender, response) {
-    if (request.message === 'optionsPageReload') {
-        // Reload options when there are any external updates that could modify the
-        // settings (e.g., permissions granted, changes to the blocklist).
-        loadOptions(JSON.parse(localStorage['options']));
+    if (request.message === 'permissionsUpdated') {
+        // Reload options when there are any external updates that change permissions.
+        // Save, since changing permissions might trigger changes to settings.
+        loadOptions(backgroundPage.getOptions());
     }
     // NOTE: if you're going to call response asynchronously,
     //       be sure to return true from this function.
     //       http://stackoverflow.com/questions/20077487/
     //              chrome-extension-message-passing-response-not-sent
+});
+
+window.addEventListener('storage', function(event) {
+    // Reload options options when there are any external updates that modify settings
+    // saved in local storage (e.g., additions to the blocklist, options changes
+    // on other options pages). Don't save, to prevent continually back-and-forth
+    // saving.
+    loadOptions(backgroundPage.getOptions(), false, false);
 });

@@ -44,13 +44,24 @@ function getPermissions(scope) {
     return permissions[scope];
 }
 
-const getOptions = function() {
+// This is called from options.js (see scope warning above).
+function getOptions() {
     let opts = localStorage['options'];
     if (opts) {
         opts = JSON.parse(opts);
     }
     return opts;
-};
+}
+
+// This is called from options.js (see scope warning above).
+function saveOptions(options) {
+    // Don't save if there are no changes (to prevent 'storage' event listeners
+    // from responding when they don't need to).
+    // XXX: The comparison will fail if the keys are in different order.
+    const json = JSON.stringify(options);
+    if (json !== localStorage['options'])
+        localStorage['options'] = JSON.stringify(options);
+}
 
 // This is called from options.js (see scope warning above).
 function defaultOptions() {
@@ -65,9 +76,9 @@ function defaultOptions() {
     options['autonomous_highlights'] = false;
     options['autonomous_delay'] = 0;
     options['autonomous_state'] = Math.min(2, NUM_HIGHLIGHT_STATES - 1);
-    options['autonomous_block_list'] = false;
-    options['autonomous_block_list_items'] = [];
-    options['autonomous_block_list_exceptions'] = [];
+    options['autonomous_blocklist'] = false;
+    options['autonomous_blocklist_items'] = [];
+    options['autonomous_blocklist_exceptions'] = [];
     return options;
 }
 
@@ -103,13 +114,8 @@ function defaultOptions() {
     if (![...Array(NUM_HIGHLIGHT_STATES).keys()].includes(opts.autonomous_state))
         opts.autonomous_state = defaults['autonomous_state'];
 
-    localStorage['options'] = JSON.stringify(opts);
+    saveOptions(opts);
 })();
-
-// Reload options page
-const optionsPageReload = function() {
-    chrome.runtime.sendMessage(chrome.runtime.id, {message: 'optionsPageReload'});
-};
 
 // *****************************
 // * Core
@@ -272,21 +278,27 @@ const highlight = function(tabId, showError, state=null, delay=null, runAt='docu
 // fail (the tabs events can seemingly still be listened for, without some
 // information like URL, and without the ability to inject javascript).
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
+    const url_matches = function(url, list) {
+        const domain = new URL(url).host;
+        for (const item of list) {
+            if (item.type === 'domain' && item.data === domain)
+                return true;
+            if (item.type === 'address' && item.data === url)
+                return true;
+            if (item.type === 'pattern') {
+                // TODO: have to implement check against URL pattern
+            }
+        }
+        return false;
+    };
     const options = getOptions();
     if (options.autonomous_highlights && changeInfo.status === 'complete') {
-        if (options.autonomous_block_list) {
+        if (options.autonomous_blocklist) {
             const url = tab.url;
             if (url === undefined) return;
-            let exception = false;
-            for (const pattern of options.autonomous_block_list_exceptions) {
-                // TODO: if url matches pattern, set exception=true and break
-            }
-            if (!exception) {
-                for (const pattern of options.autonomous_block_list_items) {
-                    // TODO: if url matches pattern, return
-                    return;
-                }
-            }
+            const exception = url_matches(url, options.autonomous_blocklist_exceptions);
+            if (!exception && url_matches(url, options.autonomous_blocklist_items))
+                return;
         }
         highlight(
             tab.id, false, options.autonomous_state, options.autonomous_delay, 'document_idle');
@@ -517,13 +529,39 @@ chrome.browserAction.onClicked.addListener(function(tab) {
                 function (granted) {
                     if (granted) {
                         highlightAll(level);
-                        // Send message to options page to reload options,
-                        // since the state of permissions may have changed.
-                        optionsPageReload();
+                        // Send message indicating that permissions have been updated.
+                        // (i.e., so options page can be updated).
+                        chrome.runtime.sendMessage(
+                            chrome.runtime.id, {message: 'permissionsUpdated'});
                     }
                 });
         } else if (id.match(options_re)) {
             chrome.runtime.openOptionsPage();
+        } else if (id.startsWith('autonomous_')) {
+            const splits = id.split('_');
+            const item_type = splits[1];  // domain or address
+            const target = splits[2];     // blocklist or exception
+            const item = {type: item_type};
+            if (item_type === 'domain') {
+                item.data = new URL(tab.url).host;
+            } else if (item_type === 'address') {
+                item.data = tab.url;
+            } else {
+                throw 'Unhandled item type: ' + item_type;
+            }
+            const options = getOptions();
+            let key;
+            if (target === 'blocklist') {
+                key = 'autonomous_blocklist_items';
+            } else if (target === 'exception') {
+                key = 'autonomous_blocklist_exceptions';
+            } else {
+                throw 'Unhandled target: ' + target;
+            }
+            options[key].push(item);
+            saveOptions(options);
+        } else {
+            throw 'Unhandled menu ID: ' + id;
         }
     });
 }
