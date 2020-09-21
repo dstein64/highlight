@@ -1328,7 +1328,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     } else if (method === 'ping') {
         // response is sent below
     } else {
-        // Unhandled method (e.g., permissionsUpdated, which is intended for the options page)
+        console.error('Unhandled method: ' + method)
     }
     sendResponse(true);
 });

@@ -46,6 +46,7 @@ function getPermissions(scope) {
 
 // This is called from options.js (see scope warning above).
 function getOptions() {
+    // Don't check for permissions here, in order to keep the funtion synchronous.
     let opts = localStorage['options'];
     if (opts) {
         opts = JSON.parse(opts);
@@ -54,13 +55,26 @@ function getOptions() {
 }
 
 // This is called from options.js (see scope warning above).
-function saveOptions(options) {
-    // Don't save if there are no changes (to prevent 'storage' event listeners
-    // from responding when they don't need to).
-    // XXX: The comparison will fail if the keys are in different order.
-    const json = JSON.stringify(options);
-    if (json !== localStorage['options'])
-        localStorage['options'] = JSON.stringify(options);
+// Saves options (asynchronously).
+function saveOptions(options, callback=null) {
+    // Deep copy so this function is not destructive.
+    options = JSON.parse(JSON.stringify(options));
+    // Disable autonomous highlighting if its required permissions were
+    // removed.
+    chrome.permissions.contains(
+        getPermissions('autonomous_highlights'),
+        function(result) {
+            if (!result)
+                options.autonomous_highlights = false;
+            // Don't save if there are no changes (to prevent 'storage' event listeners
+            // from responding when they don't need to).
+            // XXX: The comparison will fail if the keys are in different order.
+            const json = JSON.stringify(options);
+            if (json !== localStorage['options'])
+                localStorage['options'] = JSON.stringify(options);
+            if (callback !== null)
+                callback();
+        });
 }
 
 // This is called from options.js (see scope warning above).
@@ -318,6 +332,11 @@ chrome.browserAction.onClicked.addListener(function(tab) {
     highlight(tab.id, true, null, 'document_end');
 });
 
+chrome.permissions.onRemoved.addListener(function() {
+    // saveOptions() handles the check for missing permissions.
+    saveOptions(getOptions());
+});
+
 // *****************************
 // * Context Menu
 // *****************************
@@ -527,13 +546,8 @@ chrome.browserAction.onClicked.addListener(function(tab) {
             chrome.permissions.request(
                 getPermissions('global_highlighting'),
                 function (granted) {
-                    if (granted) {
+                    if (granted)
                         highlightAll(level);
-                        // Send message indicating that permissions have been updated.
-                        // (i.e., so options page can be updated).
-                        chrome.runtime.sendMessage(
-                            chrome.runtime.id, {message: 'permissionsUpdated'});
-                    }
                 });
         } else if (id.match(options_re)) {
             chrome.runtime.openOptionsPage();

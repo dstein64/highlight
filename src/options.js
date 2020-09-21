@@ -60,21 +60,7 @@ const PERMISSIONS = {};
 }
 
 revokeButton.addEventListener('click', function() {
-    chrome.permissions.remove(
-        PERMISSIONS,
-        function(removed) {
-            if (removed) {
-                revokeButton.disabled = true;
-                setAutonomousHighlights(false, true, function() {
-                    saveOptions();
-                    // Send message indicating that permissions have been updated.
-                    // (i.e., so the revoke button is properly toggled on other
-                    // options pages).
-                    chrome.runtime.sendMessage(
-                        chrome.runtime.id, {message: 'permissionsUpdated'});
-                });
-            }
-        });
+    chrome.permissions.remove(PERMISSIONS);
 });
 
 /***********************************
@@ -91,8 +77,6 @@ const setAutonomousHighlights = function(value, active=false, callback=null) {
             function(result) {
                 autonomousHighlightsInput.checked = result;
                 autonomousSettings.disabled = !result;
-                if (result)
-                    revokeButton.disabled = false;
                 if (callback !== null)
                     callback();
             });
@@ -102,6 +86,33 @@ const setAutonomousHighlights = function(value, active=false, callback=null) {
         if (callback !== null)
             callback();
     }
+};
+
+// Sets revoke button to disabled or enabled (asynchronously).
+const setRevokeButtonState = function() {
+    // Disables the revoke button, and then enables it if any of the relevant
+    // permissions are currently granted.
+    const permission_items = [
+        globalHighlightingPermissions,
+        autonomousHighlightsPermissions
+    ];
+    revokeButton.disabled = true;
+    let fn = function() {};
+    for (const item of permission_items) {
+        let _fn = fn;
+        fn = function() {
+            chrome.permissions.contains(
+                item,
+                function(result) {
+                    if (result) {
+                        revokeButton.disabled = false;
+                    } else {
+                        _fn();
+                    }
+                });
+        };
+    }
+    fn();
 };
 
 const syncBlocklistButtons = function() {
@@ -137,67 +148,46 @@ for (let i = 1; i < numHighlightStates; ++i) {
     img.width = 19;
 }
 
-// Saves options.
+// Saves options (asynchronously).
 const saveOptions = function() {
-    const highlightColor = highlightColorInput.value;
-    const textColor = textColorInput.value;
-    const linkColor = linkColorInput.value;
-    const tintedHighlights = tintedHighlightsInput.checked;
-    const autonomousHighlights = autonomousHighlightsInput.checked;
-    const autonomousDelay = parseInt(autonomousDelayInput.value);
-    const autonomousState = parseInt(
-        autonomousStateInputs.querySelector('input:checked').value);
-    const autonomousBlockList = autonomousBlocklistInput.checked;
-
-    // Update example text
-    exampleTextElement.style.backgroundColor = highlightColor;
-    exampleTextElement.style.color = textColor;
-    exampleLinkElement.style.backgroundColor = highlightColor;
-    exampleLinkElement.style.color = linkColor;
-
-    // Save options
     const options = Object.create(null);
-    options['highlight_color'] = highlightColor;
-    options['text_color'] = textColor;
-    options['link_color'] = linkColor;
-    options['tinted_highlights'] = tintedHighlights;
-    options['autonomous_highlights'] = autonomousHighlights;
-    options['autonomous_delay'] = autonomousDelay;
-    options['autonomous_state'] = autonomousState;
-    options['autonomous_blocklist'] = autonomousBlockList;
+    options['highlight_color'] = highlightColorInput.value;
+    options['text_color'] = textColorInput.value;
+    options['link_color'] = linkColorInput.value;
+    options['tinted_highlights'] = tintedHighlightsInput.checked;
+    options['autonomous_highlights'] = autonomousHighlightsInput.checked;
+    options['autonomous_delay'] = parseInt(autonomousDelayInput.value);
+    options['autonomous_state'] = parseInt(
+        autonomousStateInputs.querySelector('input:checked').value);
+    options['autonomous_blocklist'] = autonomousBlocklistInput.checked;
     // TODO: HAVE TO ACTUALLY SET THE FOLLOWING VALUES
     options['autonomous_blocklist_items'] = backgroundPage.getOptions().autonomous_blocklist_items;
     options['autonomous_blocklist_exceptions'] = backgroundPage.getOptions().autonomous_blocklist_exceptions;
-
     backgroundPage.saveOptions(options);
 };
 
-const loadOptions = function(opts, active=false, save=true) {
+// Loads options (asynchronously).
+const loadOptions = function(opts) {
     // onchange doesn't fire when setting 'checked' and other values with javascript,
     // so some form synchronization must be triggered manually.
     highlightColorInput.value = opts['highlight_color'];
     textColorInput.value = opts['text_color'];
     linkColorInput.value = opts['link_color'];
     tintedHighlightsInput.checked = opts['tinted_highlights'];
-    setAutonomousHighlights(opts['autonomous_highlights'], active, function() {
+
+    exampleTextElement.style.backgroundColor = opts['highlight_color'];
+    exampleTextElement.style.color = opts['text_color'];
+    exampleLinkElement.style.backgroundColor = opts['highlight_color'];
+    exampleLinkElement.style.color = opts['link_color'];
+
+    setAutonomousHighlights(opts['autonomous_highlights'], false, function() {
         autonomousDelayInput.value = opts['autonomous_delay'];
         showAutonomousDelay();
         document.getElementById(
             `autonomous-state-${opts['autonomous_state']}`).checked = true;
         autonomousBlocklistInput.checked = opts['autonomous_blocklist'];
         syncBlocklistButtons();
-        chrome.permissions.contains(
-            PERMISSIONS,
-            function(result) {
-                revokeButton.disabled = !result;
-            });
-        // WARN: calling saveOptions is not specific for autonomous
-        // highlights, but rather for all the settings above. It's called
-        // here though as part of the callback to setAutonomousHighlights(), not
-        // at the scope of loadOptions(), as a consequence of the asynchronous
-        // handling of setAutonomousHighlights.
-        if (save)
-            saveOptions();
+        setRevokeButtonState();
     });
 };
 
@@ -211,13 +201,24 @@ document.addEventListener('DOMContentLoaded', function() {
 // load default options
 document.getElementById('defaults').addEventListener('click', function() {
     const defaults = backgroundPage.defaultOptions();
-    loadOptions(defaults);
-    statusMessage('Defaults Loaded', 1200);
+    // this will trigger updates to the input settings
+    backgroundPage.saveOptions(defaults, function() {
+        statusMessage('Defaults Loaded', 1200);
+    });
 });
 
 document.getElementById('revert').addEventListener('click', function() {
-    loadOptions(initOpts, true);
-    statusMessage('Options Reverted', 1200);
+    let permissions = {};
+    if (initOpts.autonomous_highlights)
+        permissions = autonomousHighlightsPermissions;
+    chrome.permissions.request(
+        permissions,
+        function(response) {
+            // this will trigger updates to the input settings
+            backgroundPage.saveOptions(initOpts, function() {
+                statusMessage('Options Reverted', 1200);
+            });
+        });
 });
 
 // hide elements that are not relevant with less than three highlight states,
@@ -284,35 +285,33 @@ for (let i = 0; i < numHighlightStates; ++i) {
         chrome.permissions.request(
             globalHighlightingPermissions,
             function(granted) {
-                if (granted) {
-                    revokeButton.disabled = false;
+                if (granted)
                     backgroundPage.highlightAll(i);
-                }
             });
     });
     globalHighlightIcons.appendChild(img);
 }
 
 /***********************************
- * External Updates
+ * External Updates and/or Permissions Changes
  ***********************************/
 
-chrome.runtime.onMessage.addListener(function(request, sender, response) {
-    if (request.message === 'permissionsUpdated') {
-        // Reload options when there are any external updates that change permissions.
-        // Save, since changing permissions might trigger changes to settings.
-        loadOptions(backgroundPage.getOptions());
-    }
-    // NOTE: if you're going to call response asynchronously,
-    //       be sure to return true from this function.
-    //       http://stackoverflow.com/questions/20077487/
-    //              chrome-extension-message-passing-response-not-sent
+chrome.permissions.onAdded.addListener(function() {
+    // Changes to corresponding settings are handled by the 'storage' listener below.
+    setRevokeButtonState();
+});
+
+chrome.permissions.onRemoved.addListener(function() {
+    // Changes to corresponding settings are handled by the 'storage' listener below.
+    setRevokeButtonState();
+    // eventPage.js has an event listener for saving options when permissions are
+    // removed. This handles permissions changes triggered either within or outside
+    // the options page.
 });
 
 window.addEventListener('storage', function(event) {
-    // Reload options options when there are any external updates that modify settings
+    // Reload options when there are any external updates that modify settings
     // saved in local storage (e.g., additions to the blocklist, options changes
-    // on other options pages). Don't save, to prevent continually back-and-forth
-    // saving.
-    loadOptions(backgroundPage.getOptions(), false, false);
+    // on other options pages).
+    loadOptions(backgroundPage.getOptions());
 });
