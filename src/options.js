@@ -31,6 +31,8 @@ const autonomousStateInputs = document.getElementById('autonomous-state');
 const autonomousBlocklistInput = document.getElementById('blocklist');
 const autonomousBlocklistItemsButton = document.getElementById('blocklist-items-button');
 const autonomousBlocklistExceptionsButton = document.getElementById('blocklist-exceptions-button');
+const autonomousBlocklistItemsCount = document.getElementById('blocklist-items-count');
+const autonomousBlocklistExceptionsCount = document.getElementById('blocklist-exceptions-count');
 
 const exampleTextElement = document.getElementById('example-text');
 const exampleLinkElement = document.getElementById('example-link');
@@ -186,6 +188,12 @@ const loadOptions = function(opts) {
         document.getElementById(
             `autonomous-state-${opts['autonomous_state']}`).checked = true;
         autonomousBlocklistInput.checked = opts['autonomous_blocklist'];
+        const itemCount = opts['autonomous_blocklist_items'].length;
+        autonomousBlocklistItemsButton.setAttribute('data-count', itemCount);
+        autonomousBlocklistItemsCount.innerText = itemCount;
+        const exceptionCount = opts['autonomous_blocklist_exceptions'].length;
+        autonomousBlocklistExceptionsButton.setAttribute('data-count', exceptionCount);
+        autonomousBlocklistExceptionsCount.innerText = exceptionCount;
         syncBlocklistButtons();
         setRevokeButtonState();
     });

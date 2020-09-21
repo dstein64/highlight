@@ -55,54 +55,6 @@ table#table td:first-child {
     margin-top: 16px;
 }
 
-/* *************************************************
- * * Tooltip
- * ************************************************* */
-
-a.tooltip {
-    outline: none;
-    border-bottom: 1px dotted;
-}
-
-a.tooltip:hover {
-    text-decoration: none;
-}
-
-a.tooltip > span {
-    z-index: 10;
-    position: absolute;
-    left: 0;
-    display: none;
-    padding: 14px 20px;
-    margin-top: 40px;
-    margin-left: 20px;
-    width: auto;
-    max-width: 300px;
-    line-height: 16px;
-    text-align: left;
-}
-
-a.tooltip.top > span {
-    margin-top: -20px;
-    transform: translateY(-100%);
-}
-
-a.tooltip:hover > span {
-    display: inline;
-    color: #111;
-    border: 1px solid #DCA;
-    background: #fffAF0;
-}
-
-a.tooltip > span {
-    border-radius: 4px;
-    box-shadow: 5px 5px 8px #CCC;
-}
-
-/* *************************************************
- * * Miscellaneous
- * ************************************************* */
-
 .button-spacer {
     display: block;
     height: 4px;
@@ -156,4 +108,52 @@ summary {
 .nested p {
     margin-top: 7px ;
     margin-bottom: 7px ;
+}
+
+button[data-count="1"] span.plural {
+    display: none;
+}
+
+/* *************************************************
+ * * Tooltip
+ * ************************************************* */
+
+a.tooltip {
+    outline: none;
+    border-bottom: 1px dotted;
+}
+
+a.tooltip:hover {
+    text-decoration: none;
+}
+
+a.tooltip > span {
+    z-index: 10;
+    position: absolute;
+    left: 0;
+    display: none;
+    padding: 14px 20px;
+    margin-top: 40px;
+    margin-left: 20px;
+    width: auto;
+    max-width: 300px;
+    line-height: 16px;
+    text-align: left;
+}
+
+a.tooltip.top > span {
+    margin-top: -20px;
+    transform: translateY(-100%);
+}
+
+a.tooltip:hover > span {
+    display: inline;
+    color: #111;
+    border: 1px solid #DCA;
+    background: #fffAF0;
+}
+
+a.tooltip > span {
+    border-radius: 4px;
+    box-shadow: 5px 5px 8px #CCC;
 }
