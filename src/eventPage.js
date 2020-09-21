@@ -10,7 +10,7 @@ const MOBILE = USER_AGENT.indexOf('android') > -1 && USER_AGENT.indexOf('firefox
 
 // total number of highlight states (min 2, max 4).
 let NUM_HIGHLIGHT_STATES = 4;
-// Firefox for mobile, doesn't show an browserAction icon, so only use two highlight
+// Firefox for mobile doesn't show a browserAction icon, so only use two highlight
 // states (on and off).
 if (MOBILE)
     NUM_HIGHLIGHT_STATES = 2;
