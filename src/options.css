@@ -114,6 +114,10 @@ button[data-count="1"] span.plural {
     display: none;
 }
 
+#blocklist-items, #blocklist-exceptions {
+    font-size: 12px;
+}
+
 /* *************************************************
  * * Tooltip
  * ************************************************* */
