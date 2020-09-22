@@ -171,6 +171,8 @@ const saveOptions = function() {
 };
 
 const populateBlocklistTable = function(opts, tbody, key) {
+    // Deep copy so this function is not destructive.
+    opts = JSON.parse(JSON.stringify(opts));
     while (tbody.lastChild) {
         tbody.removeChild(tbody.lastChild);
     }
