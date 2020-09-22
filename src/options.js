@@ -33,6 +33,8 @@ const autonomousBlocklistItemsButton = document.getElementById('blocklist-items-
 const autonomousBlocklistExceptionsButton = document.getElementById('blocklist-exceptions-button');
 const autonomousBlocklistItemsCount = document.getElementById('blocklist-items-count');
 const autonomousBlocklistExceptionsCount = document.getElementById('blocklist-exceptions-count');
+const autonomousBlocklistItems = document.getElementById('blocklist-items');
+const autonomousBlocklistExceptions = document.getElementById('blocklist-exceptions');
 
 const exampleTextElement = document.getElementById('example-text');
 const exampleLinkElement = document.getElementById('example-link');
@@ -168,6 +170,39 @@ const saveOptions = function() {
     backgroundPage.saveOptions(options);
 };
 
+const populateBlocklistTable = function(opts, tbody, key) {
+    while (tbody.lastChild) {
+        tbody.removeChild(tbody.lastChild);
+    }
+    for (let i = 0; i < opts[key].length; ++i) {
+        const item = opts[key][i];
+        const tr = document.createElement('tr');
+        tbody.appendChild(tr);
+        const type_td = document.createElement('td');
+        // Applying .label directly to the <td> causes top vertical alignment
+        // instead of middle. Wrap with a span.
+        const type = document.createElement('span');
+        type.innerText = item.type;
+        type.classList.add('label');
+        type_td.append(type);
+        tr.appendChild(type_td);
+        const data_td = document.createElement('td');
+        data_td.innerText = item.data;
+        data_td.style.wordBreak = 'break-all';
+        data_td.style.flex = 1;
+        tr.appendChild(data_td);
+        const delete_td = document.createElement('td');
+        delete_td.innerHTML = '&#128465;';
+        delete_td.style.cursor = 'pointer';
+        delete_td.title = 'remove';
+        delete_td.addEventListener('click', function() {
+            opts[key].splice(i, 1);
+            backgroundPage.saveOptions(opts);
+        });
+        tr.appendChild(delete_td);
+    }
+};
+
 // Loads options (asynchronously).
 const loadOptions = function(opts) {
     // onchange doesn't fire when setting 'checked' and other values with javascript,
@@ -194,6 +229,10 @@ const loadOptions = function(opts) {
         const exceptionCount = opts['autonomous_blocklist_exceptions'].length;
         autonomousBlocklistExceptionsButton.setAttribute('data-count', exceptionCount);
         autonomousBlocklistExceptionsCount.innerText = exceptionCount;
+        populateBlocklistTable(
+            opts, autonomousBlocklistItems, 'autonomous_blocklist_items');
+        populateBlocklistTable(
+            opts, autonomousBlocklistExceptions, 'autonomous_blocklist_exceptions');
         syncBlocklistButtons();
         setRevokeButtonState();
     });
