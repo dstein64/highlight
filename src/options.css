@@ -118,6 +118,19 @@ button[data-count="1"] span.plural {
     font-size: 12px;
 }
 
+table.blocklist-table {
+    width: 100%;
+}
+
+/* Shrink the first and third columns, and expand the second. */
+.blocklist-table td:nth-child(1),
+.blocklist-table td:nth-child(3) {
+    white-space: nowrap;
+}
+.blocklist-table td:nth-child(2) {
+    width: 99%;
+}
+
 /* *************************************************
  * * Tooltip
  * ************************************************* */
