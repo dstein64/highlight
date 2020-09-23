@@ -181,6 +181,7 @@ const populateBlocklistTable = function(opts, tbody, key) {
         const tr = document.createElement('tr');
         tbody.appendChild(tr);
         const type_td = document.createElement('td');
+        type_td.classList.add('blocklist-type-col');
         // Applying .label directly to the <td> causes top vertical alignment
         // instead of middle. Wrap with a span.
         const type = document.createElement('span');
@@ -189,19 +190,21 @@ const populateBlocklistTable = function(opts, tbody, key) {
         type_td.append(type);
         tr.appendChild(type_td);
         const data_td = document.createElement('td');
+        data_td.classList.add('blocklist-data-col');
         data_td.innerText = item.data;
-        data_td.style.wordBreak = 'break-all';
-        data_td.style.flex = 1;
         tr.appendChild(data_td);
-        const delete_td = document.createElement('td');
-        delete_td.innerHTML = '&#128465;';
-        delete_td.style.cursor = 'pointer';
-        delete_td.title = 'remove';
-        delete_td.addEventListener('click', function() {
+        const remove_td = document.createElement('td');
+        remove_td.classList.add('blocklist-remove-col');
+        const remove_span = document.createElement('span');
+        remove_span.classList.add('blocklist-remove');
+        remove_span.innerHTML = '&#128465;';
+        remove_span.title = 'remove';
+        remove_td.appendChild(remove_span);
+        remove_td.addEventListener('click', function() {
             opts[key].splice(i, 1);
             backgroundPage.saveOptions(opts);
         });
-        tr.appendChild(delete_td);
+        tr.appendChild(remove_td);
     }
 };
 

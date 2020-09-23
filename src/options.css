@@ -123,13 +123,28 @@ table.blocklist-table {
 }
 
 /* Shrink the first and third columns, and expand the second. */
-.blocklist-table td:nth-child(1),
-.blocklist-table td:nth-child(3) {
+.blocklist-type-col,
+.blocklist-remove-col {
     white-space: nowrap;
 }
-.blocklist-table td:nth-child(2) {
+.blocklist-data-col {
     width: 99%;
 }
+
+.blocklist-data-col {
+    word-break: break-all;
+}
+
+.blocklist-remove {
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.blocklist-remove:hover {
+    filter: brightness(0.7);
+}
+
+.blocklist-remove-col
 
 /* *************************************************
  * * Tooltip
