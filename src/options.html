@@ -107,12 +107,22 @@
     </td>
   </tr>
 </table>
-<table>
-  <tbody id="blocklist-items"></tbody>
-</table>
-<table>
-  <tbody id="blocklist-exceptions"></tbody>
-</table>
+<div id="blocklist-view" data-list-source="items">
+  <h3 data-list-source="items">Blocklist Items</h3>
+  <h3 data-list-source="exceptions">Blocklist Exceptions</h3>
+  <div id="blocklist-new">
+    <select id="blocklist-new-select">
+      <option value="address">address</option>
+      <option selected="selected" value="domain">domain</option>
+      <option value="pattern">pattern</option>
+    </select>
+    <input id="blocklist-new-input" type="text">
+    <button id="blocklist-new-add-button">Add</button>
+  </div>
+  <table id="blocklist-table">
+    <tbody id="blocklist-items-and-exceptions"></tbody>
+  </table>
+</div>
 <p class="example">
   Example <span id="example-text">text</span>.
   Example <a href="#" id="example-link">link</a>.

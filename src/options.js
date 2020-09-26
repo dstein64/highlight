@@ -33,11 +33,15 @@ const autonomousBlocklistItemsButton = document.getElementById('blocklist-items-
 const autonomousBlocklistExceptionsButton = document.getElementById('blocklist-exceptions-button');
 const autonomousBlocklistItemsCount = document.getElementById('blocklist-items-count');
 const autonomousBlocklistExceptionsCount = document.getElementById('blocklist-exceptions-count');
-const autonomousBlocklistItems = document.getElementById('blocklist-items');
-const autonomousBlocklistExceptions = document.getElementById('blocklist-exceptions');
 
 const exampleTextElement = document.getElementById('example-text');
 const exampleLinkElement = document.getElementById('example-link');
+
+const autonomousBlocklistView = document.getElementById('blocklist-view');
+const autonomousBlocklistNewSelect = document.getElementById('blocklist-new-select');
+const autonomousBlocklistNewInput = document.getElementById('blocklist-new-input');
+const autonomousBlocklistNewAddButton = document.getElementById('blocklist-new-add-button');
+const autonomousBlocklistItemsAndExceptions = document.getElementById('blocklist-items-and-exceptions');
 
 const globalHighlightIcons = document.getElementById('global-highlight-icons');
 
@@ -165,46 +169,55 @@ const saveOptions = function() {
         autonomousStateInputs.querySelector('input:checked').value);
     options['autonomous_blocklist'] = autonomousBlocklistInput.checked;
     // TODO: HAVE TO ACTUALLY SET THE FOLLOWING VALUES
+    // ACTUALLY, THE WAY THIS IS DONE IS PROBABLY SUFFICIENT, BUT EXPLAIN WHY...
     options['autonomous_blocklist_items'] = backgroundPage.getOptions().autonomous_blocklist_items;
     options['autonomous_blocklist_exceptions'] = backgroundPage.getOptions().autonomous_blocklist_exceptions;
     backgroundPage.saveOptions(options);
 };
 
-const populateBlocklistTable = function(opts, tbody, key) {
+const populateBlocklistTable = function(opts) {
     // Deep copy so that the input opts is not modified.
     opts = JSON.parse(JSON.stringify(opts));
-    while (tbody.lastChild) {
-        tbody.removeChild(tbody.lastChild);
+    while (autonomousBlocklistItemsAndExceptions.lastChild) {
+        autonomousBlocklistItemsAndExceptions.removeChild(
+            autonomousBlocklistItemsAndExceptions.lastChild);
     }
-    for (let i = 0; i < opts[key].length; ++i) {
-        const item = opts[key][i];
-        const tr = document.createElement('tr');
-        tbody.appendChild(tr);
-        const type_td = document.createElement('td');
-        type_td.classList.add('blocklist-type-col');
-        // Applying .label directly to the <td> causes top vertical alignment
-        // instead of middle. Wrap with a span.
-        const type = document.createElement('span');
-        type.innerText = item.type;
-        type.classList.add('label');
-        type_td.append(type);
-        tr.appendChild(type_td);
-        const data_td = document.createElement('td');
-        data_td.classList.add('blocklist-data-col');
-        data_td.innerText = item.data;
-        tr.appendChild(data_td);
-        const remove_td = document.createElement('td');
-        remove_td.classList.add('blocklist-remove-col');
-        const remove_span = document.createElement('span');
-        remove_span.classList.add('blocklist-remove');
-        remove_span.innerHTML = '&#128465;';
-        remove_span.title = 'remove';
-        remove_td.appendChild(remove_span);
-        remove_td.addEventListener('click', function() {
-            opts[key].splice(i, 1);
-            backgroundPage.saveOptions(opts);
-        });
-        tr.appendChild(remove_td);
+    const list_sources = ['items', 'exceptions'];
+    for (const list_source of list_sources) {
+        const key = 'autonomous_blocklist_' + list_source;
+        // Iterate in reverse order, so that the new item is shown at the top.
+        // This way, a user can see that the item was added to the list.
+        for (let i = opts[key].length - 1; i >= 0; --i) {
+            const item = opts[key][i];
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-list-source', list_source);
+            autonomousBlocklistItemsAndExceptions.appendChild(tr);
+            const type_td = document.createElement('td');
+            type_td.classList.add('blocklist-type-col');
+            // Applying .label directly to the <td> causes top vertical alignment
+            // instead of middle. Wrap with a span.
+            const type = document.createElement('span');
+            type.innerText = item.type;
+            type.classList.add('label');
+            type_td.append(type);
+            tr.appendChild(type_td);
+            const data_td = document.createElement('td');
+            data_td.classList.add('blocklist-data-col');
+            data_td.innerText = item.data;
+            tr.appendChild(data_td);
+            const remove_td = document.createElement('td');
+            remove_td.classList.add('blocklist-remove-col');
+            const remove_span = document.createElement('span');
+            remove_span.classList.add('blocklist-remove');
+            remove_span.innerHTML = '&#128465;';
+            remove_span.title = 'remove';
+            remove_td.appendChild(remove_span);
+            remove_td.addEventListener('click', function() {
+                opts[key].splice(i, 1);
+                backgroundPage.saveOptions(opts);
+            });
+            tr.appendChild(remove_td);
+        }
     }
 };
 
@@ -234,10 +247,7 @@ const loadOptions = function(opts) {
         const exceptionCount = opts['autonomous_blocklist_exceptions'].length;
         autonomousBlocklistExceptionsButton.setAttribute('data-count', exceptionCount);
         autonomousBlocklistExceptionsCount.innerText = exceptionCount;
-        populateBlocklistTable(
-            opts, autonomousBlocklistItems, 'autonomous_blocklist_items');
-        populateBlocklistTable(
-            opts, autonomousBlocklistExceptions, 'autonomous_blocklist_exceptions');
+        populateBlocklistTable(opts);
         syncBlocklistButtons();
         setRevokeButtonState();
     });
@@ -271,6 +281,61 @@ document.getElementById('revert').addEventListener('click', function() {
                 statusMessage('Options Reverted', 1200);
             });
         });
+});
+
+autonomousBlocklistItemsButton.addEventListener('click', function() {
+    autonomousBlocklistView.setAttribute('data-list-source', 'items');
+    autonomousBlocklistView.showModal();
+});
+
+autonomousBlocklistExceptionsButton.addEventListener('click', function() {
+    autonomousBlocklistView.setAttribute('data-list-source', 'exceptions');
+    autonomousBlocklistView.showModal();
+});
+
+// Handle changes to the blocklist selection list
+{
+    const handleChange = function() {
+        // Change the placeholder text for different selections of blocklist item type.
+        // TODO: will also have to change validation function and/or input type.
+        const value = autonomousBlocklistNewSelect.value;
+        let placeholder = null;
+        if (value === 'address') {
+            placeholder = 'e.g., https://www.dannyadam.com/blog/2015/04/article-highlighter/';
+        } else if (value === 'domain') {
+            placeholder = 'e.g., www.dannyadam.com';
+        } else if (value === 'pattern') {
+            placeholder = 'e.g., *://*.dannyadam.com/blog/*';
+        }
+        if (placeholder !== null) {
+            autonomousBlocklistNewInput.placeholder = placeholder;
+        } else {
+            autonomousBlocklistNewInput.removeAttribute('placeholder');
+        }
+    };
+    autonomousBlocklistNewSelect.addEventListener('change', function() {
+        handleChange();
+    });
+    // Also, make an initial call so that things are in a good state prior to a
+    // "change".
+    handleChange();
+}
+
+// Handle blocklist addition
+autonomousBlocklistNewAddButton.addEventListener('click', function() {
+    const type = autonomousBlocklistNewSelect.value;
+    const data = autonomousBlocklistNewInput.value;
+    const item = {
+        type: type,
+        data: data
+    };
+    // TODO: validation
+    autonomousBlocklistNewInput.value = '';
+    const list_source = autonomousBlocklistView.getAttribute('data-list-source');
+    const opts = backgroundPage.getOptions();
+    const key = 'autonomous_blocklist_' + list_source;
+    opts[key].push(item);
+    backgroundPage.saveOptions(opts);
 });
 
 // hide elements that are not relevant with less than three highlight states,

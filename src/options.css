@@ -114,12 +114,69 @@ button[data-count="1"] span.plural {
     display: none;
 }
 
-#blocklist-items, #blocklist-exceptions {
+/* *************************************************
+ * * Blocklist View
+ * ************************************************* */
+
+#blocklist-view {
+    --padding-horizontal: 5px;
+    --padding-vertical: 3px;
+    --margin-horizontal: 20px;
+    --margin-vertical: 20px;
+    background: #fff;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: calc(100% - 2 * var(--margin-horizontal) - 2 * var(--padding-horizontal));
+    max-height: calc(100% - 2 * var(--margin-vertical) - 2 * var(--padding-vertical));
+    margin: var(--margin-vertical) var(--margin-horizontal);
+    padding: var(--padding-vertical) var(--padding-horizontal);
+    z-index: 10000;
+    border-radius: 5px;
+    box-shadow: 0 0 8px #111;
+    overflow-y: auto;
+}
+
+#blocklist-new {
+    display: flex;
+}
+
+#blocklist-new-input {
+    min-width: 100px;
+    flex-grow: 1;
+}
+
+#blocklist-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#blocklist-items-and-exceptions {
     font-size: 12px;
 }
 
-table.blocklist-table {
-    width: 100%;
+#blocklist-items-and-exceptions td {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.blocklist-data-col {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#blocklist-items-and-exceptions > tr:hover {
+    background-color: lightyellow;
+}
+
+/* Hide non-item (i.e., exception) data when items list is shown. */
+#blocklist-view[data-list-source="items"] *[data-list-source]:not([data-list-source="items"]) {
+    display: none;
+}
+
+/* Hide non-exception (i.e., items) data when exceptions list is shown. */
+#blocklist-view[data-list-source="exceptions"] *[data-list-source]:not([data-list-source="exceptions"]) {
+    display: none;
 }
 
 /* Shrink the first and third columns, and expand the second. */
