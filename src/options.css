@@ -118,23 +118,17 @@ button[data-count="1"] span.plural {
  * * Blocklist View
  * ************************************************* */
 
-#blocklist-view {
-    --padding-horizontal: 5px;
-    --padding-vertical: 3px;
-    --margin-horizontal: 20px;
-    --margin-vertical: 20px;
-    background: #fff;
-    position: fixed;
+#blocklist-nav {
+    position: sticky;
     top: 0;
-    left: 0;
-    width: calc(100% - 2 * var(--margin-horizontal) - 2 * var(--padding-horizontal));
-    max-height: calc(100% - 2 * var(--margin-vertical) - 2 * var(--padding-vertical));
-    margin: var(--margin-vertical) var(--margin-horizontal);
-    padding: var(--padding-vertical) var(--padding-horizontal);
-    z-index: 10000;
-    border-radius: 5px;
-    box-shadow: 0 0 8px #111;
-    overflow-y: auto;
+    color: black;
+    background-color: white;
+}
+
+#blocklist-back {
+    cursor: pointer;
+    color: blue;
+    border-bottom: 1px dotted;
 }
 
 #blocklist-new {

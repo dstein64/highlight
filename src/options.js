@@ -38,6 +38,8 @@ const exampleTextElement = document.getElementById('example-text');
 const exampleLinkElement = document.getElementById('example-link');
 
 const autonomousBlocklistView = document.getElementById('blocklist-view');
+const autonomousBlocklistBack = document.getElementById('blocklist-back');
+const autonomousBlocklistNew = document.getElementById('blocklist-new');
 const autonomousBlocklistNewSelect = document.getElementById('blocklist-new-select');
 const autonomousBlocklistNewInput = document.getElementById('blocklist-new-input');
 const autonomousBlocklistNewAddButton = document.getElementById('blocklist-new-add-button');
@@ -50,6 +52,23 @@ const revokeButton = document.getElementById('revoke-permissions');
 const versionElement = document.getElementById('version');
 
 versionElement.innerText = backgroundPage.getVersion();
+
+/***********************************
+ * Views
+ ***********************************/
+
+const showView = function(view) {
+    for (const element of document.getElementsByClassName('view')) {
+        if (element.id === view) {
+            element.style.display = 'initial';
+        } else {
+            element.style.display = 'none';
+        }
+    }
+    document.body.scrollTop = 0;
+};
+
+showView('main-view');
 
 /***********************************
  * Permissions
@@ -72,8 +91,159 @@ revokeButton.addEventListener('click', function() {
 });
 
 /***********************************
- * Options
+ * Autonomous Blocklist (and exceptions)
  ***********************************/
+
+const populateBlocklistTable = function(opts) {
+    // Deep copy so that the input opts is not modified.
+    opts = JSON.parse(JSON.stringify(opts));
+    while (autonomousBlocklistItemsAndExceptions.lastChild) {
+        autonomousBlocklistItemsAndExceptions.removeChild(
+            autonomousBlocklistItemsAndExceptions.lastChild);
+    }
+    const list_sources = ['items', 'exceptions'];
+    for (const list_source of list_sources) {
+        const key = 'autonomous_blocklist_' + list_source;
+        // Iterate in reverse order, so that the new item is shown at the top.
+        // This way, a user can see that the item was added to the list.
+        for (let i = opts[key].length - 1; i >= 0; --i) {
+            const item = opts[key][i];
+            const tr = document.createElement('tr');
+            tr.setAttribute('data-list-source', list_source);
+            autonomousBlocklistItemsAndExceptions.appendChild(tr);
+            const type_td = document.createElement('td');
+            type_td.classList.add('blocklist-type-col');
+            // Applying .label directly to the <td> causes top vertical alignment
+            // instead of middle. Wrap with a span.
+            const type = document.createElement('span');
+            type.innerText = item.type;
+            type.classList.add('label');
+            type_td.append(type);
+            tr.appendChild(type_td);
+            const data_td = document.createElement('td');
+            data_td.classList.add('blocklist-data-col');
+            data_td.innerText = item.data;
+            tr.appendChild(data_td);
+            const remove_td = document.createElement('td');
+            remove_td.classList.add('blocklist-remove-col');
+            const remove_span = document.createElement('span');
+            remove_span.classList.add('blocklist-remove');
+            remove_span.innerHTML = '&#128465;';
+            remove_span.title = 'remove';
+            remove_td.appendChild(remove_span);
+            remove_td.addEventListener('click', function() {
+                opts[key].splice(i, 1);
+                backgroundPage.saveOptions(opts);
+            });
+            tr.appendChild(remove_td);
+        }
+    }
+};
+
+autonomousBlocklistItemsButton.addEventListener('click', function() {
+    autonomousBlocklistView.setAttribute('data-list-source', 'items');
+    showView('blocklist-view');
+});
+
+autonomousBlocklistExceptionsButton.addEventListener('click', function() {
+    autonomousBlocklistView.setAttribute('data-list-source', 'exceptions');
+    showView('blocklist-view');
+});
+
+autonomousBlocklistBack.addEventListener('click', function() {
+    showView('main-view');
+});
+
+// Handle changes to the blocklist selection list and input
+{
+    const handleSelectionChange = function() {
+        // Change the placeholder text for different selections of blocklist item type.
+        // TODO: will also have to change validation function and/or input type.
+        const value = autonomousBlocklistNewSelect.value;
+        let placeholder = null;
+        let type = 'text';
+        if (value === 'address') {
+            placeholder = 'e.g., https://www.dannyadam.com/blog/2015/04/article-highlighter/';
+            type = 'url';
+        } else if (value === 'domain') {
+            placeholder = 'e.g., www.dannyadam.com';
+        } else if (value === 'pattern') {
+            placeholder = 'e.g., *://*.dannyadam.com/blog/*';
+        }
+        if (placeholder !== null) {
+            autonomousBlocklistNewInput.placeholder = placeholder;
+        } else {
+            autonomousBlocklistNewInput.removeAttribute('placeholder');
+        }
+        autonomousBlocklistNewInput.type = type;
+    };
+
+    const validateInput = function() {
+        // By default, assume input validates or will be checked by the
+        // browser.
+        autonomousBlocklistNewInput.setCustomValidity('');
+        const type = autonomousBlocklistNewSelect.value;
+        const data = autonomousBlocklistNewInput.value;
+        // Empty input handled by 'required' attribute
+        if (data === '')
+            return;
+        if (type === 'domain') {
+            autonomousBlocklistNewInput.setCustomValidity(
+                'Please enter a domain.');
+        } else if (type === 'pattern') {
+            autonomousBlocklistNewInput.setCustomValidity(
+                'Please enter a match pattern.');
+        } else {
+            // type === 'address' is handled by the browser's input[type="url"]
+            // validation.
+        }
+    };
+
+    autonomousBlocklistNewSelect.addEventListener('change', function() {
+        handleSelectionChange();
+        validateInput();
+    });
+
+    autonomousBlocklistNewInput.addEventListener('change', function(e) {
+        validateInput();
+    });
+
+    // Also, make an initial call so that things are in a good state prior to a
+    // "change".
+    handleSelectionChange();
+}
+
+// Handle blocklist addition
+{
+    const add = function() {
+        autonomousBlocklistNewInput.setCustomValidity('');
+        const type = autonomousBlocklistNewSelect.value;
+        const data = autonomousBlocklistNewInput.value;
+        const item = {
+            type: type,
+            data: data
+        };
+        autonomousBlocklistNewInput.value = '';
+        const list_source = autonomousBlocklistView.getAttribute('data-list-source');
+        const opts = backgroundPage.getOptions();
+        const key = 'autonomous_blocklist_' + list_source;
+        opts[key].push(item);
+        backgroundPage.saveOptions(opts);
+    };
+
+    autonomousBlocklistNew.addEventListener('submit', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        add();
+    });
+}
+
+
+/***********************************
+ * Options Form
+ ***********************************/
+
+const initOpts = backgroundPage.getOptions();
 
 // 'active' indicates whether the function is initiated through a user gesture. This
 // is required to avoid "This function must be called during a user gesture".
@@ -168,57 +338,14 @@ const saveOptions = function() {
     options['autonomous_state'] = parseInt(
         autonomousStateInputs.querySelector('input:checked').value);
     options['autonomous_blocklist'] = autonomousBlocklistInput.checked;
-    // TODO: HAVE TO ACTUALLY SET THE FOLLOWING VALUES
-    // ACTUALLY, THE WAY THIS IS DONE IS PROBABLY SUFFICIENT, BUT EXPLAIN WHY...
-    options['autonomous_blocklist_items'] = backgroundPage.getOptions().autonomous_blocklist_items;
-    options['autonomous_blocklist_exceptions'] = backgroundPage.getOptions().autonomous_blocklist_exceptions;
+    // The values on the blocklist (and exceptions) do not get pulled from the
+    // DOM prior to saving (which is what's done above for the other options.
+    // This is because blocklist items are handled differently than the
+    // other form inputs, getting saved directly when they're added.
+    const existing_opts = backgroundPage.getOptions();
+    options['autonomous_blocklist_items'] = existing_opts.autonomous_blocklist_items;
+    options['autonomous_blocklist_exceptions'] = existing_opts.autonomous_blocklist_exceptions;
     backgroundPage.saveOptions(options);
-};
-
-const populateBlocklistTable = function(opts) {
-    // Deep copy so that the input opts is not modified.
-    opts = JSON.parse(JSON.stringify(opts));
-    while (autonomousBlocklistItemsAndExceptions.lastChild) {
-        autonomousBlocklistItemsAndExceptions.removeChild(
-            autonomousBlocklistItemsAndExceptions.lastChild);
-    }
-    const list_sources = ['items', 'exceptions'];
-    for (const list_source of list_sources) {
-        const key = 'autonomous_blocklist_' + list_source;
-        // Iterate in reverse order, so that the new item is shown at the top.
-        // This way, a user can see that the item was added to the list.
-        for (let i = opts[key].length - 1; i >= 0; --i) {
-            const item = opts[key][i];
-            const tr = document.createElement('tr');
-            tr.setAttribute('data-list-source', list_source);
-            autonomousBlocklistItemsAndExceptions.appendChild(tr);
-            const type_td = document.createElement('td');
-            type_td.classList.add('blocklist-type-col');
-            // Applying .label directly to the <td> causes top vertical alignment
-            // instead of middle. Wrap with a span.
-            const type = document.createElement('span');
-            type.innerText = item.type;
-            type.classList.add('label');
-            type_td.append(type);
-            tr.appendChild(type_td);
-            const data_td = document.createElement('td');
-            data_td.classList.add('blocklist-data-col');
-            data_td.innerText = item.data;
-            tr.appendChild(data_td);
-            const remove_td = document.createElement('td');
-            remove_td.classList.add('blocklist-remove-col');
-            const remove_span = document.createElement('span');
-            remove_span.classList.add('blocklist-remove');
-            remove_span.innerHTML = '&#128465;';
-            remove_span.title = 'remove';
-            remove_td.appendChild(remove_span);
-            remove_td.addEventListener('click', function() {
-                opts[key].splice(i, 1);
-                backgroundPage.saveOptions(opts);
-            });
-            tr.appendChild(remove_td);
-        }
-    }
 };
 
 // Loads options (asynchronously).
@@ -253,8 +380,6 @@ const loadOptions = function(opts) {
     });
 };
 
-const initOpts = backgroundPage.getOptions();
-
 // restore saved options
 document.addEventListener('DOMContentLoaded', function() {
     loadOptions(initOpts);
@@ -281,61 +406,6 @@ document.getElementById('revert').addEventListener('click', function() {
                 statusMessage('Options Reverted', 1200);
             });
         });
-});
-
-autonomousBlocklistItemsButton.addEventListener('click', function() {
-    autonomousBlocklistView.setAttribute('data-list-source', 'items');
-    autonomousBlocklistView.showModal();
-});
-
-autonomousBlocklistExceptionsButton.addEventListener('click', function() {
-    autonomousBlocklistView.setAttribute('data-list-source', 'exceptions');
-    autonomousBlocklistView.showModal();
-});
-
-// Handle changes to the blocklist selection list
-{
-    const handleChange = function() {
-        // Change the placeholder text for different selections of blocklist item type.
-        // TODO: will also have to change validation function and/or input type.
-        const value = autonomousBlocklistNewSelect.value;
-        let placeholder = null;
-        if (value === 'address') {
-            placeholder = 'e.g., https://www.dannyadam.com/blog/2015/04/article-highlighter/';
-        } else if (value === 'domain') {
-            placeholder = 'e.g., www.dannyadam.com';
-        } else if (value === 'pattern') {
-            placeholder = 'e.g., *://*.dannyadam.com/blog/*';
-        }
-        if (placeholder !== null) {
-            autonomousBlocklistNewInput.placeholder = placeholder;
-        } else {
-            autonomousBlocklistNewInput.removeAttribute('placeholder');
-        }
-    };
-    autonomousBlocklistNewSelect.addEventListener('change', function() {
-        handleChange();
-    });
-    // Also, make an initial call so that things are in a good state prior to a
-    // "change".
-    handleChange();
-}
-
-// Handle blocklist addition
-autonomousBlocklistNewAddButton.addEventListener('click', function() {
-    const type = autonomousBlocklistNewSelect.value;
-    const data = autonomousBlocklistNewInput.value;
-    const item = {
-        type: type,
-        data: data
-    };
-    // TODO: validation
-    autonomousBlocklistNewInput.value = '';
-    const list_source = autonomousBlocklistView.getAttribute('data-list-source');
-    const opts = backgroundPage.getOptions();
-    const key = 'autonomous_blocklist_' + list_source;
-    opts[key].push(item);
-    backgroundPage.saveOptions(opts);
 });
 
 // hide elements that are not relevant with less than three highlight states,
