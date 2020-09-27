@@ -124,7 +124,7 @@
       autonomous highlighting.
     </p>
     <p>
-      The list is comprised of domains, the addresses of specific pages, and/or
+      The list is comprised of hostnames, the addresses of specific pages, and/or
       <a target="_blank" rel="noopener noreferrer"
          href="https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Match_patterns#Match_pattern_structure">
         match patterns</a>.
@@ -134,8 +134,8 @@
       <table>
         <tbody>
           <tr>
-            <td><span class="label">domain</span></td>
-            <td><span class="domain">www.dannyadam.com</span></td>
+            <td><span class="label">hostname</span></td>
+            <td><span class="hostname">www.dannyadam.com</span></td>
           </tr>
           <tr>
             <td><span class="label">address</span></td>
@@ -156,12 +156,12 @@
     <p>
       Exceptions override items on the blocklist, thus <em>permitting</em> autonomous
       highlighting for pages that would otherwise be blocked. The list of exceptions is
-      comprised of domains, addresses, and/or patterns.
+      comprised of hostnames, addresses, and/or patterns.
     </p>
     <div class="nested">
       <p>
-        For example, suppose <span class="label">domain</span>
-        <span class="domain">www<wbr>.dannyadam<wbr>.com</span> is an item on the blocklist,
+        For example, suppose <span class="label">hostname</span>
+        <span class="hostname">www<wbr>.dannyadam<wbr>.com</span> is an item on the blocklist,
         and <span class="label">pattern</span>
         <span class="pattern">*://*.dannyadam<wbr>.com<wbr>/blog<wbr>/*</span> is included
         on the list of exceptions.
@@ -213,7 +213,7 @@
   <form id="blocklist-new">
     <select id="blocklist-new-select">
       <option value="address">address</option>
-      <option selected="selected" value="domain">domain</option>
+      <option selected="selected" value="hostname">hostname</option>
       <option value="pattern">pattern</option>
     </select>
     <input id="blocklist-new-input" type="text" required>

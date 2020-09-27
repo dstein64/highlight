@@ -165,7 +165,7 @@ autonomousBlocklistBack.addEventListener('click', function() {
         if (value === 'address') {
             placeholder = 'e.g., https://www.dannyadam.com/blog/2015/04/article-highlighter/';
             type = 'url';
-        } else if (value === 'domain') {
+        } else if (value === 'hostname') {
             placeholder = 'e.g., www.dannyadam.com';
         } else if (value === 'pattern') {
             placeholder = 'e.g., *://*.dannyadam.com/blog/*';
@@ -187,9 +187,9 @@ autonomousBlocklistBack.addEventListener('click', function() {
         // Empty input handled by 'required' attribute
         if (data === '')
             return;
-        if (type === 'domain') {
+        if (type === 'hostname') {
             autonomousBlocklistNewInput.setCustomValidity(
-                'Please enter a domain.');
+                'Please enter a hostname.');
         } else if (type === 'pattern') {
             autonomousBlocklistNewInput.setCustomValidity(
                 'Please enter a match pattern.');

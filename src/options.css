@@ -86,7 +86,7 @@ summary {
     border-bottom: 1px dotted;
 }
 
-.pattern, .url, .domain {
+.pattern, .url, .hostname {
     color: blue;
     font-family: monospace;
 }
