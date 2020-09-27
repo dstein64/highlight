@@ -18,6 +18,22 @@ table#table td:first-child {
     text-align: center;
 }
 
+/*
+ * This keeps inputs (checkboxes, radios) approximately aligned with their
+ * corresponding labels. Otherwise, the inputs appear too low.
+ */
+#table td {
+    vertical-align: baseline;
+}
+
+/*
+ * However, revert the baseline alignment for the blocklist row, since that
+ * is a multi-line row that should have its contents vertically centered.
+ */
+#blocklist-settings-row td {
+    vertical-align: middle;
+}
+
 #autonomous-delay-value {
     font-family: monospace;
 }
