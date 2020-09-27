@@ -30,23 +30,25 @@
   <tr class="at-least-ternary">
     <td><input type="checkbox" id="tinted-highlights"></td>
     <td>
-      <label for="tinted-highlights" class="mobile-remove-for">
-        <a class="tooltip"><span>Toggles whether highlights are tinted based on
-          predicted sentence importance. Lower importance sentences, which receive
-          more tinting, are highlighted with subsequent clicks of the highlighter icon.
-          </span>Tinted Highlights</a>
+      <label for="tinted-highlights">
+        Tinted Highlights
       </label>
+      <a class="tooltip"><span>Toggles whether highlights are tinted based on
+        predicted sentence importance. Lower importance sentences, which receive
+        more tinting, are highlighted with subsequent clicks of the highlighter icon.
+        </span></a>
     </td>
   </tr>
   <tr>
     <td><input type="checkbox" id="autonomous-highlights"></td>
     <td>
-      <label for="autonomous-highlights" class="mobile-remove-for">
-        <!-- Display Autonomous Highlights tooltip above the label, so it doesn't block
-         the corresponding settings.-->
-        <a class="tooltip top"><span>Toggles whether pages are highlighted upon loading,
-          without requiring user interaction.</span>Autonomous Highlights</a>
+      <label for="autonomous-highlights">
+        Autonomous Highlights
       </label>
+      <!-- Display Autonomous Highlights tooltip above the label, so it doesn't block
+       the corresponding settings.-->
+      <a class="tooltip top"><span>Toggles whether pages are highlighted upon loading,
+          without requiring user interaction.</span></a>
     </td>
   </tr>
   <tr>
@@ -56,10 +58,11 @@
         <table>
           <tr>
             <td>
-              <label for="autonomous-delay">
-                <a class="tooltip"><span>Specifies how many seconds to wait&mdash;after
+              <a class="tooltip"><span>Specifies how many seconds to wait&mdash;after
                 loading a page&mdash;until autonomous highlighting is applied.
-                </span>Delay</a>
+                </span></a>
+              <label for="autonomous-delay">
+                Delay
               </label>
             </td>
             <td>
@@ -69,18 +72,20 @@
           </tr>
           <tr class="at-least-ternary">
             <td>
+              <a class="tooltip"><span>Controls the amount of autonomous
+                highlighting.</span></a>
               <label>
-                <a class="tooltip"><span>Controls the amount of autonomous
-                highlighting.</span>State</a>
+                State
               </label>
             </td>
             <td id="autonomous-state"></td>
           </tr>
           <tr>
             <td>
-              <label for="blocklist" class="mobile-remove-for">
-                <a class="tooltip"><span>Controls which pages do not receive autonomous
-                  highlighting.</span>Blocklist</a><sup>*</sup>
+              <a class="tooltip"><span>Controls which pages do not receive autonomous
+                  highlighting.</span></a>
+              <label for="blocklist">
+                Blocklist<sup>*</sup>
               </label>
             </td>
             <td>

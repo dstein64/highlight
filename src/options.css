@@ -201,7 +201,12 @@ button[data-count="1"] span.plural {
 
 a.tooltip {
     outline: none;
-    border-bottom: 1px dotted;
+}
+
+a.tooltip:after {
+    /* Circled Information Source */
+    content: "\1F6C8";
+    color: darkblue;
 }
 
 a.tooltip:hover {
@@ -237,4 +242,14 @@ a.tooltip:hover > span {
 a.tooltip > span {
     border-radius: 4px;
     box-shadow: 5px 5px 8px #CCC;
+}
+
+/* Update tooltip icon shade within a disabled fieldset. */
+fieldset[disabled] a.tooltip:after {
+    opacity: 23%;
+}
+
+/* Disabled tooltip popup within a disabled fieldset. */
+fieldset[disabled] a.tooltip > * {
+    display: none;
 }

@@ -422,14 +422,6 @@ if (numHighlightStates < 3) {
     }
 }
 
-// decouple label for touch devices, since clicking shows the tooltip.
-if (window.matchMedia('(pointer: coarse)').matches) {
-    let labels = document.getElementsByClassName('mobile-remove-for');
-    for (let i = 0; i < labels.length; ++i) {
-        labels[i].removeAttribute('for');
-    }
-}
-
 // save options and synchronize form on any user input
 (function() {
     // For color inputs, 'input' events are triggered during selection, while 'change'
