@@ -140,21 +140,6 @@ const populateBlocklistTable = function(opts) {
     }
 };
 
-autonomousBlocklistItemsButton.addEventListener('click', function() {
-    autonomousBlocklistView.setAttribute('data-list-source', 'items');
-    showView('blocklist-view');
-});
-
-autonomousBlocklistExceptionsButton.addEventListener('click', function() {
-    autonomousBlocklistView.setAttribute('data-list-source', 'exceptions');
-    showView('blocklist-view');
-});
-
-autonomousBlocklistBack.addEventListener('click', function() {
-    showView('main-view');
-});
-
-// Handle changes to the blocklist selection list and input
 {
     const handleSelectionChange = function() {
         // Change the placeholder text for different selections of blocklist item type.
@@ -215,13 +200,27 @@ autonomousBlocklistBack.addEventListener('click', function() {
         validateInput();
     });
 
-    // Also, make an initial call so that things are in a good state prior to a
-    // "change".
-    handleSelectionChange();
-}
+    const showBlocklist = function(source) {
+        autonomousBlocklistView.setAttribute('data-list-source', source);
+        autonomousBlocklistNewSelect.value = 'hostname';
+        autonomousBlocklistNewInput.value = '';
+        handleSelectionChange();
+        showView('blocklist-view');
+    };
 
-// Handle blocklist addition
-{
+    autonomousBlocklistItemsButton.addEventListener('click', function() {
+        showBlocklist('items');
+    });
+
+    autonomousBlocklistExceptionsButton.addEventListener('click', function() {
+        showBlocklist('exceptions');
+    });
+
+    autonomousBlocklistBack.addEventListener('click', function() {
+        showView('main-view');
+    });
+
+    // Handler for blocklist addition.
     const add = function() {
         autonomousBlocklistNewInput.setCustomValidity('');
         const type = autonomousBlocklistNewSelect.value;
@@ -244,7 +243,6 @@ autonomousBlocklistBack.addEventListener('click', function() {
         add();
     });
 }
-
 
 /***********************************
  * Options Form
