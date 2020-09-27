@@ -183,8 +183,12 @@ const populateBlocklistTable = function(opts) {
         } else if (type === 'pattern') {
             // Message for invalid patterns.
             const message = 'Please enter a match pattern.';
-            // TODO: only set this on invalid pattern
-            autonomousBlocklistNewInput.setCustomValidity(message);
+            try {
+                // Make sure we can create the match pattern and run matches().
+                new backgroundPage.MatchPattern(data).matches('http://www.dannyadam.com');
+            } catch (err) {
+                autonomousBlocklistNewInput.setCustomValidity(message);
+            }
         } else {
             // type === 'address' validation is handled by the browser's
             // built-in input[type="url"] validation.
