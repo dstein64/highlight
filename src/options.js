@@ -158,7 +158,6 @@ autonomousBlocklistBack.addEventListener('click', function() {
 {
     const handleSelectionChange = function() {
         // Change the placeholder text for different selections of blocklist item type.
-        // TODO: will also have to change validation function and/or input type.
         const value = autonomousBlocklistNewSelect.value;
         let placeholder = null;
         let type = 'text';
@@ -188,14 +187,22 @@ autonomousBlocklistBack.addEventListener('click', function() {
         if (data === '')
             return;
         if (type === 'hostname') {
-            autonomousBlocklistNewInput.setCustomValidity(
-                'Please enter a hostname.');
+            // Message for invalid hostnames.
+            const message = 'Please enter a hostname.';
+            try {
+                if (new URL('http://' + data).hostname !== data)
+                    autonomousBlocklistNewInput.setCustomValidity(message);
+            } catch (err) {
+                autonomousBlocklistNewInput.setCustomValidity(message);
+            }
         } else if (type === 'pattern') {
-            autonomousBlocklistNewInput.setCustomValidity(
-                'Please enter a match pattern.');
+            // Message for invalid patterns.
+            const message = 'Please enter a match pattern.';
+            // TODO: only set this on invalid pattern
+            autonomousBlocklistNewInput.setCustomValidity(message);
         } else {
-            // type === 'address' is handled by the browser's input[type="url"]
-            // validation.
+            // type === 'address' validation is handled by the browser's
+            // built-in input[type="url"] validation.
         }
     };
 
