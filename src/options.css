@@ -265,7 +265,7 @@ fieldset[disabled] a.tooltip:after {
     opacity: 23%;
 }
 
-/* Disabled tooltip popup within a disabled fieldset. */
+/* Disable tooltip popup within a disabled fieldset. */
 fieldset[disabled] a.tooltip > * {
     display: none;
 }
