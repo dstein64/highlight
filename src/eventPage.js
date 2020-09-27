@@ -293,9 +293,9 @@ const highlight = function(tabId, showError, state=null, delay=null, runAt='docu
 // information like URL, and without the ability to inject javascript).
 chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
     const url_matches = function(url, list) {
-        const domain = new URL(url).host;
+        const hostname = new URL(url).hostname;
         for (const item of list) {
-            if (item.type === 'domain' && item.data === domain)
+            if (item.type === 'hostname' && item.data === hostname)
                 return true;
             if (item.type === 'address' && item.data === url)
                 return true;
@@ -477,13 +477,13 @@ chrome.permissions.onRemoved.addListener(function() {
             properties.parentId = main_menu_id;
         chrome.contextMenus.create(properties);
         const autonomous_titles = {
-            domain_blocklist: 'Add domain to blocklist',
+            hostname_blocklist: 'Add hostname to blocklist',
             address_blocklist: 'Add page address to blocklist',
-            domain_exception: 'Add domain as blocklist exception',
+            hostname_exception: 'Add hostname as blocklist exception',
             address_exception: 'Add page address as blocklist exception',
         };
         for (const target of ['blocklist', 'exception']) {
-            for (const item_type of ['domain', 'address']) {
+            for (const item_type of ['hostname', 'address']) {
                 const id = `autonomous_${item_type}_${target}_${context}`;
                 const title = autonomous_titles[`${item_type}_${target}`];
                 properties = {
@@ -553,11 +553,11 @@ chrome.permissions.onRemoved.addListener(function() {
             chrome.runtime.openOptionsPage();
         } else if (id.startsWith('autonomous_')) {
             const splits = id.split('_');
-            const item_type = splits[1];  // domain or address
+            const item_type = splits[1];  // hostname or address
             const target = splits[2];     // blocklist or exception
             const item = {type: item_type};
-            if (item_type === 'domain') {
-                item.data = new URL(tab.url).host;
+            if (item_type === 'hostname') {
+                item.data = new URL(tab.url).hostname;
             } else if (item_type === 'address') {
                 item.data = tab.url;
             } else {
