@@ -224,8 +224,16 @@ function MatchPattern(pattern) {
             const scheme = parsed.protocol.slice(0, -1);
             if (!valid_schemes.includes(scheme))
                 return false;
-            if (!glob_matches(scheme_glob, scheme))
+            // For scheme, * only matches http and https.
+            // Specs:
+            //   "If the scheme is *, then it matches either http or https, and
+            //   not file, or ftp."
+            if (scheme_glob === '*') {
+                if (!['http', 'https'].includes(scheme))
+                    return false;
+            } else if (scheme !== scheme_glob) {
                 return false;
+            }
             if (!glob_matches(host_glob, parsed.hostname)) {
                 if (!host_glob.startsWith('*.'))
                     return false;
