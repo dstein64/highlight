@@ -330,7 +330,7 @@ for (let i = 1; i < numHighlightStates; ++i) {
     const img = document.createElement('img');
     label.appendChild(img);
     const iconName = backgroundPage.highlightStateToIconId(i) + 'highlight';
-    img.src = '../icons/' + iconName + '38x38.png';
+    img.src = '../../icons/' + iconName + '38x38.png';
     img.height = 19;
     img.width = 19;
 }
@@ -464,7 +464,7 @@ for (let i = 0; i < numHighlightStates; ++i) {
     const img = document.createElement('img');
     img.style.cursor = 'pointer';
     const iconName = backgroundPage.highlightStateToIconId(i) + 'highlight';
-    img.src = '../icons/' + iconName + '38x38.png';
+    img.src = '../../icons/' + iconName + '38x38.png';
     img.height = 19;
     img.width = 19;
     // Have to put call to chrome.permissions.request in here, not backgroundPage.highlightAll,

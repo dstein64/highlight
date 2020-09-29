@@ -222,7 +222,7 @@ a.tooltip {
 a.tooltip:after {
     /* Circled Information Source */
     content: "\1F6C8";
-    color: darkblue;
+    color: #3B88C3;
 }
 
 a.tooltip:hover {
