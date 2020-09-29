@@ -90,7 +90,9 @@ function defaultOptions() {
     options['autonomous_highlights'] = false;
     options['autonomous_delay'] = 0;
     options['autonomous_state'] = Math.min(2, NUM_HIGHLIGHT_STATES - 1);
-    options['autonomous_blocklist'] = false;
+    // Enable the blocklist by default, so that it's ready in case
+    // autonomous_highlights is enabled (which is disabled by default).
+    options['autonomous_blocklist'] = true;
     options['autonomous_blocklist_items'] = [];
     options['autonomous_blocklist_exceptions'] = [];
     return options;
