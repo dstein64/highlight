@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     viewBox="0 0 64 64"
+     enable-background="new 0 0 64 64">
+    <circle cx="32" cy="32" r="27"
+            stroke="#3B88C3" stroke-width="7" fill="none"/>
+    <g fill="#3B88C3">
+        <path d="m27 27.8h10v22h-10z"/>
+        <circle cx="32" cy="19.0" r="5"/>
+    </g>
+</svg>

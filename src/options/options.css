@@ -221,8 +221,14 @@ a.tooltip {
 
 a.tooltip:after {
     /* Circled Information Source */
-    content: "\1F6C8";
-    color: #3B88C3;
+    /* Use an SVG since the font used by default on macOS doesn't have "\1F6C8" */
+    content: url('info.svg');
+    display: inline-block;
+    height: 1em;
+    width: 1em;
+    padding: 0;
+    margin: 0;
+    transform: translateY(.125em);
 }
 
 a.tooltip:hover {
