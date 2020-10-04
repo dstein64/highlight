@@ -8,7 +8,7 @@
   "permissions": ["activeTab", "contextMenus"],
   "optional_permissions": ["<all_urls>", "tabs"],
   "background": {
-    "scripts": ["src/utils.js", "src/eventPage.js"],
+    "scripts": ["src/utils.js", "src/matchPattern.js", "src/eventPage.js"],
     "persistent": true
   },
   "browser_action": {
