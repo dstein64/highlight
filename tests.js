@@ -81,20 +81,20 @@ assert(!pattern.matches('javascript:console.log("hello")'));
 assert(!pattern.matches('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\'/%3E'));
 
 // No path.
-assert.throws(() => {new MatchPattern('http://www.google.com')});
+assert.throws(() => {new MatchPattern('http://www.google.com');});
 
 // '*' in the host can be followed only by a '.' or '/'.
-assert.throws(function() {new MatchPattern('http://*foo/bar')});
+assert.throws(() => {new MatchPattern('http://*foo/bar');});
 
 // If '*' is in the host, it must be the first character.
-assert.throws(() => {new MatchPattern('http://foo.*.bar/baz')});
+assert.throws(() => {new MatchPattern('http://foo.*.bar/baz');});
 
 // Missing scheme separator ("/" should be "//").
-assert.throws(() => {new MatchPattern('http:/bar')});
+assert.throws(() => {new MatchPattern('http:/bar');});
 
 // Invalid scheme.
-assert.throws(() => {new MatchPattern('foo://*')});
+assert.throws(() => {new MatchPattern('foo://*');});
 
 // Invalid URLs
-assert.throws(() => {new MatchPattern('<all_urls>').matches('')});
-assert.throws(() => {new MatchPattern('*://*/').matches('')});
+assert.throws(() => {new MatchPattern('<all_urls>').matches('');});
+assert.throws(() => {new MatchPattern('*://*/').matches('');});
