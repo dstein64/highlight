@@ -231,8 +231,8 @@ a.tooltip:after {
     transform: translateY(.125em);
 }
 
-a.tooltip:hover {
-    text-decoration: none;
+a.tooltip:hover:after {
+    filter: brightness(0.6);
 }
 
 a.tooltip > span {
@@ -259,16 +259,17 @@ a.tooltip:hover > span {
     color: #111;
     border: 1px solid #DCA;
     background: #fffAF0;
-}
-
-a.tooltip > span {
     border-radius: 4px;
     box-shadow: 5px 5px 8px #CCC;
 }
 
-/* Update tooltip icon shade within a disabled fieldset. */
+/*
+ * Update tooltip icon tint within a disabled fieldset, and make sure
+ * filter is disabled so that brightness doesn't change on hover.
+ */
 fieldset[disabled] a.tooltip:after {
     opacity: 23%;
+    filter: none;
 }
 
 /* Disable tooltip popup within a disabled fieldset. */
