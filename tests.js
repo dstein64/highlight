@@ -16,7 +16,7 @@ let pattern;
 
 // Matches any URL that uses the http scheme.
 pattern = new MatchPattern('http://*/*');
-assert(pattern.matches('http://www.google.com/'));
+assert(!pattern.matches('http://www.google.com/'));
 assert(pattern.matches('http://example.org/foo/bar.html'));
 assert(!pattern.matches('https://example.org/foo/bar.html'));
 assert(!pattern.matches('ftp://www.google.com/'));
