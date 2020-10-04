@@ -952,7 +952,7 @@ const getCandidates = function() {
     const WORD_COUNT_THRESHOLD = 3;
     const CHAR_COUNT_MIN_THRESHOLD = 15; // min number of characters
     const LINK_DENSITY_THRESHOLD = .75;
-    // max number of words to be consdered a candidate
+    // max number of words to be considered a candidate
     const CHAR_COUNT_MAX_THRESHOLD = 1000;
     const AVG_WORD_LEN_THRESHOLD = 15;
 
