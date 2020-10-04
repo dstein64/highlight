@@ -228,44 +228,44 @@ this.NLP = (function() {
     // abbreviations from:
     // https://github.com/Tessmore/sbd/blob/master/lib/Match.js
     let abbreviationsl = [
-        "ie", "eg", "ext", // + number?
-        "Fig", "fig", "Figs", "figs", "et al", "Co", "Corp",
-        "Ave", "Inc", "Ex", "Viz", "vs", "Vs", "repr", "Rep",
-        "Dem", "trans", "Vol", "pp", "rev", "est", "Ref", "Refs",
-        "Eq", "Eqs", "Ch", "Sec", "Secs", "mi", "Dept",
+        'ie', 'eg', 'ext', // + number?
+        'Fig', 'fig', 'Figs', 'figs', 'et al', 'Co', 'Corp',
+        'Ave', 'Inc', 'Ex', 'Viz', 'vs', 'Vs', 'repr', 'Rep',
+        'Dem', 'trans', 'Vol', 'pp', 'rev', 'est', 'Ref', 'Refs',
+        'Eq', 'Eqs', 'Ch', 'Sec', 'Secs', 'mi', 'Dept',
 
-        "Univ", "Nos", "No", "Mol", "Cell",
+        'Univ', 'Nos', 'No', 'Mol', 'Cell',
 
-        "Miss", "Mrs", "Mr", "Ms",
-        "Prof", "Dr",
-        "Sgt", "Col", "Gen", "Rep", "Sen", 'Gov', "Lt", "Maj", "Capt", "St",
+        'Miss', 'Mrs', 'Mr', 'Ms',
+        'Prof', 'Dr',
+        'Sgt', 'Col', 'Gen', 'Rep', 'Sen', 'Gov', 'Lt', 'Maj', 'Capt', 'St',
 
-        "Sr", "Jr", "jr", "Rev",
-        "PhD", "MD", "BA", "MA", "MM",
-        "BSc", "MSc",
+        'Sr', 'Jr', 'jr', 'Rev',
+        'PhD', 'MD', 'BA', 'MA', 'MM',
+        'BSc', 'MSc',
 
-        "Jan", "Feb", "Mar", "Apr", "Jun", "Jul", "Aug", "Sep", "Sept", "Oct", "Nov", "Dec",
-        "Sun", "Mon", "Tu", "Tue", "Tues", "Wed", "Th", "Thu", "Thur", "Thurs", "Fri", "Sat"
+        'Jan', 'Feb', 'Mar', 'Apr', 'Jun', 'Jul', 'Aug', 'Sep', 'Sept', 'Oct', 'Nov', 'Dec',
+        'Sun', 'Mon', 'Tu', 'Tue', 'Tues', 'Wed', 'Th', 'Thu', 'Thur', 'Thurs', 'Fri', 'Sat'
     ];
 
     // add more
     abbreviationsl = abbreviationsl.concat([
         // start AP state abbreviations
-        "Ala", "Ariz", "Ark",
-        "Calif", "Colo", "Conn",
-        "Del",
-        "Fla",
-        "Ga",
-        "Ill", "Ind",
-        "Kan", "Ky",
-        "La",
-        "Md", "Mass", "Mich", "Minn", "Miss", "Mo", "Mont",
-        "Neb", "Nev",
-        "Okla", "Ore",
-        "Pa",
-        "Tenn",
-        "Vt", "Va",
-        "Wash", "Wis", "Wyo"
+        'Ala', 'Ariz', 'Ark',
+        'Calif', 'Colo', 'Conn',
+        'Del',
+        'Fla',
+        'Ga',
+        'Ill', 'Ind',
+        'Kan', 'Ky',
+        'La',
+        'Md', 'Mass', 'Mich', 'Minn', 'Miss', 'Mo', 'Mont',
+        'Neb', 'Nev',
+        'Okla', 'Ore',
+        'Pa',
+        'Tenn',
+        'Vt', 'Va',
+        'Wash', 'Wis', 'Wyo'
     ]);
 
     abbreviationsl.push('etc');
@@ -273,8 +273,8 @@ this.NLP = (function() {
     // sometimes states are all caps
     // (TODO: better generic handling for caps)
     abbreviationsl = abbreviationsl.concat([
-        "JAN", "FEB", "MAR", "APR", "MAY", "JUN",
-        "JUL", "AUG", "SEP", "SEPT", "OCT", "NOV", "DEC"
+        'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+        'JUL', 'AUG', 'SEP', 'SEPT', 'OCT', 'NOV', 'DEC'
     ]);
 
     const abbreviations = new Set(abbreviationsl);
