@@ -25,10 +25,8 @@
 //   then it matches the specified host or any of its subdomains. In the path section,
 //   each '*' matches 0 or more characters. The following table shows some valid patterns.
 
-// This is called from eventPage.js and options.js
-// (see scope warning in eventPage.js).
-function MatchPattern(pattern) {
-    const pattern_error = 'Invalid MatchPattern';
+this.MatchPattern = function(pattern) {
+    const pattern_error = new Error('Invalid MatchPattern');
     const all_urls = '<all_urls>';
     const valid_schemes = ['http', 'https', 'file', 'ftp'];
 
@@ -45,28 +43,27 @@ function MatchPattern(pattern) {
         if (scheme_glob !== '*' && !valid_schemes.includes(scheme_glob))
             throw pattern_error;
         const host_path = pattern.slice(scheme_sep_idx + scheme_sep.length);
-        if (scheme_glob === 'file') {
-            // file schemes have no host
-            path_glob = host_path;
-        } else {
-            const path_sep = '/';
-            const path_sep_idx = host_path.indexOf(path_sep);
-            if (path_sep_idx === -1)
+        const path_sep = '/';
+        const path_sep_idx = host_path.indexOf(path_sep);
+        if (path_sep_idx === -1)
+            throw pattern_error;
+        host_glob = host_path.slice(0, path_sep_idx);
+        // File URLs may have an empty host, but for other schemes, require a host.
+        if (scheme_glob !== 'file' && host_glob.length === 0)
+            throw pattern_error;
+        // Make sure that there is at most one asterisk in the host, and that it occurs
+        // as the first character.
+        if (host_glob.indexOf('*') > -1) {
+            if (host_glob.slice(1).indexOf('*') > -1)
                 throw pattern_error;
-            host_glob = host_path.slice(0, path_sep_idx);
-            if (host_glob.length === 0)
-                throw pattern_error;
-            // Make sure that there is at most one asterisk in the host, and that it occurs
-            // as the first character.
-            if (host_glob.indexOf('*') > -1) {
-                if (host_glob.slice(1).indexOf('*') > -1)
-                    throw pattern_error;
-            }
-            // Make sure that host starting with '*.' is followed by at least one character.
-            if (host_glob.startsWith('*.') && host_glob.length <= 2)
-                throw pattern_error;
-            path_glob = host_path.slice(path_sep_idx);
         }
+        // Make sure that hosts starting with '*', if followed, are followed only by '.'.
+        if (host_glob.startsWith('*') && host_glob.length > 1 && !host_glob.startsWith('*.'))
+            throw pattern_error;
+        // Make sure that host starting with '*.' is followed by at least one character.
+        if (host_glob.startsWith('*.') && host_glob.length <= 2)
+            throw pattern_error;
+        path_glob = host_path.slice(path_sep_idx);
     }
 
     const glob_matches = function(glob, text) {
@@ -83,15 +80,15 @@ function MatchPattern(pattern) {
     };
 
     this.matches = (url) => {
-        const url_error = 'Invalid URL';
+        const url_error = new Error('Invalid URL');
         try {
-            if (pattern === all_urls)
-                return true;
             const parsed = new URL(url);
             // Remove the trailing ":"
             const scheme = parsed.protocol.slice(0, -1);
             if (!valid_schemes.includes(scheme))
                 return false;
+            if (pattern === all_urls)
+                return true;
             // For scheme, * only matches http and https.
             // Specs:
             //   "If the scheme is *, then it matches either http or https, and
@@ -102,6 +99,7 @@ function MatchPattern(pattern) {
             } else if (scheme !== scheme_glob) {
                 return false;
             }
+            // For file schems, host_glob is null.
             if (!glob_matches(host_glob, parsed.hostname)) {
                 if (!host_glob.startsWith('*.'))
                     return false;
@@ -120,4 +118,4 @@ function MatchPattern(pattern) {
             throw url_error;
         }
     };
-}
+};

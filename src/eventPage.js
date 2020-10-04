@@ -567,7 +567,7 @@ chrome.permissions.onRemoved.addListener(function() {
             } else if (item_type === 'address') {
                 item.data = tab.url;
             } else {
-                throw 'Unhandled item type: ' + item_type;
+                throw new Error('Unhandled item type: ' + item_type);
             }
             const options = getOptions();
             let key;
@@ -576,12 +576,12 @@ chrome.permissions.onRemoved.addListener(function() {
             } else if (target === 'exception') {
                 key = 'autonomous_blocklist_exceptions';
             } else {
-                throw 'Unhandled target: ' + target;
+                throw new Error('Unhandled target: ' + target);
             }
             options[key].push(item);
             saveOptions(options);
         } else {
-            throw 'Unhandled menu ID: ' + id;
+            throw new Error('Unhandled menu ID: ' + id);
         }
     });
 }
