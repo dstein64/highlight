@@ -1,3 +1,5 @@
+[![Build Status](https://github.com/dstein64/highlight/workflows/build/badge.svg)](https://github.com/dstein64/highlight/actions)
+
 Auto Highlight
 ==============
 
