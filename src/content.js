@@ -163,7 +163,7 @@ const descendantOfTag = function(element, tagName, depth) {
         if (depth > -1 && counter > depth) {
             return false;
         } else if (cur.tagName === tagName) {
-            return cur;
+            return true;
         } else {
             // if you get to the root element, parentNode returns null
             cur = cur.parentNode;
@@ -307,11 +307,12 @@ const countWords = function(text) {
 // are constructed just from being at the end of a TextBlock, even without
 // a sentence end.
 // readability indicates whether the sentence is extracted by readability
-const Sentence = function(nodes, s, e, hasEnd) {
+const Sentence = function(nodes, s, e, hasEnd, inPre) {
     this.nodes = nodes;
     this.s = s;
     this.e = e;
     this.hasEnd = hasEnd;
+    this.inPre = inPre;
     this.nodeCount = this.nodes.length;
 
     let text = '';
@@ -649,8 +650,8 @@ const getTextBlocks = function(doc, parseSentences=true) {
 
     const leaves = []; // textnodes and <br>s
     // FILTER_SKIP will continue searching descendants. FILTER_REJECT will
-    // not the following walker will traverse all non-empty text nodes and
-    // <br>s you're getting leaves by keeping text nodes and <br> nodes.
+    // not. The following walker will traverse all non-empty text nodes and
+    // <br>s. You're getting leaves by keeping text nodes and <br> nodes.
     // Could possibly alternatively check for nodes with no children, but
     // what you did is fine since you're particularly interested in text
     // nodes and <br>s.
@@ -856,12 +857,12 @@ const getSentences = function(nodes) {
         // (block ends may not have sentence ends)
         const hasEnd = segs.hasEnd;
 
-        // WARN: handling for <pre> until you figure out a better place
-        // <pre>'s are composed of their own special types of TextBlocks
-        // this doesn't handle syntax highlighted code well. that will
+        // WARN: handling for <pre> until you figure out a better place.
+        // <pre>'s are composed of their own special types of TextBlocks.
+        // This doesn't handle syntax highlighted code well. That will
         // need more complex handling.
         const inPre = block.length > 0
-            && descendantOfTag(block[0], 'pre', 5);
+            && descendantOfTag(block[0], 'pre', 8);
         const endsAlready = new Set(ends);
         if (inPre) {
             const re = /[\n\r]{2,}/g;
@@ -919,7 +920,8 @@ const getSentences = function(nodes) {
                             sentenceNodes,
                             withinstart,
                             withinend,
-                            _hasEnd);
+                            _hasEnd,
+                            inPre);
                         sentences.push(sentenceToAdd);
                         break;
                     }
@@ -955,6 +957,12 @@ const getCandidates = function() {
     // max number of words to be considered a candidate
     const CHAR_COUNT_MAX_THRESHOLD = 1000;
     const AVG_WORD_LEN_THRESHOLD = 15;
+    // Max proportion of candidates that are descendants of <pre> in order
+    // for all corresponding candidates to be subsequently dropped.
+    // This is an attempt to avoid source code embedded within articles,
+    // for which this proportion is expected to be low.
+    // Issue #5: https://github.com/dstein64/highlight/issues/5
+    const PRE_PROPORTION_THRESHOLD = 0.75;
 
     for (let h = 0; h < textblocks.length; h++) {
         const tb = textblocks[h];
@@ -983,20 +991,33 @@ const getCandidates = function() {
             if (HIGHLIGHT_ALL)
                 isCandidate = true; // for debugging
 
-            if (READABILITY_ONLY) {
+            if (READABILITY_ONLY)
                 isCandidate = isCandidate && readability;
-            }
 
             if (isCandidate)
                 candidates.push(sentence);
         }
     }
 
+    // Calculate the percentage of current candidates that are descendants of
+    // <pre> tags. If this is less than PRE_PROPORTION_THRESHOLD, drop all the
+    // corresponding candidates.
+    let pre_proportion = 0;
+    if (candidates.length > 0) {
+        let pre_count = 0;
+        for (let c of candidates) {
+            pre_count += c.inPre;
+        }
+        pre_proportion = pre_count / candidates.length;
+    }
+    if (pre_proportion < PRE_PROPORTION_THRESHOLD)
+        candidates = candidates.filter(c => !c.inPre);
+
     // Only return a unique set of candidates. Don't want to give extra
     // weight to duplicates, and highlight the same content twice.
     // duplicates can be part of boilerplate, or also e.g., extracted
     // sentences that are featured in larger font size. Keep the first
-    // occurence.
+    // occurrence.
     const uniques = new Set();
     const _candidates = [];
     for (let i = 0; i < candidates.length; i++) {
