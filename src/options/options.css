@@ -130,6 +130,22 @@ button[data-count="1"] span.plural {
     display: none;
 }
 
+.global-highlight-icon {
+    height: 19px;
+    width: 19px;
+    padding: 4px;
+    margin-top: -4px;
+    margin-bottom: -4px;
+    margin-left: -1px;
+    margin-right: -1px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.global-highlight-icon:hover {
+    background-color: lightgray;
+}
+
 /* *************************************************
  * * Blocklist View
  * ************************************************* */

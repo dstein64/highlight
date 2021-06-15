@@ -459,25 +459,45 @@ if (numHighlightStates < 3) {
  * Global Highlighting
  ***********************************/
 
-// create global highlighting links
-for (let i = 0; i < numHighlightStates; ++i) {
-    const img = document.createElement('img');
-    img.style.cursor = 'pointer';
-    const iconName = backgroundPage.highlightStateToIconId(i) + 'highlight';
-    img.src = '../../icons/' + iconName + '38x38.png';
-    img.height = 19;
-    img.width = 19;
-    // Have to put call to chrome.permissions.request in here, not backgroundPage.highlightAll,
-    // to avoid "This function must be called during a user gesture" error.
-    img.addEventListener('click', function() {
-        chrome.permissions.request(
-            globalHighlightingPermissions,
-            function(granted) {
-                if (granted)
+{
+    const iconSrc = function(i) {
+        const iconName = backgroundPage.highlightStateToIconId(i) + 'highlight';
+        return '../../icons/' + iconName + '38x38.png';
+    };
+
+    let count = 0;  // click counter
+    const icons = [];
+    for (let i = 0; i < numHighlightStates; ++i) {
+        const img = document.createElement('img');
+        icons.push(img);
+        img.className = 'global-highlight-icon';
+        img.src = iconSrc(i);
+        img.addEventListener('click', function() {
+            // Have to put call to chrome.permissions.request in here, not backgroundPage.highlightAll,
+            // to avoid "This function must be called during a user gesture" error.
+            chrome.permissions.request(
+                globalHighlightingPermissions,
+                function(granted) {
+                    if (!granted) return;
+                    count += 1;
+                    const id = count;
+                    // Restore icons (in case the loading icon is currently showing).
+                    for (let i = 0; i < numHighlightStates; ++i) {
+                        icons[i].src = iconSrc(i);
+                    }
                     backgroundPage.highlightAll(i);
-            });
-    });
-    globalHighlightIcons.appendChild(img);
+                    img.src = '../../icons/_highlight38x38.png';
+                    setTimeout(function() {
+                        // Only restore icon if there weren't subsequent clicks (in case the same icon
+                        // is clicked multiple times).
+                        if (id !== count) return;
+                        img.src = iconSrc(i);
+                    }, 1000);
+                });
+        });
+        globalHighlightIcons.appendChild(img);
+    }
+
 }
 
 /***********************************
