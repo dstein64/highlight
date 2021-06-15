@@ -131,13 +131,13 @@ button[data-count="1"] span.plural {
 }
 
 .global-highlight-icon {
+    /* Manually specify box-sizing so that Firefox doesn't use 'box-sizing: border-box'
+       as part of its default options page styling. */
+    box-sizing: content-box;
     height: 19px;
     width: 19px;
     padding: 4px;
-    margin-top: -4px;
-    margin-bottom: -4px;
-    margin-left: -1px;
-    margin-right: -1px;
+    margin: -4px -1px;
     border-radius: 6px;
     cursor: pointer;
 }
