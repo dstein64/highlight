@@ -242,7 +242,8 @@ const inject = function(tabId, runAt='document_idle', callback=function() {}) {
 };
 
 // setting state to null results in automatically incrementing the state.
-const highlight = function(tabId, showError, state=null, delay=null, runAt='document_idle') {
+const highlight = function(
+    tabId, showError, state=null, runAt='document_idle', delay=0) {
     if (state !== null && (state < 0 || state >= NUM_HIGHLIGHT_STATES)) {
         console.error(`invalid state: ${state}`);
         return;
@@ -320,8 +321,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
             if (!exception && url_matches(url, options.autonomous_blocklist_items))
                 return;
         }
-        highlight(
-            tab.id, false, options.autonomous_state, options.autonomous_delay, 'document_idle');
+        highlight(tab.id, false, options.autonomous_state, 'document_idle', options.autonomous_delay);
     }
 });
 

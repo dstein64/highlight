@@ -1263,68 +1263,71 @@ const tintColor = function(color, level) {
     return out;
 };
 
-// keep track of last highlight time, so our timers only operate if we
-// haven't received new highlight requests
-let lastHighlight = (new Date()).getTime();
-
-const highlight = function(highlightState, options, params) {
-    const time = (new Date()).getTime();
-    lastHighlight = time;
-    // we're in a new state, but we don't know whether there is success yet
-    updateHighlightState(highlightState, null);  // loading
-    // use a timeout so icon updates right away
-    UTILS.setTimeoutIgnore(function() {
-        let success = false;
-        // A try/catch/finally block is used so that a thrown error won't leave the extension
-        // in a loading state (with the icon indicating so).
-        try {
-            removeHighlightAllDocs();
-            const scoredCandsToHighlight = [];
-            if (highlightState > 0)
-                scoredCandsToHighlight.push(...cth(highlightState, params['numHighlightStates']));
-            trimSpaces(scoredCandsToHighlight);
-            // have to loop backwards since splitting text nodes
-            for (let j = scoredCandsToHighlight.length-1; j >= 0; j--) {
-                let highlightColor = options['highlight_color'];
-                if (options['tinted_highlights']) {
-                    const importance = scoredCandsToHighlight[j].importance;
-                    // XXX: Ad-hoc formula can be improved.
-                    highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
-                }
-                const colorSpec = new ColorSpec(
-                    highlightColor, options['text_color'], options['link_color']);
-                const candidate = scoredCandsToHighlight[j].candidate;
-                const c = CYCLE_COLORS ? getNextColor() : colorSpec;
-                candidate.highlight(c);
-            }
-            success = highlightState === 0 || scoredCandsToHighlight.length > 0;
-        } catch (err) {
-            removeHighlightAllDocs();
-        } finally {
-            // Before updating highlight state, wait until at least 0.5 seconds has elapsed
-            // since this function started. This prevents jumpiness of the loading icon.
-            const delay = Math.max(0, 500 - ((new Date()).getTime() - time));
-            UTILS.setTimeoutIgnore(function() {
-                if (lastHighlight === time) {
-                    updateHighlightState(highlightState, success);
-                    // if we don't have success, turn off icon in 2 seconds
-                    if (!success) {
-                        const turnoffdelay = 2000;
-                        UTILS.setTimeoutIgnore(function() {
-                            getHighlightState(function(curHighlight, curSuccess) {
-                                if (curHighlight === 0
-                                    && !curSuccess
-                                    && lastHighlight === time) {
-                                    updateHighlightState(0, true);
-                                }
-                            });
-                        }, turnoffdelay);
+// signature:
+//   void highlight(highlightState, options, params, delay)
+const highlight = function() {
+    let count = 0;
+    const closure = function(highlightState, options, params, delay) {
+        const time = (new Date()).getTime();
+        count += 1;
+        const id = count;
+        // Even with a delay of 0, an asynchronous call is useful so the icon update is not blocked.
+        UTILS.setTimeoutIgnore(function() {
+            if (count !== id) return;
+            updateHighlightState(highlightState, null);  // loading
+            let success = false;
+            // A try/catch/finally block is used so that a thrown error won't leave the extension
+            // in a loading state (with the icon indicating so).
+            try {
+                removeHighlightAllDocs();
+                const scoredCandsToHighlight = [];
+                if (highlightState > 0)
+                    scoredCandsToHighlight.push(...cth(highlightState, params['numHighlightStates']));
+                trimSpaces(scoredCandsToHighlight);
+                // have to loop backwards since splitting text nodes
+                for (let j = scoredCandsToHighlight.length-1; j >= 0; j--) {
+                    let highlightColor = options['highlight_color'];
+                    if (options['tinted_highlights']) {
+                        const importance = scoredCandsToHighlight[j].importance;
+                        // XXX: Ad-hoc formula can be improved.
+                        highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
                     }
+                    const colorSpec = new ColorSpec(
+                        highlightColor, options['text_color'], options['link_color']);
+                    const candidate = scoredCandsToHighlight[j].candidate;
+                    const c = CYCLE_COLORS ? getNextColor() : colorSpec;
+                    candidate.highlight(c);
                 }
-            }, delay);
-        }
-    }, 0);
-};
+                success = highlightState === 0 || scoredCandsToHighlight.length > 0;
+            } catch (err) {
+                removeHighlightAllDocs();
+            } finally {
+                // Before updating highlight state, wait until at least 0.5 seconds has elapsed
+                // since this function started. This prevents jumpiness of the loading icon.
+                const state_delay = Math.max(0, 500 - ((new Date()).getTime() - time));
+                UTILS.setTimeoutIgnore(function() {
+                    if (count === id) {
+                        updateHighlightState(highlightState, success);
+                        // if we don't have success, turn off icon in 2 seconds
+                        if (!success) {
+                            const turnoffdelay = 2000;
+                            UTILS.setTimeoutIgnore(function() {
+                                getHighlightState(function(curHighlight, curSuccess) {
+                                    if (curHighlight === 0
+                                        && !curSuccess
+                                        && count === id) {
+                                        updateHighlightState(0, true);
+                                    }
+                                });
+                            }, turnoffdelay);
+                        }
+                    }
+                }, state_delay);
+            }
+        }, delay);
+    };
+    return closure;
+}();
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     const method = request.method;
@@ -1335,14 +1338,10 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 chrome.runtime.sendMessage({message: 'getParams'}, function (response) {
                     const params = response;
                     const highlightState = request.highlightState;
-                    const delay = request.delay;
-                    if (delay === null || delay === undefined) {
-                        highlight(highlightState, options, params);
-                    } else {
-                        UTILS.setTimeoutIgnore(function () {
-                            highlight(highlightState, options, params);
-                        }, delay);
-                    }
+                    let delay = 0;
+                    if (request.delay !== null && request.delay !== undefined)
+                        delay = request.delay;
+                    highlight(highlightState, options, params, delay);
                 });
             });
         }
