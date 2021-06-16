@@ -1268,12 +1268,13 @@ const tintColor = function(color, level) {
 const highlight = function() {
     let count = 0;
     const closure = function(highlightState, options, params, delay) {
-        const time = (new Date()).getTime();
         count += 1;
         const id = count;
         // Even with a delay of 0, an asynchronous call is useful so the icon update is not blocked.
         UTILS.setTimeoutIgnore(function() {
+            // Only process the request if it's the most recent.
             if (count !== id) return;
+            const time = (new Date()).getTime();
             updateHighlightState(highlightState, null);  // loading
             let success = false;
             // A try/catch/finally block is used so that a thrown error won't leave the extension
