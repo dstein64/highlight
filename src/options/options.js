@@ -5,11 +5,10 @@ const statusMessage = function(message, time) {
     if (curTimer)
         clearTimeout(curTimer);
     element.innerText = message;
-    const timer = setTimeout(function() {
+    curTimer = setTimeout(function () {
         element.innerText = '';
         curTimer = null;
     }, time);
-    curTimer = timer;
 };
 
 const backgroundPage = chrome.extension.getBackgroundPage();
@@ -199,7 +198,7 @@ const populateBlocklistTable = function(opts) {
         validateInput();
     });
 
-    autonomousBlocklistNewInput.addEventListener('change', function(e) {
+    autonomousBlocklistNewInput.addEventListener('change', function() {
         validateInput();
     });
 
@@ -408,7 +407,7 @@ document.getElementById('revert').addEventListener('click', function() {
         permissions = autonomousHighlightsPermissions;
     chrome.permissions.request(
         permissions,
-        function(response) {
+        function() {
             // this will trigger updates to the input settings
             backgroundPage.saveOptions(initOpts, function() {
                 statusMessage('Options Reverted', 1200);
@@ -516,7 +515,7 @@ chrome.permissions.onRemoved.addListener(function() {
     // the options page.
 });
 
-window.addEventListener('storage', function(event) {
+window.addEventListener('storage', function() {
     // Reload options when there are any external updates that modify settings
     // saved in local storage (e.g., additions to the blocklist, options changes
     // on other options pages).
