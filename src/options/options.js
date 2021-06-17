@@ -5,7 +5,7 @@ const statusMessage = function(message, time) {
     if (curTimer)
         clearTimeout(curTimer);
     element.innerText = message;
-    curTimer = setTimeout(function () {
+    curTimer = setTimeout(function() {
         element.innerText = '';
         curTimer = null;
     }, time);
