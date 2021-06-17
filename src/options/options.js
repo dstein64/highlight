@@ -42,7 +42,6 @@ const autonomousBlocklistBack = document.getElementById('blocklist-back');
 const autonomousBlocklistNew = document.getElementById('blocklist-new');
 const autonomousBlocklistNewSelect = document.getElementById('blocklist-new-select');
 const autonomousBlocklistNewInput = document.getElementById('blocklist-new-input');
-const autonomousBlocklistNewAddButton = document.getElementById('blocklist-new-add-button');
 const autonomousBlocklistItemsAndExceptions = document.getElementById('blocklist-items-and-exceptions');
 
 const globalHighlightIcons = document.getElementById('global-highlight-icons');
