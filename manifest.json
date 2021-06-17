@@ -1,6 +1,6 @@
 {
   "name": "Auto Highlight",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "description": "*Auto Highlight* automatically highlights the important content on article pages.",
   "options_ui": {
     "page": "src/options/options.html"

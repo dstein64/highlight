@@ -80,7 +80,7 @@ const PERMISSIONS = {};
     const origins = new Set();
     globalHighlightingPermissions.origins.forEach(x => origins.add(x));
     autonomousHighlightsPermissions.origins.forEach(x => origins.add(x));
-    PERMISSIONS.permissions = Array.from(PERMISSIONS);
+    PERMISSIONS.permissions = Array.from(_permissions);
     PERMISSIONS.origins = Array.from(origins);
 }
 
