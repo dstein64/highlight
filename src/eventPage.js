@@ -351,10 +351,10 @@ chrome.permissions.onRemoved.addListener(function() {
     // As of 2019/9/18, Chrome does not support icons.
     const icons_supported = is_firefox;
     const level_emoji_lookup = {
-        0: String.fromCodePoint('0x258F'),
-        1: String.fromCodePoint('0x258D'),
-        2: String.fromCodePoint('0x258B'),
-        3: String.fromCodePoint('0x2589')
+        0: String.fromCodePoint('0x25FD'),
+        1: String.fromCodePoint('0x25FE'),
+        2: String.fromCodePoint('0x25FC'),
+        3: String.fromCodePoint('0x2B1B')
     };
     let properties;
 
@@ -547,7 +547,7 @@ chrome.permissions.onRemoved.addListener(function() {
                 '32': 'icons/clipboard32x32.png',
             }
         } else {
-            properties.title = String.fromCodePoint('0x1F5D0') + ' ' + properties.title;
+            properties.title = String.fromCodePoint('0x1F4DD') + ' ' + properties.title;
         }
         if (main_menu_id !== null)
             properties.parentId = main_menu_id;
