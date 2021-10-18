@@ -1263,6 +1263,9 @@ const tintColor = function(color, level) {
     return out;
 };
 
+// Retain last highlight text so that it can be copied to the clipboard.
+let lastHighlightText = '';
+
 // signature:
 //   void highlight(highlightState, options, params, delay)
 const highlight = function() {
@@ -1286,22 +1289,24 @@ const highlight = function() {
                     scoredCandsToHighlight.push(...cth(highlightState, params['numHighlightStates']));
                 trimSpaces(scoredCandsToHighlight);
                 // have to loop backwards since splitting text nodes
-                for (let j = scoredCandsToHighlight.length-1; j >= 0; j--) {
+                for (let i = scoredCandsToHighlight.length - 1; i >= 0; i--) {
                     let highlightColor = options['highlight_color'];
                     if (options['tinted_highlights']) {
-                        const importance = scoredCandsToHighlight[j].importance;
+                        const importance = scoredCandsToHighlight[i].importance;
                         // XXX: Ad-hoc formula can be improved.
                         highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
                     }
                     const colorSpec = new ColorSpec(
                         highlightColor, options['text_color'], options['link_color']);
-                    const candidate = scoredCandsToHighlight[j].candidate;
+                    const candidate = scoredCandsToHighlight[i].candidate;
                     const c = CYCLE_COLORS ? getNextColor() : colorSpec;
                     candidate.highlight(c);
                 }
                 success = highlightState === 0 || scoredCandsToHighlight.length > 0;
+                lastHighlightText = scoredCandsToHighlight.map(function(c) {return c.candidate.text}).join('\n\n');
             } catch (err) {
                 removeHighlightAllDocs();
+                lastHighlightText = '';
             } finally {
                 // Before updating highlight state, wait until at least 0.5 seconds has elapsed
                 // since this function started. This prevents jumpiness of the loading icon.
@@ -1346,6 +1351,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 });
             });
         }
+    } else if (method === 'clipboard') {
+        navigator.clipboard.writeText(lastHighlightText);
     } else if (method === 'ping') {
         // response is sent below
     } else {

@@ -242,8 +242,7 @@ const inject = function(tabId, runAt='document_idle', callback=function() {}) {
 };
 
 // setting state to null results in automatically incrementing the state.
-const highlight = function(
-    tabId, showError, state=null, runAt='document_idle', delay=0) {
+const highlight = function(tabId, showError, state=null, runAt='document_idle', delay=0) {
     if (state !== null && (state < 0 || state >= NUM_HIGHLIGHT_STATES)) {
         console.error(`invalid state: ${state}`);
         return;
@@ -268,7 +267,7 @@ const highlight = function(
         function() {
             if (chrome.runtime.lastError) {
                 if (showError)
-                    alert('highlighting is not supported on this page.');
+                    alert('Auto Highlight is not supported on this page.');
                 return;
             }
             chrome.tabs.sendMessage(
@@ -509,6 +508,24 @@ chrome.permissions.onRemoved.addListener(function() {
             }
         }
 
+        // Add copy-to-clipboard item
+        const clipboard_id = 'clipboard_' + context;
+        properties = {
+            type: 'normal',
+            id: clipboard_id,
+            title: 'Copy Highlights',
+            contexts: [context]
+        };
+        if (icons_supported) {
+            properties.icons = {
+                '16': 'icons/clipboard16x16.png',
+                '32': 'icons/clipboard32x32.png',
+            }
+        }
+        if (main_menu_id !== null)
+            properties.parentId = main_menu_id;
+        chrome.contextMenus.create(properties);
+
         // Add an options item for 1) the 'page' context and 2) the 'browser_action' context
         // on Firefox, since it doesn't have an Options item. This is not added for the
         // 'browser_action' context on Chrome, since it already has an Options item.
@@ -539,7 +556,9 @@ chrome.permissions.onRemoved.addListener(function() {
     // Matches pattern: 'global_NUM_CONTEXT'
     const global_re = new RegExp(
         `^global_[0-${NUM_HIGHLIGHT_STATES - 1}]_(?:${joined_contexts})$`);
-    // Matches pattern: 'global_CONTEXT'
+    // Matches pattern: 'clipboard_CONTEXT'
+    const clipboard_re = new RegExp(`^clipboard_(?:${joined_contexts})$`);
+    // Matches pattern: 'options_CONTEXT'
     const options_re = new RegExp(`^options_(?:${joined_contexts})$`);
 
     chrome.contextMenus.onClicked.addListener(function(info, tab) {
@@ -554,6 +573,26 @@ chrome.permissions.onRemoved.addListener(function() {
                 function (granted) {
                     if (granted)
                         highlightAll(level);
+                });
+        } else if (id.match(clipboard_re)) {
+            chrome.tabs.sendMessage(
+                tab.id,
+                {method: 'clipboard'},
+                {},
+                function() {
+                    if (chrome.runtime.lastError) {
+                        // The Auto Highlight code has not been injected yet, so there was no
+                        // handler to process the message. Execute code that will copy the empty
+                        // string to the clipboard.
+                        chrome.tabs.executeScript(
+                            tab.id,
+                            {code: '(function(){navigator.clipboard.writeText("");})();'},
+                            function() {
+                                if (chrome.runtime.lastError) {
+                                    alert('Auto Highlight is not supported on this page.');
+                                }
+                            });
+                    }
                 });
         } else if (id.match(options_re)) {
             chrome.runtime.openOptionsPage();
