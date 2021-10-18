@@ -350,6 +350,12 @@ chrome.permissions.onRemoved.addListener(function() {
     const is_firefox = chrome.runtime.getURL('').startsWith('moz-extension://');
     // As of 2019/9/18, Chrome does not support icons.
     const icons_supported = is_firefox;
+    const level_emoji_lookup = {
+        0: String.fromCodePoint('0x258F'),
+        1: String.fromCodePoint('0x258D'),
+        2: String.fromCodePoint('0x258B'),
+        3: String.fromCodePoint('0x2589')
+    };
     let properties;
 
     const level_name_lookup = {
@@ -391,6 +397,8 @@ chrome.permissions.onRemoved.addListener(function() {
                     '16': 'icons/16x16.png',
                     '32': 'icons/32x32.png',
                 };
+            } else {
+                properties.title = String.fromCodePoint('0x1F39A') + ' ' + properties.title;
             }
             chrome.contextMenus.create(properties);
         }
@@ -408,6 +416,8 @@ chrome.permissions.onRemoved.addListener(function() {
                     '16': `icons/${iconName}16x16.png`,
                     '32': `icons/${iconName}32x32.png`,
                 };
+            } else {
+                properties.title = level_emoji_lookup[i] + ' ' + properties.title;
             }
             if (main_menu_id !== null) {
                 properties.parentId = main_menu_id;
@@ -441,6 +451,8 @@ chrome.permissions.onRemoved.addListener(function() {
                 '16': 'icons/global16x16.png',
                 '32': 'icons/global32x32.png',
             };
+        } else {
+            properties.title = String.fromCodePoint('0x1F30E') + ' ' + properties.title;
         }
         if (main_menu_id !== null)
             properties.parentId = main_menu_id;
@@ -460,6 +472,8 @@ chrome.permissions.onRemoved.addListener(function() {
                     '16': `icons/${iconName}16x16.png`,
                     '32': `icons/${iconName}32x32.png`,
                 };
+            } else {
+                properties.title = level_emoji_lookup[i] + ' ' + properties.title;
             }
             chrome.contextMenus.create(properties);
         }
@@ -477,6 +491,8 @@ chrome.permissions.onRemoved.addListener(function() {
                 '16': 'icons/autonomous16x16.png',
                 '32': 'icons/autonomous32x32.png',
             };
+        } else {
+            properties.title = String.fromCodePoint('0x1F916') + ' ' + properties.title;
         }
         if (main_menu_id !== null)
             properties.parentId = main_menu_id;
@@ -487,10 +503,17 @@ chrome.permissions.onRemoved.addListener(function() {
             hostname_exception: 'Add hostname as blocklist exception',
             address_exception: 'Add page address as blocklist exception',
         };
+        const autonomous_emoji_lookup = {
+            hostname_blocklist: String.fromCodePoint('0x1F534'),
+            address_blocklist: String.fromCodePoint('0x1F7E5'),
+            hostname_exception: String.fromCodePoint('0x1F7E2'),
+            address_exception: String.fromCodePoint('0x1F7E9')
+        };
         for (const target of ['blocklist', 'exception']) {
             for (const item_type of ['hostname', 'address']) {
                 const id = `autonomous_${item_type}_${target}_${context}`;
-                const title = autonomous_titles[`${item_type}_${target}`];
+                const key = `${item_type}_${target}`;
+                const title = autonomous_titles[key];
                 properties = {
                     type: 'normal',
                     id: id,
@@ -503,6 +526,8 @@ chrome.permissions.onRemoved.addListener(function() {
                         '16': `icons/autonomous_${item_type}_${target}16x16.png`,
                         '32': `icons/autonomous_${item_type}_${target}32x32.png`,
                     };
+                } else {
+                    properties.title = autonomous_emoji_lookup[key] + ' ' + properties.title;
                 }
                 chrome.contextMenus.create(properties);
             }
@@ -521,6 +546,8 @@ chrome.permissions.onRemoved.addListener(function() {
                 '16': 'icons/clipboard16x16.png',
                 '32': 'icons/clipboard32x32.png',
             }
+        } else {
+            properties.title = String.fromCodePoint('0x1F5D0') + ' ' + properties.title;
         }
         if (main_menu_id !== null)
             properties.parentId = main_menu_id;
@@ -542,6 +569,8 @@ chrome.permissions.onRemoved.addListener(function() {
                     '16': 'icons/options16x16.png',
                     '32': 'icons/options32x32.png',
                 }
+            } else {
+                properties.title = String.fromCodePoint('0x2699') + ' ' + properties.title;
             }
             if (main_menu_id !== null)
                 properties.parentId = main_menu_id;
