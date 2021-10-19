@@ -352,9 +352,9 @@ chrome.permissions.onRemoved.addListener(function() {
     const icons_supported = is_firefox;
     const level_emoji_lookup = {
         0: String.fromCodePoint('0x25FD'),
-        1: String.fromCodePoint('0x25FE'),
-        2: String.fromCodePoint('0x25FC'),
-        3: String.fromCodePoint('0x2B1B')
+        1: String.fromCodePoint('0x1F538'),
+        2: String.fromCodePoint('0x1F536'),
+        3: String.fromCodePoint('0x1F7E0')
     };
     let properties;
 
@@ -570,7 +570,7 @@ chrome.permissions.onRemoved.addListener(function() {
                     '32': 'icons/options32x32.png',
                 }
             } else {
-                properties.title = String.fromCodePoint('0x2699') + ' ' + properties.title;
+                properties.title = String.fromCodePoint('0x1F39B') + ' ' + properties.title;
             }
             if (main_menu_id !== null)
                 properties.parentId = main_menu_id;
