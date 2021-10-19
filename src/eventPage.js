@@ -496,22 +496,27 @@ chrome.permissions.onRemoved.addListener(function() {
         }
 
         // Add copy-to-clipboard item
-        const clipboard_id = 'clipboard_' + context;
-        properties = {
-            type: 'normal',
-            id: clipboard_id,
-            title: 'Copy Highlights',
-            contexts: [context]
-        };
-        if (icons_supported) {
-            properties.icons = {
-                '16': 'icons/clipboard16x16.png',
-                '32': 'icons/clipboard32x32.png',
+        // On Firefox, copying to clipboard doesn't work from a browser action context, resulting
+        // in an exception:
+        // > "Clipboard write was blocked due to lack of user activation."
+        if (context === 'page' || !is_firefox) {
+            const clipboard_id = 'clipboard_' + context;
+            properties = {
+                type: 'normal',
+                id: clipboard_id,
+                title: 'Copy Highlights',
+                contexts: [context]
+            };
+            if (icons_supported) {
+                properties.icons = {
+                    '16': 'icons/clipboard16x16.png',
+                    '32': 'icons/clipboard32x32.png',
+                }
+            } else {
+                properties.title = String.fromCodePoint('0x1F4DD') + ' ' + properties.title;
             }
-        } else {
-            properties.title = String.fromCodePoint('0x1F4DD') + ' ' + properties.title;
+            chrome.contextMenus.create(properties);
         }
-        chrome.contextMenus.create(properties);
 
         // Add an options item for 1) the 'page' context and 2) the 'browser_action' context
         // on Firefox, since it doesn't have an Options item. This is not added for the
