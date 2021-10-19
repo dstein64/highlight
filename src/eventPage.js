@@ -376,8 +376,8 @@ chrome.permissions.onRemoved.addListener(function() {
         };
         if (icons_supported) {
             properties.icons = {
-                '16': 'icons/16x16.png',
-                '32': 'icons/32x32.png',
+                '16': 'icons/state16x16.png',
+                '32': 'icons/state32x32.png',
             };
         } else {
             properties.title = String.fromCodePoint('0x1F39A') + ' ' + properties.title;
