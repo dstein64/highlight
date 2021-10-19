@@ -366,17 +366,6 @@ chrome.permissions.onRemoved.addListener(function() {
 
     const contexts = ['page', 'browser_action'];
     for (const context of contexts) {
-        let main_menu_id = null;
-        if (context === 'page') {
-            main_menu_id = 'main_' + context;
-            chrome.contextMenus.create({
-                type: 'normal',
-                id: main_menu_id,
-                title: 'Auto Highlight',
-                contexts: ['page']
-            });
-        }
-
         // Add highlighting items.
         let highlight_menu_id = 'highlight_' + context;
         properties = {
@@ -393,8 +382,6 @@ chrome.permissions.onRemoved.addListener(function() {
         } else {
             properties.title = String.fromCodePoint('0x1F39A') + ' ' + properties.title;
         }
-        if (main_menu_id !== null)
-            properties.parentId = main_menu_id;
         chrome.contextMenus.create(properties);
         for (let i = 0; i < NUM_HIGHLIGHT_STATES; ++i) {
             const id = `highlight_${i}_${context}`;
@@ -433,8 +420,6 @@ chrome.permissions.onRemoved.addListener(function() {
         } else {
             properties.title = String.fromCodePoint('0x1F30E') + ' ' + properties.title;
         }
-        if (main_menu_id !== null)
-            properties.parentId = main_menu_id;
         chrome.contextMenus.create(properties);
         for (let i = 0; i < NUM_HIGHLIGHT_STATES; ++i) {
             const id = `global_${i}_${context}`;
@@ -473,8 +458,6 @@ chrome.permissions.onRemoved.addListener(function() {
         } else {
             properties.title = String.fromCodePoint('0x1F916') + ' ' + properties.title;
         }
-        if (main_menu_id !== null)
-            properties.parentId = main_menu_id;
         chrome.contextMenus.create(properties);
         const autonomous_titles = {
             hostname_blocklist: 'Add hostname to blocklist',
@@ -528,8 +511,6 @@ chrome.permissions.onRemoved.addListener(function() {
         } else {
             properties.title = String.fromCodePoint('0x1F4DD') + ' ' + properties.title;
         }
-        if (main_menu_id !== null)
-            properties.parentId = main_menu_id;
         chrome.contextMenus.create(properties);
 
         // Add an options item for 1) the 'page' context and 2) the 'browser_action' context
@@ -551,8 +532,6 @@ chrome.permissions.onRemoved.addListener(function() {
             } else {
                 properties.title = String.fromCodePoint('0x1F39B') + ' ' + properties.title;
             }
-            if (main_menu_id !== null)
-                properties.parentId = main_menu_id;
             chrome.contextMenus.create(properties);
         }
     }
