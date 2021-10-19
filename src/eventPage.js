@@ -378,37 +378,32 @@ chrome.permissions.onRemoved.addListener(function() {
         }
 
         // Add highlighting items.
-        let highlight_menu_id = null;
-        // Use a submenu for the browser action, to prevent Firefox from automatically
-        // putting items beyond the fourth in a submenu (i.e., keep the number of
-        // Firefox browser action items less than or equal to four), and to prevent
-        // Chrome from truncating items beyond the fifth (i.e., keep the number of
-        // Chrome browser action items less than or equal to five).
-        if (context === 'browser_action') {
-            highlight_menu_id = 'highlight_' + context;
-            properties = {
-                type: 'normal',
-                id: highlight_menu_id,
-                title: 'State',
-                contexts: [context]
+        let highlight_menu_id = 'highlight_' + context;
+        properties = {
+            type: 'normal',
+            id: highlight_menu_id,
+            title: 'State',
+            contexts: [context]
+        };
+        if (icons_supported) {
+            properties.icons = {
+                '16': 'icons/16x16.png',
+                '32': 'icons/32x32.png',
             };
-            if (icons_supported) {
-                properties.icons = {
-                    '16': 'icons/16x16.png',
-                    '32': 'icons/32x32.png',
-                };
-            } else {
-                properties.title = String.fromCodePoint('0x1F39A') + ' ' + properties.title;
-            }
-            chrome.contextMenus.create(properties);
+        } else {
+            properties.title = String.fromCodePoint('0x1F39A') + ' ' + properties.title;
         }
+        if (main_menu_id !== null)
+            properties.parentId = main_menu_id;
+        chrome.contextMenus.create(properties);
         for (let i = 0; i < NUM_HIGHLIGHT_STATES; ++i) {
             const id = `highlight_${i}_${context}`;
             properties = {
                 type: 'normal',
                 id: id,
                 title: level_name_lookup[NUM_HIGHLIGHT_STATES][i],
-                contexts: [context]
+                contexts: [context],
+                parentId: highlight_menu_id
             };
             if (icons_supported) {
                 const iconName = highlightStateToIconId(i) + 'highlight';
@@ -419,22 +414,6 @@ chrome.permissions.onRemoved.addListener(function() {
             } else {
                 properties.title = level_emoji_lookup[i] + ' ' + properties.title;
             }
-            if (main_menu_id !== null) {
-                properties.parentId = main_menu_id;
-            } else if (highlight_menu_id !== null) {
-                properties.parentId = highlight_menu_id;
-            }
-            chrome.contextMenus.create(properties);
-        }
-
-        // Add separator if we're in the page context
-        if (context === 'page') {
-            properties = {
-                type: 'separator',
-                contexts: [context],
-            };
-            if (main_menu_id !== null)
-                properties.parentId = main_menu_id;
             chrome.contextMenus.create(properties);
         }
 
