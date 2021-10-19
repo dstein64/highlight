@@ -499,7 +499,7 @@ chrome.permissions.onRemoved.addListener(function() {
         // On Firefox, copying to clipboard doesn't work from a browser action context, resulting
         // in an exception:
         // > "Clipboard write was blocked due to lack of user activation."
-        if (context === 'page' || !is_firefox) {
+        if (!is_firefox || context === 'page') {
             const clipboard_id = 'clipboard_' + context;
             properties = {
                 type: 'normal',
