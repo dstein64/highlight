@@ -351,10 +351,10 @@ chrome.permissions.onRemoved.addListener(function() {
     // As of 2019/9/18, Chrome does not support icons.
     const icons_supported = is_firefox;
     const level_emoji_lookup = {
-        0: String.fromCodePoint('0x25FD'),
-        1: String.fromCodePoint('0x1F538'),
-        2: String.fromCodePoint('0x1F536'),
-        3: String.fromCodePoint('0x1F7E0')
+        0: String.fromCodePoint('0x26AA'),
+        1: String.fromCodePoint('0x1F536'),
+        2: String.fromCodePoint('0x1F537'),
+        3: String.fromCodePoint('0x1F7E2')
     };
     let properties;
 
