@@ -325,6 +325,8 @@ const Sentence = function(nodes, s, e, hasEnd, inPre) {
              + this.nodes[this.nodeCount-1].textContent.substring(0, this.e+1);
     }
     this.text = text.trim();
+    // Replace newlines with spaces.
+    this.text = this.text.replace(/\s*\n\s*/g, ' ');
 
     this.textLength = this.text.length;
     this.wordCount = countWords(this.text);
