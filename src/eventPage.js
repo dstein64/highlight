@@ -234,53 +234,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
     //              chrome-extension-message-passing-response-not-sent
 });
 
-const inject = function(tabId, runAt='document_idle', callback=function() {}) {
-    const scripts = [
-        'src/lib/readabilitySAX/readabilitySAX.js',
-        'src/lib/Porter-Stemmer/PorterStemmer1980.js',
-        'src/nlp.js',
-        'src/utils.js',
-        'src/content.js',
-        'src/style.css'
-    ];
+// Injects Auto Highlight if it hasn't been injected yet, and runs the specified callback.
+const injectThenRun = function(tabId, showError, runAt='document_idle', callback=function() {}) {
     let fn = callback;
-    for (let i = scripts.length - 1; i >= 0; --i) {
-        let script = scripts[i];
-        let fn_ = fn;
-        fn = function() {
-            let inject_ = function(id, options, callback) {callback()};
-            if (script.endsWith('.css')) {
-                inject_ = chrome.tabs.insertCSS;
-            } else if (script.endsWith('.js')) {
-                inject_ = chrome.tabs.executeScript;
-            }
-            // Only inject into the top-level frame. More permissions than activeTab
-            // would be required for iframes of different origins.
-            // https://stackoverflow.com/questions/59166046/using-tabs-executescript-in-iframe
-            // The same permissions used for global highlighting seem to suffice.
-            inject_(tabId, {file: script, allFrames: false, runAt: runAt}, fn_);
-        }
-    }
-    fn();
-};
-
-// setting state to null results in automatically incrementing the state.
-const highlight = function(tabId, showError, state=null, runAt='document_idle', delay=0) {
-    if (state !== null && (state < 0 || state >= NUM_HIGHLIGHT_STATES)) {
-        console.error(`invalid state: ${state}`);
-        return;
-    }
-    const sendHighlightMessage = function() {
-        if (state === null)
-            state = (tabIdToHighlightState.get(tabId).highlight + 1) % NUM_HIGHLIGHT_STATES;
-        chrome.tabs.sendMessage(
-            tabId,
-            {
-                method: 'highlight',
-                highlightState: state,
-                delay: delay
-            });
-    };
     // First check if the current page is supported by trying to inject no-op code.
     // (e.g., https://chrome.google.com/webstore, chrome://extensions/, and other pages
     // do not support extensions).
@@ -301,12 +257,55 @@ const highlight = function(tabId, showError, state=null, runAt='document_idle', 
                     // On Firefox, in some cases just checking for lastError is not
                     // sufficient.
                     if (chrome.runtime.lastError || !resp) {
-                        inject(tabId, runAt, sendHighlightMessage);
-                    } else {
-                        sendHighlightMessage();
+                        const scripts = [
+                            'src/lib/readabilitySAX/readabilitySAX.js',
+                            'src/lib/Porter-Stemmer/PorterStemmer1980.js',
+                            'src/nlp.js',
+                            'src/utils.js',
+                            'src/content.js',
+                            'src/style.css'
+                        ];
+                        for (let i = scripts.length - 1; i >= 0; --i) {
+                            let script = scripts[i];
+                            let fn_ = fn;
+                            fn = function() {
+                                let inject_ = function(id, options, callback) {callback()};
+                                if (script.endsWith('.css')) {
+                                    inject_ = chrome.tabs.insertCSS;
+                                } else if (script.endsWith('.js')) {
+                                    inject_ = chrome.tabs.executeScript;
+                                }
+                                // Only inject into the top-level frame. More permissions than activeTab
+                                // would be required for iframes of different origins.
+                                // https://stackoverflow.com/questions/59166046/using-tabs-executescript-in-iframe
+                                // The same permissions used for global highlighting seem to suffice.
+                                inject_(tabId, {file: script, allFrames: false, runAt: runAt}, fn_);
+                            }
+                        }
                     }
+                    fn();
                 });
         });
+};
+
+// setting state to null results in automatically incrementing the state.
+const highlight = function(tabId, showError, state=null, runAt='document_idle', delay=0) {
+    if (state !== null && (state < 0 || state >= NUM_HIGHLIGHT_STATES)) {
+        console.error(`invalid state: ${state}`);
+        return;
+    }
+    const sendHighlightMessage = function() {
+        if (state === null)
+            state = (tabIdToHighlightState.get(tabId).highlight + 1) % NUM_HIGHLIGHT_STATES;
+        chrome.tabs.sendMessage(
+            tabId,
+            {
+                method: 'highlight',
+                highlightState: state,
+                delay: delay
+            });
+    };
+    injectThenRun(tabId, showError, runAt, sendHighlightMessage);
 };
 
 // runAt: 'document_end' is used for manually triggered highlighting, so that
@@ -588,25 +587,11 @@ chrome.permissions.onRemoved.addListener(function() {
                 });
         } else if (id.match(clipboard_re)) {
             const copyHighlights = function() {
-                chrome.tabs.sendMessage(
-                    tab.id,
-                    {method: 'copyHighlights'},
-                    {},
-                    function () {
-                        if (chrome.runtime.lastError) {
-                            // The Auto Highlight code has not been injected yet, so there was no
-                            // handler to process the message. Execute code that will copy the empty
-                            // string to the clipboard.
-                            chrome.tabs.executeScript(
-                                tab.id,
-                                {code: '(function(){navigator.clipboard.writeText("");})();'},
-                                function () {
-                                    if (chrome.runtime.lastError) {
-                                        alert('Auto Highlight is not supported on this page.');
-                                    }
-                                });
-                        }
-                    });
+                // Inject Auto Highlight prior to sending the message so that there is always
+                // a handler to process the message, even prior to the initial highlight request.
+                injectThenRun(tab.id, true, 'document_idle', function() {
+                    chrome.tabs.sendMessage(tab.id, {method: 'copyHighlights'});
+                });
             };
             // On Firefox, copying to the clipboard through a browser action context requires the
             // clipboardWrite permission to avoid an exception:
