@@ -374,12 +374,13 @@ chrome.permissions.onRemoved.addListener(function() {
     const icons_supported = IS_FIREFOX;
     const black_square = String.fromCodePoint('0x25FC');
     const white_square = String.fromCodePoint('0x25FB');
-    const level_emoji_lookup = {
-        0: white_square + white_square + white_square,
-        1: black_square + white_square + white_square,
-        2: black_square + black_square + white_square,
-        3: black_square + black_square + black_square
-    };
+    const level_emoji_lookup = {};
+    for (let i = 0; i < NUM_HIGHLIGHT_STATES; i++) {
+        level_emoji_lookup[i] = '';
+        for (let j = 0; j < NUM_HIGHLIGHT_STATES - 1; j++) {
+            level_emoji_lookup[i] += j < i ? black_square : white_square;
+        }
+    }
     let properties;
 
     const level_name_lookup = {
