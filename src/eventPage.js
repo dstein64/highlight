@@ -350,11 +350,13 @@ chrome.permissions.onRemoved.addListener(function() {
     const is_firefox = chrome.runtime.getURL('').startsWith('moz-extension://');
     // As of 2019/9/18, Chrome does not support icons.
     const icons_supported = is_firefox;
+    const black_square = String.fromCodePoint('0x25FC');
+    const white_square = String.fromCodePoint('0x25FB');
     const level_emoji_lookup = {
-        0: String.fromCodePoint('0x26AA'),
-        1: String.fromCodePoint('0x1F536'),
-        2: String.fromCodePoint('0x1F537'),
-        3: String.fromCodePoint('0x1F7E2')
+        0: white_square + white_square + white_square,
+        1: black_square + white_square + white_square,
+        2: black_square + black_square + white_square,
+        3: black_square + black_square + black_square
     };
     let properties;
 
