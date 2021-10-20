@@ -7,6 +7,7 @@
 
 const USER_AGENT = navigator.userAgent.toLowerCase();
 const MOBILE = USER_AGENT.indexOf('android') > -1 && USER_AGENT.indexOf('firefox') > -1;
+const IS_FIREFOX = chrome.runtime.getURL('').startsWith('moz-extension://');
 
 // total number of highlight states (min 2, max 4).
 let NUM_HIGHLIGHT_STATES = 4;
@@ -30,6 +31,8 @@ function getVersion() {
 }
 
 // This is called from options.js (see scope warning above).
+// Takes an optional scope, which can be null to refer to all.
+// When no scope is specified, the container dictionary is returned.
 function getPermissions(scope) {
     const permissions = {
         'autonomous_highlights': {
@@ -39,9 +42,29 @@ function getPermissions(scope) {
         'global_highlighting': {
             permissions: ['tabs'],
             origins: ['<all_urls>']
+        },
+        'copy_highlights': {
+            permissions: ['clipboardWrite'],
+            origins: []
         }
     };
-    return permissions[scope];
+    if (scope === null) {
+        const _permissions = new Set();
+        const origins = new Set();
+        for (const [key, value] of Object.entries(permissions)) {
+            value.permissions.forEach(x => _permissions.add(x));
+            value.origins.forEach(x => origins.add(x));
+        }
+        const result = {
+            permissions: Array.from(_permissions),
+            origins: Array.from(origins)
+        };
+        return result;
+    } else if (scope === undefined) {
+        return permissions;
+    } else {
+        return permissions[scope];
+    }
 }
 
 // This is called from options.js (see scope warning above).
@@ -347,9 +370,8 @@ chrome.permissions.onRemoved.addListener(function() {
 // *****************************
 
 {
-    const is_firefox = chrome.runtime.getURL('').startsWith('moz-extension://');
     // As of 2019/9/18, Chrome does not support icons.
-    const icons_supported = is_firefox;
+    const icons_supported = IS_FIREFOX;
     const black_square = String.fromCodePoint('0x25FC');
     const white_square = String.fromCodePoint('0x25FB');
     const level_emoji_lookup = {
@@ -498,32 +520,27 @@ chrome.permissions.onRemoved.addListener(function() {
         }
 
         // Add copy-to-clipboard item
-        // On Firefox, copying to clipboard doesn't work from a browser action context, resulting
-        // in an exception:
-        // > "Clipboard write was blocked due to lack of user activation."
-        if (!is_firefox || context === 'page') {
-            const clipboard_id = 'clipboard_' + context;
-            properties = {
-                type: 'normal',
-                id: clipboard_id,
-                title: 'Copy Highlights',
-                contexts: [context]
-            };
-            if (icons_supported) {
-                properties.icons = {
-                    '16': 'icons/clipboard16x16.png',
-                    '32': 'icons/clipboard32x32.png',
-                }
-            } else {
-                properties.title = String.fromCodePoint('0x1F4DD') + ' ' + properties.title;
+        const clipboard_id = 'clipboard_' + context;
+        properties = {
+            type: 'normal',
+            id: clipboard_id,
+            title: 'Copy Highlights',
+            contexts: [context]
+        };
+        if (icons_supported) {
+            properties.icons = {
+                '16': 'icons/clipboard16x16.png',
+                '32': 'icons/clipboard32x32.png',
             }
-            chrome.contextMenus.create(properties);
+        } else {
+            properties.title = String.fromCodePoint('0x1F4DD') + ' ' + properties.title;
         }
+        chrome.contextMenus.create(properties);
 
         // Add an options item for 1) the 'page' context and 2) the 'browser_action' context
         // on Firefox, since it doesn't have an Options item. This is not added for the
         // 'browser_action' context on Chrome, since it already has an Options item.
-        if (context === 'page' || is_firefox) {
+        if (context === 'page' || IS_FIREFOX) {
             const options_id = 'options_' + context;
             properties = {
                 type: 'normal',
@@ -569,25 +586,40 @@ chrome.permissions.onRemoved.addListener(function() {
                         highlightAll(level);
                 });
         } else if (id.match(clipboard_re)) {
-            chrome.tabs.sendMessage(
-                tab.id,
-                {method: 'clipboard'},
-                {},
-                function() {
-                    if (chrome.runtime.lastError) {
-                        // The Auto Highlight code has not been injected yet, so there was no
-                        // handler to process the message. Execute code that will copy the empty
-                        // string to the clipboard.
-                        chrome.tabs.executeScript(
-                            tab.id,
-                            {code: '(function(){navigator.clipboard.writeText("");})();'},
-                            function() {
-                                if (chrome.runtime.lastError) {
-                                    alert('Auto Highlight is not supported on this page.');
-                                }
-                            });
-                    }
-                });
+            const copyHighlights = function() {
+                chrome.tabs.sendMessage(
+                    tab.id,
+                    {method: 'copyHighlights'},
+                    {},
+                    function () {
+                        if (chrome.runtime.lastError) {
+                            // The Auto Highlight code has not been injected yet, so there was no
+                            // handler to process the message. Execute code that will copy the empty
+                            // string to the clipboard.
+                            chrome.tabs.executeScript(
+                                tab.id,
+                                {code: '(function(){navigator.clipboard.writeText("");})();'},
+                                function () {
+                                    if (chrome.runtime.lastError) {
+                                        alert('Auto Highlight is not supported on this page.');
+                                    }
+                                });
+                        }
+                    });
+            };
+            // On Firefox, copying to the clipboard through a browser action context requires the
+            // clipboardWrite permission to avoid an exception:
+            // > "Clipboard write was blocked due to lack of user activation."
+            if (IS_FIREFOX && id === 'clipboard_browser_action') {
+                chrome.permissions.request(
+                    getPermissions('copy_highlights'),
+                    function (granted) {
+                        if (granted)
+                            copyHighlights();
+                    });
+            } else {
+                copyHighlights();
+            }
         } else if (id.match(options_re)) {
             chrome.runtime.openOptionsPage();
         } else if (id.startsWith('autonomous_')) {

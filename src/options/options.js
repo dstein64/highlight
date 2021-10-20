@@ -72,20 +72,8 @@ showView('main-view');
  * Permissions
  ***********************************/
 
-const PERMISSIONS = {};
-{
-    const _permissions = new Set();
-    globalHighlightingPermissions.permissions.forEach(x => _permissions.add(x));
-    autonomousHighlightsPermissions.permissions.forEach(x => _permissions.add(x));
-    const origins = new Set();
-    globalHighlightingPermissions.origins.forEach(x => origins.add(x));
-    autonomousHighlightsPermissions.origins.forEach(x => origins.add(x));
-    PERMISSIONS.permissions = Array.from(_permissions);
-    PERMISSIONS.origins = Array.from(origins);
-}
-
 revokeButton.addEventListener('click', function() {
-    chrome.permissions.remove(PERMISSIONS);
+    chrome.permissions.remove(backgroundPage.getPermissions(null));
 });
 
 /***********************************
@@ -277,10 +265,8 @@ const setAutonomousHighlights = function(value, active=false, callback=null) {
 const setRevokeButtonState = function() {
     // Disables the revoke button, and then enables it if any of the relevant
     // permissions are currently granted.
-    const permission_items = [
-        globalHighlightingPermissions,
-        autonomousHighlightsPermissions
-    ];
+    const permission_items = Object.keys(backgroundPage.getPermissions()).map(
+        key => backgroundPage.getPermissions(key));
     revokeButton.disabled = true;
     let fn = function() {};
     for (const item of permission_items) {

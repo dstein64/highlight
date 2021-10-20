@@ -1263,8 +1263,8 @@ const tintColor = function(color, level) {
     return out;
 };
 
-// Retain last highlight text so that it can be copied to the clipboard.
-let lastHighlightText = '';
+// Retain last highlighted text so that it can be copied to the clipboard.
+let highlightedText = '';
 
 // signature:
 //   void highlight(highlightState, options, params, delay)
@@ -1303,10 +1303,10 @@ const highlight = function() {
                     candidate.highlight(c);
                 }
                 success = highlightState === 0 || scoredCandsToHighlight.length > 0;
-                lastHighlightText = scoredCandsToHighlight.map(function(c) {return c.candidate.text}).join('\n\n');
+                highlightedText = scoredCandsToHighlight.map(function(c) {return c.candidate.text}).join('\n\n');
             } catch (err) {
                 removeHighlightAllDocs();
-                lastHighlightText = '';
+                highlightedText = '';
             } finally {
                 // Before updating highlight state, wait until at least 0.5 seconds has elapsed
                 // since this function started. This prevents jumpiness of the loading icon.
@@ -1351,8 +1351,8 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
                 });
             });
         }
-    } else if (method === 'clipboard') {
-        navigator.clipboard.writeText(lastHighlightText);
+    } else if (method === 'copyHighlights') {
+        navigator.clipboard.writeText(highlightedText)
     } else if (method === 'ping') {
         // response is sent below
     } else {
