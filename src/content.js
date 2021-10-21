@@ -1354,16 +1354,15 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             });
         }
     } else if (method === 'copyHighlights') {
-        try {
-            navigator.clipboard.writeText(highlightedText).catch((error_inner) => {
-                // E.g., "DOMException: Document is not focused" when the developer tools are open and
-                // active, and a browser action is used.
-                alert('Error writing to clipboard.');
-            });
-        } catch(error_outer) {
-            // E.g., the clipboard has no writeText method when a remote page is not served over HTTPS.
-            alert('Error accessing clipboard.');
-        }
+        // Use execCommand('copy') from the background page, as opposed to using
+        // navigator.clipboard.writeText from here. This avoids 1) "DOMException:
+        // Document is not focused" when the developer tools are open and active,
+        // and 2) the absence of the writeText method when a remote page is not
+        // served over HTTPS.
+        chrome.runtime.sendMessage({
+            'message': 'copyText',
+            'text': highlightedText
+        });
     } else if (method === 'ping') {
         // response is sent below
     } else {

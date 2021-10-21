@@ -227,6 +227,20 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
         response(getOptions());
     } else if (message === 'getParams') {
         response({'numHighlightStates': NUM_HIGHLIGHT_STATES});
+    } else if (message === 'copyText') {
+        if (request.text === '') {
+            const msg = 'There is no highlighted text.' +
+                '\nUse Auto Highlight prior to copying.';
+            alert(msg);
+        } else {
+            const textarea = document.createElement('textarea');
+            document.body.append(textarea);
+            textarea.textContent = request.text;
+            console.log(textarea.innerText);
+            textarea.select();
+            document.execCommand('copy');
+            textarea.parentNode.removeChild(textarea);
+        }
     }
     // NOTE: if you're going to call response asynchronously,
     //       be sure to return true from this function.
@@ -585,28 +599,26 @@ chrome.permissions.onRemoved.addListener(function() {
                     if (granted)
                         highlightAll(level);
                 });
-        } else if (id.match(clipboard_re)) {
-            const copyHighlights = function() {
-                // Inject Auto Highlight prior to sending the message so that there is always
-                // a handler to process the message, even prior to the initial highlight request.
-                injectThenRun(tab.id, true, 'document_idle', function() {
-                    chrome.tabs.sendMessage(tab.id, {method: 'copyHighlights'});
-                });
-            };
-            // On Firefox, copying to the clipboard through a browser action context requires the
+        } else if (id.match(clipboard_re) !== null) {
+            // On Firefox, copying to the clipboard with execCommand('copy') requires the
             // clipboardWrite permission to avoid an exception:
-            // > "Clipboard write was blocked due to lack of user activation."
-            if (IS_FIREFOX && id === 'clipboard_browser_action') {
-                chrome.permissions.request(
-                    getPermissions('copy_highlights'),
-                    function (granted) {
-                        if (granted)
-                            copyHighlights();
-                    });
-            } else {
-                copyHighlights();
-            }
-        } else if (id.match(options_re)) {
+            // > "document.execCommand(‘cut’/‘copy’) was denied because it was not called
+            // > from inside a short running user-generated event handler."
+            // On Chrome, the permission is "recommended for extensions and packaged apps"
+            // when using execCommand('copy').
+            // https://developer.chrome.com/docs/extensions/mv2/declare_permissions/
+            chrome.permissions.request(
+                getPermissions('copy_highlights'),
+                function (granted) {
+                    if (granted) {
+                        // Inject Auto Highlight prior to sending the message so that there is always
+                        // a handler to process the message, even prior to the initial highlight request.
+                        injectThenRun(tab.id, true, 'document_idle', function() {
+                            chrome.tabs.sendMessage(tab.id, {method: 'copyHighlights'});
+                        });
+                    }
+                });
+        } else if (id.match(options_re) !== null) {
             chrome.runtime.openOptionsPage();
         } else if (id.startsWith('autonomous_')) {
             const splits = id.split('_');
