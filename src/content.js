@@ -1372,7 +1372,7 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     } else if (method === 'ping') {
         // response is sent below
     } else {
-        console.error('Unhandled method: ' + method)
+        console.error('Unhandled method: ' + method);
     }
     sendResponse(true);
 });
