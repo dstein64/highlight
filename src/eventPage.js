@@ -228,19 +228,12 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
     } else if (message === 'getParams') {
         response({'numHighlightStates': NUM_HIGHLIGHT_STATES});
     } else if (message === 'copyText') {
-        if (request.text === '') {
-            const msg = 'There is no highlighted text.' +
-                '\nUse Auto Highlight prior to copying.';
-            alert(msg);
-        } else {
-            const textarea = document.createElement('textarea');
-            document.body.append(textarea);
-            textarea.textContent = request.text;
-            console.log(textarea.innerText);
-            textarea.select();
-            document.execCommand('copy');
-            textarea.parentNode.removeChild(textarea);
-        }
+        const textarea = document.createElement('textarea');
+        document.body.append(textarea);
+        textarea.textContent = request.text;
+        textarea.select();
+        document.execCommand('copy');
+        textarea.parentNode.removeChild(textarea);
     }
     // NOTE: if you're going to call response asynchronously,
     //       be sure to return true from this function.
@@ -252,15 +245,22 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
 const injectThenRun = function(tabId, showError, runAt='document_idle', callback=function() {}) {
     let fn = callback;
     // First check if the current page is supported by trying to inject no-op code.
-    // (e.g., https://chrome.google.com/webstore, chrome://extensions/, and other pages
-    // do not support extensions).
+    // (e.g., https://chrome.google.com/webstore, https://addons.mozilla.org/en-US/firefox/,
+    // chrome://extensions/, and other pages do not support extensions).
     chrome.tabs.executeScript(
         tabId,
         {code: '(function(){})();'},
         function() {
             if (chrome.runtime.lastError) {
-                if (showError)
-                    alert('Auto Highlight is not supported on this page.');
+                if (showError) {
+                    // alert() doesn't work from Firefox background pages. A try/catch block is
+                    // not sufficient to prevent the "Browser Console" window that pops up with
+                    // the following message when using alert():
+                    // > "The Web Console logging API (console.log, console.info, console.warn,
+                    // > console.error) has been disabled by a script on this page."
+                    if (!IS_FIREFOX)
+                        alert('Auto Highlight is not supported on this page.');
+                }
                 return;
             }
             chrome.tabs.sendMessage(

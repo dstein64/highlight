@@ -1354,15 +1354,21 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             });
         }
     } else if (method === 'copyHighlights') {
-        // Use execCommand('copy') from the background page, as opposed to using
-        // navigator.clipboard.writeText from here. This avoids 1) "DOMException:
-        // Document is not focused" when the developer tools are open and active,
-        // and 2) the absence of the writeText method when a remote page is not
-        // served over HTTPS.
-        chrome.runtime.sendMessage({
-            'message': 'copyText',
-            'text': highlightedText
-        });
+        if (highlightedText === '') {
+            // Alert from content script, since alert() doesn't work from background
+            // scripts on Firefox.
+            alert('There is no highlighted text.\nUse Auto Highlight prior to copying.');
+        } else {
+            // Use execCommand('copy') from the background page, as opposed to using
+            // navigator.clipboard.writeText from here. This avoids 1) "DOMException:
+            // Document is not focused" when the developer tools are open and active,
+            // and 2) the absence of the writeText method when a remote page is not
+            // served over HTTPS.
+            chrome.runtime.sendMessage({
+                'message': 'copyText',
+                'text': highlightedText
+            });
+        }
     } else if (method === 'ping') {
         // response is sent below
     } else {
