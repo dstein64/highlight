@@ -418,7 +418,7 @@ chrome.permissions.onRemoved.addListener(function() {
                 '32': 'icons/state32x32.png',
             };
         } else {
-            properties.title = String.fromCodePoint('0x1F39A') + ' ' + properties.title;
+            properties.title = String.fromCodePoint('0x1F39B') + ' ' + properties.title;
         }
         chrome.contextMenus.create(properties);
         for (let i = 0; i < NUM_HIGHLIGHT_STATES; ++i) {
