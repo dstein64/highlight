@@ -568,7 +568,7 @@ chrome.permissions.onRemoved.addListener(function() {
                     '32': 'icons/options32x32.png',
                 }
             } else {
-                properties.title = String.fromCodePoint('0x1F39B') + ' ' + properties.title;
+                properties.title = String.fromCodePoint('0x1F527') + ' ' + properties.title;
             }
             chrome.contextMenus.create(properties);
         }
