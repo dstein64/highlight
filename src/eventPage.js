@@ -568,7 +568,10 @@ chrome.permissions.onRemoved.addListener(function() {
                     '32': 'icons/options32x32.png',
                 }
             } else {
-                properties.title = String.fromCodePoint('0x1F527') + ' ' + properties.title;
+                // The variation selector-16 character (0xFE0F) is used so that the gear is
+                // shown with emoji presentation. Otherwise, it's small (observed on macOS).
+                const gear = String.fromCodePoint('0x2699') + String.fromCodePoint('0xFE0F');
+                properties.title = gear + ' ' + properties.title;
             }
             chrome.contextMenus.create(properties);
         }
