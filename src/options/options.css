@@ -259,6 +259,7 @@ a.tooltip > span {
     padding: 14px 20px;
     margin-top: 40px;
     margin-left: 20px;
+    margin-right: 20px;
     width: auto;
     max-width: 300px;
     line-height: 16px;
