@@ -1341,8 +1341,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     const method = request.method;
     if (method === 'highlight') {
         if (compatibleDocument(document)) {
-            chrome.runtime.sendMessage({message: 'getOptions'}, function (response) {
-                const options = response;
+            chrome.storage.local.get(['options'], (storage) => {
+                const options = storage.options;
+                if (!options) return;
                 chrome.runtime.sendMessage({message: 'getParams'}, function (response) {
                     const params = response;
                     const highlightState = request.highlightState;

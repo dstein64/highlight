@@ -68,18 +68,8 @@ function getPermissions(scope) {
 }
 
 // This is called from options.js (see scope warning above).
-function getOptions() {
-    // Don't check for permissions here, in order to keep the funtion synchronous.
-    let opts = localStorage['options'];
-    if (opts) {
-        opts = JSON.parse(opts);
-    }
-    return opts;
-}
-
-// This is called from options.js (see scope warning above).
 // Saves options (asynchronously).
-function saveOptions(options, callback=null) {
+function saveOptions(options, callback=function() {}) {
     // Deep copy so this function is not destructive.
     options = JSON.parse(JSON.stringify(options));
     // Disable autonomous highlighting if its required permissions were
@@ -89,14 +79,17 @@ function saveOptions(options, callback=null) {
         function(result) {
             if (!result)
                 options.autonomous_highlights = false;
-            // Don't save if there are no changes (to prevent 'storage' event listeners
-            // from responding when they don't need to).
-            // XXX: The comparison will fail if the keys are in different order.
-            const json = JSON.stringify(options);
-            if (json !== localStorage['options'])
-                localStorage['options'] = JSON.stringify(options);
-            if (callback !== null)
-                callback();
+            chrome.storage.local.get(['options'], function(storage) {
+                const json = JSON.stringify(storage.options);
+                // Don't save if there are no changes (to prevent 'storage' event listeners
+                // from responding when they don't need to).
+                // XXX: The comparison will fail if the keys are in different order.
+                if (JSON.stringify(storage.options) !== JSON.stringify(options)) {
+                    chrome.storage.local.set({options: options}, callback);
+                } else {
+                    callback();
+                }
+            });
         });
 }
 
@@ -122,38 +115,55 @@ function defaultOptions() {
 }
 
 // Validate options
+const validateOptions = function() {
+    chrome.storage.local.get({options: {}}, function(result) {
+        let opts = result.options;
+        if (!opts) {
+            opts = Object.create(null);
+        }
+
+        const defaults = defaultOptions();
+
+        // Set missing options using defaults.
+        const default_keys = Object.keys(defaults);
+        for (let i = 0; i < default_keys.length; i++) {
+            const default_key = default_keys[i];
+            if (!(default_key in opts)) {
+                opts[default_key] = defaults[default_key];
+            }
+        }
+
+        // Remove unknown options (these may have been set
+        // by previous versions of the extension).
+        const opt_keys = Object.keys(opts);
+        for (let i = 0; i < opt_keys.length; i++) {
+            const opt_key = opt_keys[i];
+            if (!(opt_key in defaults)) {
+                delete opts[opt_key];
+            }
+        }
+
+        // Convert invalid settings to valid settings.
+        if (![...Array(NUM_HIGHLIGHT_STATES).keys()].includes(opts.autonomous_state))
+            opts.autonomous_state = defaults['autonomous_state'];
+
+        saveOptions(opts);
+    });
+};
+
 (function() {
-    let opts = getOptions();
-    if (!opts) {
-        opts = Object.create(null);
+    if ('options' in localStorage) {
+        // If there are localStorage options, transfer them to chrome.storage.local.
+        // TODO: This can eventually be removed, at which point the validateOptions()
+        // function should be deleted, and its code moved here.
+        let opts = localStorage['options'];
+        localStorage.clear();
+        chrome.storage.local.set({options: JSON.parse(opts)}, function() {
+            validateOptions();
+        });
+    } else {
+        validateOptions();
     }
-
-    const defaults = defaultOptions();
-
-    // Set missing options using defaults.
-    const default_keys = Object.keys(defaults);
-    for (let i = 0; i < default_keys.length; i++) {
-        const default_key = default_keys[i];
-        if (!(default_key in opts)) {
-            opts[default_key] = defaults[default_key];
-        }
-    }
-
-    // Remove unknown options (these may have been set
-    // by previous versions of the extension).
-    const opt_keys = Object.keys(opts);
-    for (let i = 0; i < opt_keys.length; i++) {
-        const opt_key = opt_keys[i];
-        if (!(opt_key in defaults)) {
-            delete opts[opt_key];
-        }
-    }
-
-    // Convert invalid settings to valid settings.
-    if (![...Array(NUM_HIGHLIGHT_STATES).keys()].includes(opts.autonomous_state))
-        opts.autonomous_state = defaults['autonomous_state'];
-
-    saveOptions(opts);
 })();
 
 // *****************************
@@ -223,8 +233,6 @@ chrome.runtime.onMessage.addListener(function(request, sender, response) {
         response({
             'curHighlight': highlightState.highlight,
             'curSuccess': highlightState.success});
-    } else if (message === 'getOptions') {
-        response(getOptions());
     } else if (message === 'getParams') {
         response({'numHighlightStates': NUM_HIGHLIGHT_STATES});
     } else if (message === 'copyText') {
@@ -347,17 +355,20 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         }
         return false;
     };
-    const options = getOptions();
-    if (options.autonomous_highlights && changeInfo.status === 'complete') {
-        if (options.autonomous_blocklist) {
-            const url = tab.url;
-            if (url === undefined) return;
-            const exception = url_matches(url, options.autonomous_blocklist_exceptions);
-            if (!exception && url_matches(url, options.autonomous_blocklist_items))
-                return;
+    chrome.storage.local.get(['options'], (storage) => {
+        const options = storage.options;
+        if (options.autonomous_highlights && changeInfo.status === 'complete') {
+            if (options.autonomous_blocklist) {
+                const url = tab.url;
+                if (url === undefined) return;
+                const exception = url_matches(url, options.autonomous_blocklist_exceptions);
+                if (!exception && url_matches(url, options.autonomous_blocklist_items))
+                    return;
+            }
+            highlight(
+                tab.id, false, options.autonomous_state, 'document_idle', options.autonomous_delay);
         }
-        highlight(tab.id, false, options.autonomous_state, 'document_idle', options.autonomous_delay);
-    }
+    });
 });
 
 // This is called from options.js (see scope warning above).
@@ -374,8 +385,10 @@ chrome.browserAction.onClicked.addListener(function(tab) {
 });
 
 chrome.permissions.onRemoved.addListener(function() {
-    // saveOptions() handles the check for missing permissions.
-    saveOptions(getOptions());
+    chrome.storage.local.get(['options'], (storage) => {
+        // saveOptions() handles the check for missing permissions.
+        saveOptions(storage.options);
+    });
 });
 
 // *****************************
@@ -632,17 +645,19 @@ chrome.permissions.onRemoved.addListener(function() {
             } else {
                 throw new Error('Unhandled item type: ' + item_type);
             }
-            const options = getOptions();
-            let key;
-            if (target === 'blocklist') {
-                key = 'autonomous_blocklist_items';
-            } else if (target === 'exception') {
-                key = 'autonomous_blocklist_exceptions';
-            } else {
-                throw new Error('Unhandled target: ' + target);
-            }
-            options[key].push(item);
-            saveOptions(options);
+            chrome.storage.local.get(['options'], (storage) => {
+                const options = storage.options;
+                let key;
+                if (target === 'blocklist') {
+                    key = 'autonomous_blocklist_items';
+                } else if (target === 'exception') {
+                    key = 'autonomous_blocklist_exceptions';
+                } else {
+                    throw new Error('Unhandled target: ' + target);
+                }
+                options[key].push(item);
+                saveOptions(options);
+            });
         } else {
             throw new Error('Unhandled menu ID: ' + id);
         }

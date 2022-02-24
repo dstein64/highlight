@@ -221,10 +221,12 @@ const populateBlocklistTable = function(opts) {
         };
         autonomousBlocklistNewInput.value = '';
         const list_source = autonomousBlocklistView.getAttribute('data-list-source');
-        const opts = backgroundPage.getOptions();
-        const key = 'autonomous_blocklist_' + list_source;
-        opts[key].push(item);
-        backgroundPage.saveOptions(opts);
+        chrome.storage.local.get(['options'], (storage) => {
+            const opts = storage.options;
+            const key = 'autonomous_blocklist_' + list_source;
+            opts[key].push(item);
+            backgroundPage.saveOptions(opts);
+        });
     };
 
     autonomousBlocklistNew.addEventListener('submit', function (e) {
@@ -237,8 +239,6 @@ const populateBlocklistTable = function(opts) {
 /***********************************
  * Options Form
  ***********************************/
-
-const initOpts = backgroundPage.getOptions();
 
 // 'active' indicates whether the function is initiated through a user gesture. This
 // is required to avoid "This function must be called during a user gesture".
@@ -335,10 +335,12 @@ const saveOptions = function() {
     // DOM prior to saving (which is what's done above for the other options.
     // This is because blocklist items are handled differently than the
     // other form inputs, getting saved directly when they're added.
-    const existing_opts = backgroundPage.getOptions();
-    options['autonomous_blocklist_items'] = existing_opts.autonomous_blocklist_items;
-    options['autonomous_blocklist_exceptions'] = existing_opts.autonomous_blocklist_exceptions;
-    backgroundPage.saveOptions(options);
+    chrome.storage.local.get(['options'], (storage) => {
+        const existing_opts = storage.options;
+        options['autonomous_blocklist_items'] = existing_opts.autonomous_blocklist_items;
+        options['autonomous_blocklist_exceptions'] = existing_opts.autonomous_blocklist_exceptions;
+        backgroundPage.saveOptions(options);
+    });
 };
 
 // Loads options (asynchronously).
@@ -373,32 +375,36 @@ const loadOptions = function(opts) {
     });
 };
 
-// restore saved options
 document.addEventListener('DOMContentLoaded', function() {
-    loadOptions(initOpts);
-});
+    chrome.storage.local.get(['options'], (result) => {
+        const initOpts = result.options;
 
-// load default options
-document.getElementById('defaults').addEventListener('click', function() {
-    const defaults = backgroundPage.defaultOptions();
-    // this will trigger updates to the input settings
-    backgroundPage.saveOptions(defaults, function() {
-        statusMessage('Defaults Loaded', 1200);
-    });
-});
+        // Restore saved options.
+        loadOptions(initOpts);
 
-document.getElementById('revert').addEventListener('click', function() {
-    let permissions = {};
-    if (initOpts.autonomous_highlights)
-        permissions = autonomousHighlightsPermissions;
-    chrome.permissions.request(
-        permissions,
-        function() {
+        // Load default options.
+        document.getElementById('defaults').addEventListener('click', () => {
+            const defaults = backgroundPage.defaultOptions();
             // this will trigger updates to the input settings
-            backgroundPage.saveOptions(initOpts, function() {
-                statusMessage('Options Reverted', 1200);
+            backgroundPage.saveOptions(defaults, function() {
+                statusMessage('Defaults Loaded', 1200);
             });
         });
+
+        document.getElementById('revert').addEventListener('click', () => {
+            let permissions = {};
+            if (initOpts.autonomous_highlights)
+                permissions = autonomousHighlightsPermissions;
+            chrome.permissions.request(
+                permissions,
+                function() {
+                    // this will trigger updates to the input settings
+                    backgroundPage.saveOptions(initOpts, () => {
+                        statusMessage('Options Reverted', 1200);
+                    });
+                });
+        });
+    });
 });
 
 // hide elements that are not relevant with less than three highlight states,
@@ -501,9 +507,11 @@ chrome.permissions.onRemoved.addListener(function() {
     // the options page.
 });
 
-window.addEventListener('storage', function() {
+chrome.storage.onChanged.addListener(function (changes, namespace) {
     // Reload options when there are any external updates that modify settings
     // saved in local storage (e.g., additions to the blocklist, options changes
     // on other options pages).
-    loadOptions(backgroundPage.getOptions());
+    chrome.storage.local.get(['options'], (storage) => {
+        loadOptions(storage.options);
+    });
 });
