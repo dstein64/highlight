@@ -472,8 +472,8 @@ if (numHighlightStates < 3) {
                     count += 1;
                     const id = count;
                     // Restore icons (in case the loading icon is currently showing).
-                    for (let i = 0; i < numHighlightStates; ++i) {
-                        icons[i].src = iconSrc(i);
+                    for (let j = 0; j < numHighlightStates; ++j) {
+                        icons[j].src = iconSrc(j);
                     }
                     backgroundPage.highlightAll(i);
                     img.src = '../../icons/_highlight38x38.png';
