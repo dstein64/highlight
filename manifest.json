@@ -5,13 +5,12 @@
   "options_ui": {
     "page": "src/options/options.html"
   },
-  "permissions": ["activeTab", "contextMenus", "storage"],
-  "optional_permissions": ["<all_urls>", "tabs", "clipboardWrite"],
+  "permissions": ["activeTab", "contextMenus", "scripting", "storage"],
+  "optional_permissions": ["tabs", "clipboardWrite"],
   "background": {
-    "scripts": ["src/utils.js", "src/matchPattern.js", "src/eventPage.js"],
-    "persistent": true
+    "service_worker": "src/eventPage.js"
   },
-  "browser_action": {
+  "action": {
     "default_icon": {
       "19": "icons/0highlight19x19.png",
       "38": "icons/0highlight38x38.png"
@@ -23,5 +22,5 @@
     "48": "icons/48x48.png",
     "128": "icons/128x128.png"
   },
-  "manifest_version": 2
+  "manifest_version": 3
 }

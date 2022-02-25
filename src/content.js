@@ -69,6 +69,24 @@ const getDocumentWindow = function() {
     return closure;
 }();
 
+/***********************************
+ * Utilities
+ ***********************************/
+
+// sets a timeout and ignores exceptions
+const setTimeoutIgnore = function() {
+    const args = [];
+    for (let i = 0; i < arguments.length; i++) {
+        args.push(arguments[i]);
+    }
+    const fn = args[0];
+    const rest = args.slice(1);
+    setTimeout.apply(null, [function() {
+        try {
+            fn();
+        } catch(err) {}  // ignore errors
+    }].concat(rest));
+};
 
 /***********************************
  * Node Highlighting Functionality
@@ -1167,24 +1185,26 @@ const cth = function(highlightState, numHighlightStates) {
     return _tohighlight;
 };
 
-const updateHighlightState = function(highlightState, success) {
-    chrome.runtime.sendMessage(
-        {
-            'message': 'updateHighlightState',
-            'highlight': highlightState,
-            'success': success
-        });
-};
+let curHighlight = 0;
+let curSuccess = true;
 
-// callback takes two args: a number indicating highlight state, and
-// boolean for success
-const getHighlightState = function(callback) {
-    const message = {'message': 'getHighlightState'};
-    chrome.runtime.sendMessage(message, function(response) {
-        const curHighlight = response['curHighlight'];
-        const curSuccess = response['curSuccess'];
-        callback(curHighlight, curSuccess);
-    });
+const updateHighlightState = function(highlightState, success, callback) {
+    // null represents 'unknown'
+    // true should always clobber false (for iframes)
+    success = (typeof success) === 'undefined' ? null : success;
+
+    // have to check for false. for null we don't want to set to zero.
+    if (success === false)
+        highlightState = 0;
+
+    curHighlight = highlightState;
+    curSuccess = success;
+
+    chrome.runtime.sendMessage({
+        'message': 'updateIcon',
+        'highlight': highlightState,
+        'success': success
+    }, callback);
 };
 
 // useful for debugging sentence boundary detection
@@ -1275,63 +1295,64 @@ const highlight = function() {
     const closure = function(highlightState, options, params, delay) {
         count += 1;
         const id = count;
-        // Even with a delay of 0, an asynchronous call is useful so the icon update is not blocked.
-        UTILS.setTimeoutIgnore(function() {
+        if (highlightState === null)
+            highlightState = (curHighlight + 1) % params['numHighlightStates'];
+        setTimeoutIgnore(function() {
             // Only process the request if it's the most recent.
             if (count !== id) return;
             const time = (new Date()).getTime();
-            updateHighlightState(highlightState, null);  // loading
-            let success = false;
-            // A try/catch/finally block is used so that a thrown error won't leave the extension
-            // in a loading state (with the icon indicating so).
-            try {
-                removeHighlightAllDocs();
-                const scoredCandsToHighlight = [];
-                if (highlightState > 0)
-                    scoredCandsToHighlight.push(...cth(highlightState, params['numHighlightStates']));
-                trimSpaces(scoredCandsToHighlight);
-                // have to loop backwards since splitting text nodes
-                for (let i = scoredCandsToHighlight.length - 1; i >= 0; i--) {
-                    let highlightColor = options['highlight_color'];
-                    if (options['tinted_highlights']) {
-                        const importance = scoredCandsToHighlight[i].importance;
-                        // XXX: Ad-hoc formula can be improved.
-                        highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
+            // update highlight state to null (loading)
+            updateHighlightState(highlightState, null, function() {
+                let success = false;
+                // A try/catch/finally block is used so that a thrown error won't leave the extension
+                // in a loading state (with the icon indicating so).
+                try {
+                    removeHighlightAllDocs();
+                    const scoredCandsToHighlight = [];
+                    if (highlightState > 0)
+                        scoredCandsToHighlight.push(...cth(highlightState, params['numHighlightStates']));
+                    trimSpaces(scoredCandsToHighlight);
+                    // have to loop backwards since splitting text nodes
+                    for (let i = scoredCandsToHighlight.length - 1; i >= 0; i--) {
+                        let highlightColor = options['highlight_color'];
+                        if (options['tinted_highlights']) {
+                            const importance = scoredCandsToHighlight[i].importance;
+                            // XXX: Ad-hoc formula can be improved.
+                            highlightColor = tintColor(highlightColor, 1.0 - Math.pow(1 / importance, 1.6));
+                        }
+                        const colorSpec = new ColorSpec(
+                            highlightColor, options['text_color'], options['link_color']);
+                        const candidate = scoredCandsToHighlight[i].candidate;
+                        const c = CYCLE_COLORS ? getNextColor() : colorSpec;
+                        candidate.highlight(c);
                     }
-                    const colorSpec = new ColorSpec(
-                        highlightColor, options['text_color'], options['link_color']);
-                    const candidate = scoredCandsToHighlight[i].candidate;
-                    const c = CYCLE_COLORS ? getNextColor() : colorSpec;
-                    candidate.highlight(c);
-                }
-                success = highlightState === 0 || scoredCandsToHighlight.length > 0;
-                highlightedText = scoredCandsToHighlight.map(function(c) {return c.candidate.text}).join('\n\n');
-            } catch (err) {
-                removeHighlightAllDocs();
-                highlightedText = '';
-            } finally {
-                // Before updating highlight state, wait until at least 0.5 seconds has elapsed
-                // since this function started. This prevents jumpiness of the loading icon.
-                const state_delay = Math.max(0, 500 - ((new Date()).getTime() - time));
-                UTILS.setTimeoutIgnore(function() {
-                    if (count === id) {
-                        updateHighlightState(highlightState, success);
-                        // if we don't have success, turn off icon in 2 seconds
-                        if (!success) {
-                            const turnoffdelay = 2000;
-                            UTILS.setTimeoutIgnore(function() {
-                                getHighlightState(function(curHighlight, curSuccess) {
+                    success = highlightState === 0 || scoredCandsToHighlight.length > 0;
+                    highlightedText = scoredCandsToHighlight.map(function(c) {return c.candidate.text}).join('\n\n');
+                } catch (err) {
+                    removeHighlightAllDocs();
+                    highlightedText = '';
+                } finally {
+                    // Before updating highlight state, wait until at least 0.5 seconds has elapsed
+                    // since this function started. This prevents jumpiness of the loading icon.
+                    const state_delay = Math.max(0, 500 - ((new Date()).getTime() - time));
+                    setTimeoutIgnore(function() {
+                        if (count === id) {
+                            updateHighlightState(highlightState, success);
+                            // if we don't have success, turn off icon in 2 seconds
+                            if (!success) {
+                                const turnoffdelay = 2000;
+                                setTimeoutIgnore(function() {
                                     if (curHighlight === 0
                                         && !curSuccess
                                         && count === id) {
                                         updateHighlightState(0, true);
                                     }
-                                });
-                            }, turnoffdelay);
+                                }, turnoffdelay);
+                            }
                         }
-                    }
-                }, state_delay);
-            }
+                    }, state_delay);
+                }
+            });
         }, delay);
     };
     return closure;
@@ -1360,15 +1381,16 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
             // scripts on Firefox.
             alert('There is no highlighted text.\nUse Auto Highlight prior to copying.');
         } else {
-            // Use execCommand('copy') from the background page, as opposed to using
-            // navigator.clipboard.writeText from here. This avoids 1) "DOMException:
-            // Document is not focused" when the developer tools are open and active,
-            // and 2) the absence of the writeText method when a remote page is not
-            // served over HTTPS.
-            chrome.runtime.sendMessage({
-                'message': 'copyText',
-                'text': highlightedText
-            });
+            // Use execCommand('copy') as opposed to using navigator.clipboard.writeText
+            // from here. This avoids 1) "DOMException: Document is not focused" when the
+            // developer tools are open and active, and 2) the absence of the writeText
+            // method when a remote page is not served over HTTPS.
+            const textarea = document.createElement('textarea');
+            document.body.append(textarea);
+            textarea.textContent = highlightedText;
+            textarea.select();
+            document.execCommand('copy');
+            textarea.parentNode.removeChild(textarea);
         }
     } else if (method === 'ping') {
         // response is sent below

@@ -1,121 +1,13 @@
 // TODO: Use consistent variable naming (camel case or underscores, not both)
 
-// WARN: For functions that are called from the options page, proper scope is
-// necessary (e.g., using a function declaration beginning with a 'function',
-// or using a function expression beginning with 'var', but not a function
-// expression beginning with 'let' or 'const').
-
-const USER_AGENT = navigator.userAgent.toLowerCase();
-const MOBILE = USER_AGENT.indexOf('android') > -1 && USER_AGENT.indexOf('firefox') > -1;
-const IS_FIREFOX = chrome.runtime.getURL('').startsWith('moz-extension://');
-
-// total number of highlight states (min 2, max 4).
-let NUM_HIGHLIGHT_STATES = 4;
-// Firefox for mobile doesn't show a browserAction icon, so only use two highlight
-// states (on and off).
-if (MOBILE)
-    NUM_HIGHLIGHT_STATES = 2;
+importScripts('matchPattern.js', 'shared.js');
 
 // *****************************
 // * Utilities and Options
 // *****************************
 
-// This is called from options.js (see scope warning above).
-function getNumHighlightStates() {
-    return NUM_HIGHLIGHT_STATES;
-}
-
-// This is called from options.js (see scope warning above).
-function getVersion() {
-    return chrome.runtime.getManifest().version;
-}
-
-// This is called from options.js (see scope warning above).
-// Takes an optional scope, which can be null to refer to all.
-// When no scope is specified, the container dictionary is returned.
-function getPermissions(scope) {
-    const permissions = {
-        'autonomous_highlights': {
-            permissions: ['tabs'],
-            origins: ['<all_urls>']
-        },
-        'global_highlighting': {
-            permissions: ['tabs'],
-            origins: ['<all_urls>']
-        },
-        'copy_highlights': {
-            permissions: ['clipboardWrite'],
-            origins: []
-        }
-    };
-    if (scope === null) {
-        const _permissions = new Set();
-        const origins = new Set();
-        for (const [key, value] of Object.entries(permissions)) {
-            value.permissions.forEach(x => _permissions.add(x));
-            value.origins.forEach(x => origins.add(x));
-        }
-        const result = {
-            permissions: Array.from(_permissions),
-            origins: Array.from(origins)
-        };
-        return result;
-    } else if (scope === undefined) {
-        return permissions;
-    } else {
-        return permissions[scope];
-    }
-}
-
-// This is called from options.js (see scope warning above).
-// Saves options (asynchronously).
-function saveOptions(options, callback=function() {}) {
-    // Deep copy so this function is not destructive.
-    options = JSON.parse(JSON.stringify(options));
-    // Disable autonomous highlighting if its required permissions were
-    // removed.
-    chrome.permissions.contains(
-        getPermissions('autonomous_highlights'),
-        function(result) {
-            if (!result)
-                options.autonomous_highlights = false;
-            chrome.storage.local.get(['options'], function(storage) {
-                const json = JSON.stringify(storage.options);
-                // Don't save if there are no changes (to prevent 'storage' event listeners
-                // from responding when they don't need to).
-                // XXX: The comparison will fail if the keys are in different order.
-                if (JSON.stringify(storage.options) !== JSON.stringify(options)) {
-                    chrome.storage.local.set({options: options}, callback);
-                } else {
-                    callback();
-                }
-            });
-        });
-}
-
-// This is called from options.js (see scope warning above).
-function defaultOptions() {
-    const options = Object.create(null);
-    const yellow = '#FFFF00';
-    const black = '#000000';
-    const red = '#FF0000';
-    options['highlight_color'] = yellow;
-    options['text_color'] = black;
-    options['link_color'] = red;
-    options['tinted_highlights'] = false;
-    options['autonomous_highlights'] = false;
-    options['autonomous_delay'] = 0;
-    options['autonomous_state'] = Math.min(2, NUM_HIGHLIGHT_STATES - 1);
-    // Enable the blocklist by default, so that it's ready in case
-    // autonomous_highlights is enabled (which is disabled by default).
-    options['autonomous_blocklist'] = true;
-    options['autonomous_blocklist_items'] = [];
-    options['autonomous_blocklist_exceptions'] = [];
-    return options;
-}
-
-// Validate options
-const validateOptions = function() {
+(function() {
+    // Validate options
     chrome.storage.local.get({options: {}}, function(result) {
         let opts = result.options;
         if (!opts) {
@@ -149,60 +41,18 @@ const validateOptions = function() {
 
         saveOptions(opts);
     });
-};
-
-(function() {
-    if ('options' in localStorage) {
-        // If there are localStorage options, transfer them to chrome.storage.local.
-        // TODO: This can eventually be removed, at which point the validateOptions()
-        // function should be deleted, and its code moved here.
-        let opts = localStorage['options'];
-        localStorage.clear();
-        chrome.storage.local.set({options: JSON.parse(opts)}, function() {
-            validateOptions();
-        });
-    } else {
-        validateOptions();
-    }
 })();
 
 // *****************************
 // * Core
 // *****************************
 
-// a highlightState is a list with highlight state and success state
-// this is used to manage highlight state, particularly for keeping
-// icon in sync, and telling content.js what state to change to
-const tabIdToHighlightState = new Map();
-
-chrome.tabs.onRemoved.addListener(function(tabId, removeInfo) {
-    // don't have to check if tabId in map. delete will still work, but
-    // will return false
-    tabIdToHighlightState.delete(tabId);
-});
-
-// This is called from options.js (see scope warning above).
-function highlightStateToIconId(state) {
-    return state + (state > 0 ? 4 - NUM_HIGHLIGHT_STATES : 0);
-}
-
-// updates highlight state in tabIdToHighlightState, and also used to
 // show the correct highlight icon
-const updateHighlightState = function(tabId, highlight, success) {
-    // null represents 'unknown'
-    // true should always clobber false (for iframes)
-    success = (typeof success) === 'undefined' ? null : success;
-
-    // have to check for false. for null we don't want to set to zero.
-    if (success === false)
-        highlight = 0;
-
-    tabIdToHighlightState.set(tabId, {highlight: highlight, success: success});
-
+const updateIcon = function(tabId, highlight, success) {
     const setIcon = function(iconId) {
-        const path19 = 'icons/' + iconId + 'highlight19x19.png';
-        const path38 = 'icons/' + iconId + 'highlight38x38.png';
-        chrome.browserAction.setIcon({
+        const path19 = '../icons/' + iconId + 'highlight19x19.png';
+        const path38 = '../icons/' + iconId + 'highlight38x38.png';
+        chrome.action.setIcon({
             path: {
                 '19': path19,
                 '38': path38
@@ -220,105 +70,73 @@ const updateHighlightState = function(tabId, highlight, success) {
     setIcon(iconId);
 };
 
-chrome.runtime.onMessage.addListener(function(request, sender, response) {
-    const proceed = request && sender && sender.tab;
-    if (!proceed)
-        return;
-    const message = request.message;
-    const tabId = sender.tab.id;
-    if (message === 'updateHighlightState') {
-        updateHighlightState(tabId, request.highlight, request.success);
-    } else if (message === 'getHighlightState') {
-        const highlightState = tabIdToHighlightState.get(tabId);
-        response({
-            'curHighlight': highlightState.highlight,
-            'curSuccess': highlightState.success});
-    } else if (message === 'getParams') {
-        response({'numHighlightStates': NUM_HIGHLIGHT_STATES});
-    } else if (message === 'copyText') {
-        const textarea = document.createElement('textarea');
-        document.body.append(textarea);
-        textarea.textContent = request.text;
-        textarea.select();
-        document.execCommand('copy');
-        textarea.parentNode.removeChild(textarea);
-    }
-    // NOTE: if you're going to call response asynchronously,
-    //       be sure to return true from this function.
-    //       http://stackoverflow.com/questions/20077487/
-    //              chrome-extension-message-passing-response-not-sent
-});
-
 // Injects Auto Highlight if it hasn't been injected yet, and runs the specified callback.
-const injectThenRun = function(tabId, showError, runAt='document_idle', callback=function() {}) {
+const injectThenRun = function(tabId, runAt='document_idle', callback=function() {}) {
     let fn = callback;
     // First check if the current page is supported by trying to inject no-op code.
     // (e.g., https://chrome.google.com/webstore, https://addons.mozilla.org/en-US/firefox/,
     // chrome://extensions/, and other pages do not support extensions).
-    chrome.tabs.executeScript(
-        tabId,
-        {code: '(function(){})();'},
-        function() {
-            if (chrome.runtime.lastError) {
-                if (showError) {
-                    // alert() doesn't work from Firefox background pages. A try/catch block is
-                    // not sufficient to prevent the "Browser Console" window that pops up with
-                    // the following message when using alert():
-                    // > "The Web Console logging API (console.log, console.info, console.warn,
-                    // > console.error) has been disabled by a script on this page."
-                    if (!IS_FIREFOX)
-                        alert('Auto Highlight is not supported on this page.');
-                }
-                return;
-            }
-            chrome.tabs.sendMessage(
-                tabId,
-                {method: 'ping'},
-                {},
-                function(resp) {
-                    // On Firefox, in some cases just checking for lastError is not
-                    // sufficient.
-                    if (chrome.runtime.lastError || !resp) {
-                        const scripts = [
-                            'src/lib/readabilitySAX/readabilitySAX.js',
-                            'src/lib/Porter-Stemmer/PorterStemmer1980.js',
-                            'src/nlp.js',
-                            'src/utils.js',
-                            'src/content.js',
-                            'src/style.css'
-                        ];
-                        for (let i = scripts.length - 1; i >= 0; --i) {
-                            let script = scripts[i];
-                            let fn_ = fn;
-                            fn = function() {
-                                let inject_ = function(id, options, callback) {callback()};
-                                if (script.endsWith('.css')) {
-                                    inject_ = chrome.tabs.insertCSS;
-                                } else if (script.endsWith('.js')) {
-                                    inject_ = chrome.tabs.executeScript;
-                                }
-                                // Only inject into the top-level frame. More permissions than activeTab
-                                // would be required for iframes of different origins.
-                                // https://stackoverflow.com/questions/59166046/using-tabs-executescript-in-iframe
-                                // The same permissions used for global highlighting seem to suffice.
-                                inject_(tabId, {file: script, allFrames: false, runAt: runAt}, fn_);
-                            }
-                        }
+    chrome.scripting.executeScript({
+        target: {tabId: tabId},
+        func: () => {
+            (function () {})();
+        }
+    }, (results) => {
+        if (chrome.runtime.lastError) {
+            // Earlier versions used an option to injectThenRun to specify whether an error
+            // message should be shown here using alert():
+            //   Auto Highlight is not supported on this page.
+            // This was avoided on Firefox, since it led to an error popup, and also avoided
+            // for non-user actions (e.g., autonomous highlights).
+            // However, with manifest v3's service workers, showing a message with alert()
+            // is not possible.
+            return;
+        }
+        chrome.tabs.sendMessage(
+            tabId,
+            {method: 'ping'},
+            {},
+            function(resp) {
+                // On Firefox, in some cases just checking for lastError is not
+                // sufficient.
+                if (chrome.runtime.lastError || !resp) {
+                    fn = () => {
+                        // Only inject into the top-level frame. More permissions than activeTab
+                        // would be required for iframes of different origins.
+                        // https://stackoverflow.com/questions/59166046/using-tabs-executescript-in-iframe
+                        // The same permissions used for global highlighting seem to suffice.
+                        const styles = ['src/style.css'];
+                        chrome.scripting.insertCSS({
+                            target: {tabId: tabId, allFrames: false},
+                            files: styles
+                        }, () => {
+                            const scripts = [
+                                'src/lib/readabilitySAX/readabilitySAX.js',
+                                'src/lib/Porter-Stemmer/PorterStemmer1980.js',
+                                'src/nlp.js',
+                                'src/content.js'
+                            ];
+                            chrome.scripting.executeScript({
+                                target: {tabId: tabId, allFrames: false},
+                                files: scripts
+                            }, () => {
+                                callback();
+                            });
+                        });
                     }
-                    fn();
-                });
-        });
+                }
+                fn();
+            });
+    });
 };
 
 // setting state to null results in automatically incrementing the state.
-const highlight = function(tabId, showError, state=null, runAt='document_idle', delay=0) {
+const highlight = function(tabId, state=null, runAt='document_idle', delay=0) {
     if (state !== null && (state < 0 || state >= NUM_HIGHLIGHT_STATES)) {
         console.error(`invalid state: ${state}`);
         return;
     }
     const sendHighlightMessage = function() {
-        if (state === null)
-            state = (tabIdToHighlightState.get(tabId).highlight + 1) % NUM_HIGHLIGHT_STATES;
         chrome.tabs.sendMessage(
             tabId,
             {
@@ -327,7 +145,7 @@ const highlight = function(tabId, showError, state=null, runAt='document_idle', 
                 delay: delay
             });
     };
-    injectThenRun(tabId, showError, runAt, sendHighlightMessage);
+    injectThenRun(tabId, runAt, sendHighlightMessage);
 };
 
 // runAt: 'document_end' is used for manually triggered highlighting, so that
@@ -366,22 +184,21 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
                     return;
             }
             highlight(
-                tab.id, false, options.autonomous_state, 'document_idle', options.autonomous_delay);
+                tab.id, options.autonomous_state, 'document_idle', options.autonomous_delay);
         }
     });
 });
 
-// This is called from options.js (see scope warning above).
-function highlightAll(state) {
+const highlightAll = function(state) {
     chrome.tabs.query({}, function(tabs) {
         for (let i = 0; i < tabs.length; ++i) {
-            highlight(tabs[i].id, false, state, 'document_end');
+            highlight(tabs[i].id, state, 'document_end');
         }
     });
-}
+};
 
-chrome.browserAction.onClicked.addListener(function(tab) {
-    highlight(tab.id, true, null, 'document_end');
+chrome.action.onClicked.addListener(function(tab) {
+    highlight(tab.id, null, 'document_end');
 });
 
 chrome.permissions.onRemoved.addListener(function() {
@@ -391,11 +208,31 @@ chrome.permissions.onRemoved.addListener(function() {
     });
 });
 
+chrome.runtime.onMessage.addListener(function(request, sender, response) {
+    const message = request.message;
+    if (message === 'updateIcon') {
+        updateIcon(sender.tab.id, request.highlight, request.success);
+    } else if (message === 'getParams') {
+        response({'numHighlightStates': NUM_HIGHLIGHT_STATES});
+    } else if (message === 'highlightAll') {
+        highlightAll(request.state);
+        // Respond so that a callback can be executed without "Unchecked runtime.lastError".
+        response(true);
+    }
+    // NOTE: if you're going to call response asynchronously,
+    //       be sure to return true from this function.
+    //       http://stackoverflow.com/questions/20077487/
+    //              chrome-extension-message-passing-response-not-sent
+});
+
 // *****************************
 // * Context Menu
 // *****************************
 
-{
+// Context menus are removed then re-created when the service worker resumes.
+// This avoids the following error on each context menu creation:
+//   Unchecked runtime.lastError: Cannot create item with duplicate id _______
+chrome.contextMenus.removeAll(function() {
     // As of 2019/9/18, Chrome does not support icons.
     const icons_supported = IS_FIREFOX;
     const black_square = String.fromCodePoint('0x25FC');
@@ -415,7 +252,7 @@ chrome.permissions.onRemoved.addListener(function() {
         4: {0: 'None', 1: 'Low', 2: 'High', 3: 'Max'}
     };
 
-    const contexts = ['page', 'browser_action'];
+    const contexts = ['page', 'action'];
     for (const context of contexts) {
         // Add highlighting items.
         let highlight_menu_id = 'highlight_' + context;
@@ -603,7 +440,7 @@ chrome.permissions.onRemoved.addListener(function() {
         const id = info.menuItemId;
         if (id.match(highlight_re) !== null) {
             const level = parseInt(id.slice('highlight_'.length).split('_')[0]);
-            highlight(tab.id, true, level, 'document_end');
+            highlight(tab.id, level, 'document_end');
         } else if (id.match(global_re) !== null) {
             const level = parseInt(id.slice('global_'.length).split('_')[0]);
             chrome.permissions.request(
@@ -626,7 +463,7 @@ chrome.permissions.onRemoved.addListener(function() {
                     if (granted) {
                         // Inject Auto Highlight prior to sending the message so that there is always
                         // a handler to process the message, even prior to the initial highlight request.
-                        injectThenRun(tab.id, true, 'document_idle', function() {
+                        injectThenRun(tab.id, 'document_idle', function() {
                             chrome.tabs.sendMessage(tab.id, {method: 'copyHighlights'});
                         });
                     }
@@ -662,4 +499,4 @@ chrome.permissions.onRemoved.addListener(function() {
             throw new Error('Unhandled menu ID: ' + id);
         }
     });
-}
+});
