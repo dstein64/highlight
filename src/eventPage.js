@@ -210,15 +210,16 @@ chrome.permissions.onRemoved.addListener(function() {
 
 chrome.runtime.onMessage.addListener(function(request, sender, response) {
     const message = request.message;
+    let result = true;
     if (message === 'updateIcon') {
         updateIcon(sender.tab.id, request.highlight, request.success);
     } else if (message === 'getParams') {
-        response({'numHighlightStates': NUM_HIGHLIGHT_STATES});
+        result = {'numHighlightStates': NUM_HIGHLIGHT_STATES};
     } else if (message === 'highlightAll') {
         highlightAll(request.state);
-        // Respond so that a callback can be executed without "Unchecked runtime.lastError".
-        response(true);
     }
+    // Respond so that a callback can be executed without "Unchecked runtime.lastError".
+    response(result);
     // NOTE: if you're going to call response asynchronously,
     //       be sure to return true from this function.
     //       http://stackoverflow.com/questions/20077487/
