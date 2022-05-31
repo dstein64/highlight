@@ -11,6 +11,7 @@ p {
 }
 
 body {
+    max-width: 400px;
     margin-top: 20px;
 }
 
@@ -170,6 +171,13 @@ button[data-count="1"] span.plural {
 #blocklist-new-input {
     min-width: 100px;
     flex-grow: 1;
+}
+
+/* Make sure blocklist input is on top of the GitHub link. */
+#blocklist-new-input,
+#blocklist-add-button,
+.blocklist-remove {
+    z-index: 1;
 }
 
 #blocklist-table {
