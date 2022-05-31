@@ -9,11 +9,9 @@
 <!-- Surround body content in a <div>. Otherwise, in Firefox, top-level buttons
  have display:block instead of display:inline-block, and they take the full
  width of the page. CSS rules don't fix the problem. -->
-<div class="view" id="main-view">
-<a href="https://github.com/dstein64/highlight" target="_blank" rel="noopener noreferrer">
-  <img id="forkme" src="forkme_right_white_ffffff.png" alt="Fork me on GitHub">
-</a>
+<div>
 <h3><em>Auto Highlight</em> v<span id="version"></span></h3>
+<div class="view" id="main-view">
 <h2>&#x2699;&#xFE0F; Options</h2>
 <table id="table">
   <tr>
@@ -225,12 +223,16 @@
       <option value="pattern">pattern</option>
     </select>
     <input id="blocklist-new-input" type="text" required>
-    <button type="submit">Add</button>
+    <button id="blocklist-add-button" type="submit">Add</button>
   </form>
   <table id="blocklist-table">
     <tbody id="blocklist-items-and-exceptions"></tbody>
   </table>
 </div><!-- #blocklist-view -->
+<a href="https://github.com/dstein64/highlight" target="_blank" rel="noopener noreferrer">
+  <img id="forkme" src="forkme_right_white_ffffff.png" alt="Fork me on GitHub">
+</a>
+</div>
 </body>
 
 <script src="options.js"></script>

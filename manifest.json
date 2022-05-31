@@ -1,9 +1,10 @@
 {
   "name": "Auto Highlight",
-  "version": "3.4.10",
+  "version": "3.4.11",
   "description": "*Auto Highlight* automatically highlights the important content on article pages.",
   "options_ui": {
-    "page": "src/options/options.html"
+    "page": "src/options/options.html",
+    "open_in_tab": true
   },
   "permissions": ["activeTab", "contextMenus", "storage"],
   "optional_permissions": ["<all_urls>", "tabs", "clipboardWrite"],
