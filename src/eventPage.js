@@ -174,11 +174,17 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         return false;
     };
     chrome.storage.local.get(['options'], (storage) => {
+        const url = tab.url;
+        if (url === undefined) return;
+        // Don't apply autonomous highlighting on options pages. When
+        // open_in_tab=false, this is the default behavior, so this check is not
+        // necessary. When open_in_tab=true, autonomous highlighting would run
+        // on Firefox (but not Chrome).
+        if (url.startsWith('moz-extension://') || url.startsWith('chrome-extension://'))
+            return;
         const options = storage.options;
         if (options.autonomous_highlights && changeInfo.status === 'complete') {
             if (options.autonomous_blocklist) {
-                const url = tab.url;
-                if (url === undefined) return;
                 const exception = url_matches(url, options.autonomous_blocklist_exceptions);
                 if (!exception && url_matches(url, options.autonomous_blocklist_items))
                     return;
