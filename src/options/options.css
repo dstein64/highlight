@@ -158,7 +158,7 @@ button[data-count="1"] span.plural {
     background-color: white;
 }
 
-#blocklist-back {
+#blocklist-return {
     cursor: pointer;
     color: blue;
     border-bottom: 1px dotted;
