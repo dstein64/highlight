@@ -37,7 +37,7 @@ const exampleTextElement = document.getElementById('example-text');
 const exampleLinkElement = document.getElementById('example-link');
 
 const autonomousBlocklistView = document.getElementById('blocklist-view');
-const autonomousBlocklistBack = document.getElementById('blocklist-back');
+const autonomousBlocklistReturn = document.getElementById('blocklist-return');
 const autonomousBlocklistNew = document.getElementById('blocklist-new');
 const autonomousBlocklistNewSelect = document.getElementById('blocklist-new-select');
 const autonomousBlocklistNewInput = document.getElementById('blocklist-new-input');
@@ -66,6 +66,12 @@ const showView = function(view) {
     document.body.scrollTop = 0;
 };
 
+addEventListener('popstate', function(e) {
+    if (e.state !== null && e.state.view !== undefined)
+        showView(e.state.view);
+});
+
+history.replaceState({view: 'main-view'}, '');
 showView('main-view');
 
 /***********************************
@@ -198,15 +204,23 @@ const populateBlocklistTable = function(opts) {
         showView('blocklist-view');
     };
 
+    addEventListener('popstate', function(e) {
+        if (e.state !== null && e.state.blocklist !== undefined)
+            showBlocklist(e.state.blocklist);
+    });
+
     autonomousBlocklistItemsButton.addEventListener('click', function() {
+        history.pushState({view: 'blocklist-view', blocklist: 'items'}, '');
         showBlocklist('items');
     });
 
     autonomousBlocklistExceptionsButton.addEventListener('click', function() {
+        history.pushState({view: 'blocklist-view', blocklist: 'exceptions'}, '');
         showBlocklist('exceptions');
     });
 
-    autonomousBlocklistBack.addEventListener('click', function() {
+    autonomousBlocklistReturn.addEventListener('click', function() {
+        history.pushState({view: 'main-view'}, '');
         showView('main-view');
     });
 
