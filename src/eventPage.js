@@ -330,6 +330,10 @@ const highlight = function(tabId, showError, state=null, runAt='document_idle', 
     injectThenRun(tabId, showError, runAt, sendHighlightMessage);
 };
 
+const isOptionsPage = function(url) {
+    return url.startsWith('moz-extension://') || url.startsWith('chrome-extension://');
+};
+
 // runAt: 'document_end' is used for manually triggered highlighting, so that
 // highlighting occurs sooner than it otherwise would with 'document_idle'.
 
@@ -362,7 +366,7 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
         // open_in_tab=false, this is the default behavior, so this check is not
         // necessary. When open_in_tab=true, autonomous highlighting would run
         // on Firefox (but not Chrome).
-        if (url.startsWith('moz-extension://') || url.startsWith('chrome-extension://'))
+        if (isOptionsPage(url))
             return;
         const options = storage.options;
         if (options.autonomous_highlights && changeInfo.status === 'complete') {
@@ -381,7 +385,10 @@ chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
 function highlightAll(state) {
     chrome.tabs.query({}, function(tabs) {
         for (let i = 0; i < tabs.length; ++i) {
-            highlight(tabs[i].id, false, state, 'document_end');
+            const tab = tabs[i];
+            if (tab.url === undefined || isOptionsPage(tab.url))
+                continue;
+            highlight(tab.id, false, state, 'document_end');
         }
     });
 }
