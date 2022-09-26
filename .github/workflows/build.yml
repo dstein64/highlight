@@ -10,7 +10,7 @@ on:
     branches: [master]
   schedule:
     # Run weekly (* is a special character in YAML, so quote the string)
-    - cron:  '0 0 * * 0'
+    - cron: '0 0 * * 0'
   workflow_dispatch:
     inputs:
       # When git-ref is empty, HEAD will be checked out.
