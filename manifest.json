@@ -3,8 +3,7 @@
   "version": "3.5.0",
   "description": "*Auto Highlight* automatically highlights the important content on article pages.",
   "options_ui": {
-    "page": "src/options/options.html",
-    "open_in_tab": true
+    "page": "src/options/options.html"
   },
   "permissions": ["activeTab", "contextMenus", "storage"],
   "optional_permissions": ["<all_urls>", "tabs", "clipboardWrite"],
