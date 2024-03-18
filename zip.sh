@@ -1,22 +1,31 @@
 #!/usr/bin/env bash
 
-# run this from the package directory
+scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "${scriptdir}"
 
-# easier to see args in an array than a string
-ARGS=()
-ARGS+=("icons/")
-ARGS+=("src/")
-ARGS+=("manifest.json")
+gen_archive() {
+  browser="${1}"
 
-# exclude
-ARGS+=("-x")
-ARGS+=("*.DS_Store")
-ARGS+=("*Thumbs.db")
+  # easier to see args in an array than a string
+  args=()
+  args+=("icons/")
+  args+=("src/")
+  args+=("manifest_${browser}.json")
 
-archive="archive.zip"
+  # exclude
+  args+=("-x")
+  args+=("*.DS_Store")
+  args+=("*Thumbs.db")
 
-if [ -f "${archive}" ]; then
-  rm "${archive}"
-fi
+  archive="archive_${browser}.zip"
 
-zip -r "${archive}" "${ARGS[@]}"
+  if [ -f "${archive}" ]; then
+    rm "${archive}"
+  fi
+
+  zip -r "${archive}" "${args[@]}"
+  printf "@ manifest_${browser}.json\n@=manifest.json\n" | zipnote -w "${archive}"
+}
+
+gen_archive chrome
+gen_archive firefox

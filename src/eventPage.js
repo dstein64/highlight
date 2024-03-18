@@ -1,6 +1,10 @@
 // TODO: Use consistent variable naming (camel case or underscores, not both)
 
-importScripts('matchPattern.js', 'shared.js');
+// If we're running as a service worker (Chrome), import dependencies. For
+// Firefox, they've already been loaded as background scripts.
+if (self.WorkerGlobalScope !== undefined) {
+    importScripts('matchPattern.js', 'shared.js');
+}
 
 // *****************************
 // * Utilities and Options
