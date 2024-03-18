@@ -1,17 +1,17 @@
 {
   "name": "Auto Highlight",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "description": "*Auto Highlight* automatically highlights the important content on article pages.",
   "options_ui": {
     "page": "src/options/options.html"
   },
-  "permissions": ["activeTab", "contextMenus", "storage"],
-  "optional_permissions": ["<all_urls>", "tabs", "clipboardWrite"],
+  "permissions": ["activeTab", "contextMenus", "scripting", "storage"],
+  "optional_permissions": ["tabs", "clipboardWrite"],
+  "optional_host_permissions": ["<all_urls>"],
   "background": {
-    "scripts": ["src/utils.js", "src/matchPattern.js", "src/eventPage.js"],
-    "persistent": true
+    "service_worker": "src/eventPage.js"
   },
-  "browser_action": {
+  "action": {
     "default_icon": {
       "19": "icons/0highlight19x19.png",
       "38": "icons/0highlight38x38.png"
@@ -23,5 +23,5 @@
     "48": "icons/48x48.png",
     "128": "icons/128x128.png"
   },
-  "manifest_version": 2
+  "manifest_version": 3
 }

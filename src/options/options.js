@@ -11,12 +11,10 @@ const statusMessage = function(message, time) {
     }, time);
 };
 
-const backgroundPage = chrome.extension.getBackgroundPage();
+const numHighlightStates = NUM_HIGHLIGHT_STATES;
 
-const numHighlightStates = backgroundPage.getNumHighlightStates();
-
-const autonomousHighlightsPermissions = backgroundPage.getPermissions('autonomous_highlights');
-const globalHighlightingPermissions = backgroundPage.getPermissions('global_highlighting');
+const autonomousHighlightsPermissions = getPermissions('autonomous_highlights');
+const globalHighlightingPermissions = getPermissions('global_highlighting');
 
 const highlightColorInput = document.getElementById('highlight-color');
 const textColorInput = document.getElementById('text-color');
@@ -49,7 +47,7 @@ const revokeButton = document.getElementById('revoke-permissions');
 
 const versionElement = document.getElementById('version');
 
-versionElement.innerText = backgroundPage.getVersion();
+versionElement.innerText = chrome.runtime.getManifest().version;
 
 /***********************************
  * Views
@@ -79,7 +77,7 @@ showView('main-view');
  ***********************************/
 
 revokeButton.addEventListener('click', function() {
-    chrome.permissions.remove(backgroundPage.getPermissions(null));
+    chrome.permissions.remove(getPermissions(null));
 });
 
 /***********************************
@@ -125,7 +123,7 @@ const populateBlocklistTable = function(opts) {
             remove_td.appendChild(remove_span);
             remove_td.addEventListener('click', function() {
                 opts[key].splice(i, 1);
-                backgroundPage.saveOptions(opts);
+                saveOptions(opts);
             });
             tr.appendChild(remove_td);
         }
@@ -177,7 +175,7 @@ const populateBlocklistTable = function(opts) {
             const message = 'Please enter a match pattern.';
             try {
                 // Make sure we can create the match pattern and run matches().
-                new backgroundPage.MatchPattern(data).matches('http://www.dannyadam.com');
+                new MatchPattern(data).matches('http://www.dannyadam.com');
             } catch (err) {
                 autonomousBlocklistNewInput.setCustomValidity(message);
             }
@@ -239,7 +237,7 @@ const populateBlocklistTable = function(opts) {
             const opts = storage.options;
             const key = 'autonomous_blocklist_' + list_source;
             opts[key].push(item);
-            backgroundPage.saveOptions(opts);
+            saveOptions(opts);
         });
     };
 
@@ -279,8 +277,8 @@ const setAutonomousHighlights = function(value, active=false, callback=null) {
 const setRevokeButtonState = function() {
     // Disables the revoke button, and then enables it if any of the relevant
     // permissions are currently granted.
-    const permission_items = Object.keys(backgroundPage.getPermissions()).map(
-        key => backgroundPage.getPermissions(key));
+    const permission_items = Object.keys(getPermissions()).map(
+        key => getPermissions(key));
     revokeButton.disabled = true;
     let fn = function() {};
     for (const item of permission_items) {
@@ -327,35 +325,11 @@ for (let i = 1; i < numHighlightStates; ++i) {
 
     const img = document.createElement('img');
     label.appendChild(img);
-    const iconName = backgroundPage.highlightStateToIconId(i) + 'highlight';
+    const iconName = highlightStateToIconId(i) + 'highlight';
     img.src = '../../icons/' + iconName + '38x38.png';
     img.height = 19;
     img.width = 19;
 }
-
-// Saves options (asynchronously).
-const saveOptions = function() {
-    const options = Object.create(null);
-    options['highlight_color'] = highlightColorInput.value;
-    options['text_color'] = textColorInput.value;
-    options['link_color'] = linkColorInput.value;
-    options['tinted_highlights'] = tintedHighlightsInput.checked;
-    options['autonomous_highlights'] = autonomousHighlightsInput.checked;
-    options['autonomous_delay'] = parseInt(autonomousDelayInput.value);
-    options['autonomous_state'] = parseInt(
-        autonomousStateInputs.querySelector('input:checked').value);
-    options['autonomous_blocklist'] = autonomousBlocklistInput.checked;
-    // The values on the blocklist (and exceptions) do not get pulled from the
-    // DOM prior to saving (which is what's done above for the other options.
-    // This is because blocklist items are handled differently than the
-    // other form inputs, getting saved directly when they're added.
-    chrome.storage.local.get(['options'], (storage) => {
-        const existing_opts = storage.options;
-        options['autonomous_blocklist_items'] = existing_opts.autonomous_blocklist_items;
-        options['autonomous_blocklist_exceptions'] = existing_opts.autonomous_blocklist_exceptions;
-        backgroundPage.saveOptions(options);
-    });
-};
 
 // Loads options (asynchronously).
 const loadOptions = function(opts) {
@@ -398,9 +372,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Load default options.
         document.getElementById('defaults').addEventListener('click', () => {
-            const defaults = backgroundPage.defaultOptions();
+            const defaults = defaultOptions();
             // this will trigger updates to the input settings
-            backgroundPage.saveOptions(defaults, function() {
+            saveOptions(defaults, function() {
                 statusMessage('Defaults Loaded', 1200);
             });
         });
@@ -413,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 permissions,
                 function() {
                     // this will trigger updates to the input settings
-                    backgroundPage.saveOptions(initOpts, () => {
+                    saveOptions(initOpts, () => {
                         statusMessage('Options Reverted', 1200);
                     });
                 });
@@ -432,30 +406,54 @@ if (numHighlightStates < 3) {
 
 // save options and synchronize form on any user input
 (function() {
+    // Saves form options (asynchronously).
+    const saveFormOptions = function() {
+        const options = Object.create(null);
+        options['highlight_color'] = highlightColorInput.value;
+        options['text_color'] = textColorInput.value;
+        options['link_color'] = linkColorInput.value;
+        options['tinted_highlights'] = tintedHighlightsInput.checked;
+        options['autonomous_highlights'] = autonomousHighlightsInput.checked;
+        options['autonomous_delay'] = parseInt(autonomousDelayInput.value);
+        options['autonomous_state'] = parseInt(
+            autonomousStateInputs.querySelector('input:checked').value);
+        options['autonomous_blocklist'] = autonomousBlocklistInput.checked;
+        // The values on the blocklist (and exceptions) do not get pulled from the
+        // DOM prior to saving (which is what's done above for the other options.
+        // This is because blocklist items are handled differently than the
+        // other form inputs, getting saved directly when they're added.
+        chrome.storage.local.get(['options'], (storage) => {
+            const existing_opts = storage.options;
+            options['autonomous_blocklist_items'] = existing_opts.autonomous_blocklist_items;
+            options['autonomous_blocklist_exceptions'] = existing_opts.autonomous_blocklist_exceptions;
+            saveOptions(options);
+        });
+    };
+
     // For color inputs, 'input' events are triggered during selection, while 'change'
     // events are triggered after closing the dialog.
     for (const type of ['change', 'input']) {
-        highlightColorInput.addEventListener(type, saveOptions);
-        textColorInput.addEventListener(type, saveOptions);
-        linkColorInput.addEventListener(type, saveOptions);
+        highlightColorInput.addEventListener(type, saveFormOptions);
+        textColorInput.addEventListener(type, saveFormOptions);
+        linkColorInput.addEventListener(type, saveFormOptions);
     }
-    tintedHighlightsInput.addEventListener('change', saveOptions);
+    tintedHighlightsInput.addEventListener('change', saveFormOptions);
     autonomousHighlightsInput.addEventListener('change', function() {
-        setAutonomousHighlights(autonomousHighlightsInput.checked, true, saveOptions);
+        setAutonomousHighlights(autonomousHighlightsInput.checked, true, saveFormOptions);
     });
-    autonomousDelayInput.addEventListener('change', saveOptions);
+    autonomousDelayInput.addEventListener('change', saveFormOptions);
     // For range inputs, 'input' events are triggered while dragging, while 'change'
     // events are triggered after the end of a sliding action.
     autonomousDelayInput.addEventListener('input', function() {
         showAutonomousDelay();
-        saveOptions();
+        saveFormOptions();
     });
     for (const input of autonomousStateInputs.querySelectorAll('input')) {
-        input.addEventListener('change', saveOptions);
+        input.addEventListener('change', saveFormOptions);
     }
     autonomousBlocklistInput.addEventListener('change', function() {
         syncBlocklistButtons();
-        saveOptions();
+        saveFormOptions();
     });
 })();
 
@@ -465,7 +463,7 @@ if (numHighlightStates < 3) {
 
 {
     const iconSrc = function(i) {
-        const iconName = backgroundPage.highlightStateToIconId(i) + 'highlight';
+        const iconName = highlightStateToIconId(i) + 'highlight';
         return '../../icons/' + iconName + '38x38.png';
     };
 
@@ -477,7 +475,7 @@ if (numHighlightStates < 3) {
         img.className = 'global-highlight-icon';
         img.src = iconSrc(i);
         img.addEventListener('click', function() {
-            // Have to put call to chrome.permissions.request in here, not backgroundPage.highlightAll,
+            // Have to put call to chrome.permissions.request in here, not highlightAll,
             // to avoid "This function must be called during a user gesture" error.
             chrome.permissions.request(
                 globalHighlightingPermissions,
@@ -489,19 +487,19 @@ if (numHighlightStates < 3) {
                     for (let j = 0; j < numHighlightStates; ++j) {
                         icons[j].src = iconSrc(j);
                     }
-                    backgroundPage.highlightAll(i);
                     img.src = '../../icons/_highlight38x38.png';
-                    setTimeout(function() {
-                        // Only restore icon if there weren't subsequent clicks (in case the same icon
-                        // is clicked multiple times).
-                        if (id !== count) return;
-                        img.src = iconSrc(i);
-                    }, 1000);
+                    chrome.runtime.sendMessage({message: 'highlightAll', state: i}, () => {
+                        setTimeout(function() {
+                            // Only restore icon if there weren't subsequent clicks (in case the same icon
+                            // is clicked multiple times).
+                            if (id !== count) return;
+                            img.src = iconSrc(i);
+                        }, 1000);
+                    });
                 });
         });
         globalHighlightIcons.appendChild(img);
     }
-
 }
 
 /***********************************

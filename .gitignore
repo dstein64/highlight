@@ -1,3 +1,5 @@
 .DS_Store
 Thumbs.db
-/archive.zip
+/archive_chrome.zip
+/archive_firefox.zip
+/manifest.json
