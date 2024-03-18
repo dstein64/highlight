@@ -29,6 +29,15 @@ The following image shows the highlighting on an article after clicking the
 
 ![Screenshot](screenshots/1.png)
 
+Development
+-----------
+
+A different `manifest.json` is used for Chrome and Firefox. For development, create a symbolic link
+`manifest.json` that points to either `manifest_chrome.json` or `manifest_firefox.json`, depending
+on the environment.
+
+To generate zip archives, run `zip.sh`.
+
 Privacy Policy
 --------------
 
