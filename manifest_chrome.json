@@ -1,16 +1,4 @@
 {
-  "name": "Auto Highlight",
-  "version": "3.6.0",
-  "description": "*Auto Highlight* automatically highlights the important content on article pages.",
-  "options_ui": {
-    "page": "src/options/options.html"
-  },
-  "permissions": ["activeTab", "contextMenus", "scripting", "storage"],
-  "optional_permissions": ["tabs", "clipboardWrite"],
-  "optional_host_permissions": ["<all_urls>"],
-  "background": {
-    "service_worker": "src/eventPage.js"
-  },
   "action": {
     "default_icon": {
       "19": "icons/0highlight19x19.png",
@@ -18,10 +6,22 @@
     },
     "default_title": "Toggle highlighting"
   },
+  "background": {
+    "service_worker": "src/eventPage.js"
+  },
+  "description": "*Auto Highlight* automatically highlights the important content on article pages.",
   "icons": {
     "16": "icons/16x16.png",
     "48": "icons/48x48.png",
     "128": "icons/128x128.png"
   },
-  "manifest_version": 3
+  "manifest_version": 3,
+  "name": "Auto Highlight",
+  "optional_host_permissions": ["<all_urls>"],
+  "optional_permissions": ["tabs", "clipboardWrite"],
+  "options_ui": {
+    "page": "src/options/options.html"
+  },
+  "permissions": ["activeTab", "contextMenus", "scripting", "storage"],
+  "version": "3.6.0"
 }
