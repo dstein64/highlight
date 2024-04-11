@@ -13,7 +13,7 @@ The extension is available from various browser add-on repositories.
 * Chrome
     - https://chrome.google.com/webstore/detail/highlight/dnkdpcbijfnmekbkchfjapfneigjomhh
 * Firefox
-    - https://addons.mozilla.org/en-US/firefox/addon/auto-highlight/
+    - https://addons.mozilla.org/firefox/addon/auto-highlight/
 * Edge
     - https://microsoftedge.microsoft.com/addons/detail/djobhcecijhljcmdohlobhgiconbhnoo
 
